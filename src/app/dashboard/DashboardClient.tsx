@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { AdvisoryBanners } from '@/components/AdvisoryBanners';
 import { ProjectCard } from '@/components/ProjectCard';
+import { Button } from '@/components/ui/button';
 import type { Project, Applicant, ShareLinks } from '@/types/index';
 
 interface ProjectWithDetails extends Project {
@@ -72,13 +73,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
             Manage your connected repositories, share join links, and review collaborator requests.
           </p>
         </div>
-        <Link
-          href="/projects/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Connect Repository</span>
-        </Link>
+        <Button asChild size="sm" className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-9">
+          <Link href="/projects/new" className="inline-flex items-center gap-1.5">
+            <Plus className="w-4 h-4" />
+            <span>Connect Repository</span>
+          </Link>
+        </Button>
       </div>
 
       {/* Advisory banners required by specification */}
@@ -91,13 +91,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
           <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
             Connect a GitHub repository where you have admin permissions to generate your first join link.
           </p>
-          <Link
-            href="/projects/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition shadow"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Connect Your First Repository</span>
-          </Link>
+          <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-10">
+            <Link href="/projects/new" className="inline-flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              <span>Connect Your First Repository</span>
+            </Link>
+          </Button>
         </div>
       ) : (
         <div className="space-y-6">
