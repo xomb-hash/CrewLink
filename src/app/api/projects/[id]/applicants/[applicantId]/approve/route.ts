@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { getGitHubClient } from '@/github/index';
+import { notifyApplicantApproved } from '@/lib/notifications';
 
 export async function POST(
   request: NextRequest,
@@ -51,6 +52,10 @@ export async function POST(
 
     const updated = await storage.updateApplicantStatus(applicant.id, 'approved', invitation);
 
+    if (updated) {
+      notifyApplicantApproved(project, updated).catch(() => {});
+    }
+
     return NextResponse.json({
       success: true,
       applicant: updated,
@@ -67,3 +72,4 @@ export async function POST(
     );
   }
 }
+

@@ -4,6 +4,7 @@ import { storage } from '@/lib/storage';
 import { getGitHubClient } from '@/github/index';
 import { validateProjectInput } from '@/lib/validation';
 import { generateShareLinks } from '@/projects/share';
+import { rateLimiter } from '@/lib/rateLimit';
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser(request);
@@ -39,10 +40,21 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit project creation: 10 per minute per IP
+  const rateLimitCheck = rateLimiter.check(request, {
+    limit: 10,
+    windowMs: 60_000,
+    keyPrefix: 'project-create',
+  });
+  if (!rateLimitCheck.success) {
+    return rateLimiter.createResponse(rateLimitCheck);
+  }
+
   const user = await getCurrentUser(request);
   if (!user || !user.accessToken) {
     return NextResponse.json({ error: 'Please sign in with GitHub.' }, { status: 401 });
   }
+
 
   let body: unknown = {};
   try {

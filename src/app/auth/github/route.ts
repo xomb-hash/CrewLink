@@ -3,8 +3,19 @@ import crypto from 'node:crypto';
 import { config } from '@/config/index';
 import { getGitHubClient } from '@/github/index';
 import { STATE_COOKIE, REDIRECT_COOKIE, signValue } from '@/lib/auth';
+import { rateLimiter } from '@/lib/rateLimit';
 
 export async function GET(request: NextRequest) {
+  // Rate limit OAuth initiation: 20 per minute per IP
+  const rateLimitCheck = rateLimiter.check(request, {
+    limit: 20,
+    windowMs: 60_000,
+    keyPrefix: 'auth-github',
+  });
+  if (!rateLimitCheck.success) {
+    return rateLimiter.createResponse(rateLimitCheck);
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const redirectTo = searchParams.get('redirect_to') || '/dashboard';
 

@@ -1,12 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
+import { rateLimiter } from '@/lib/rateLimit';
+import { notifyOwnerNewApplication } from '@/lib/notifications';
 import { formatAccountAge, validateApplicantInput } from '@/lib/validation';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  // Apply rate limiting: 10 requests per minute per IP
+  const rateLimitCheck = rateLimiter.check(request, {
+    limit: 10,
+    windowMs: 60_000,
+    keyPrefix: 'join-apply',
+  });
+  if (!rateLimitCheck.success) {
+    return rateLimiter.createResponse(rateLimitCheck);
+  }
+
   const currentUser = await getCurrentUser(request);
   if (!currentUser) {
     return NextResponse.json({ error: 'Please sign in with GitHub to apply.' }, { status: 401 });
@@ -59,6 +71,9 @@ export async function POST(
     message: validation.data.message,
   });
 
+  // Non-blocking notification dispatch
+  notifyOwnerNewApplication(project, applicant).catch(() => {});
+
   return NextResponse.json(
     {
       applicant: {
@@ -70,3 +85,4 @@ export async function POST(
     { status: 201 }
   );
 }
+

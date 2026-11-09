@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { prisma } from './prisma';
+import { encryptSecret, decryptSecret } from './crypto';
+import { logger } from './logger';
 import type { User, Project, Applicant, Session } from '../types/index';
 
 interface StorageData {
@@ -69,7 +71,7 @@ export class Storage {
       }
       fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf8');
     } catch (err: unknown) {
-      console.error('Storage save error:', err instanceof Error ? err.message : String(err));
+      logger.error('Storage save error', err);
     }
   }
 
@@ -86,6 +88,7 @@ export class Storage {
   // --- Users ---
   async saveUser(user: Partial<User> & { id: string | number; login: string }): Promise<User> {
     const id = String(user.id);
+    const encryptedToken = user.accessToken ? encryptSecret(user.accessToken) : (user.accessToken === null ? null : undefined);
 
     if (this.isPrismaActive()) {
       try {
@@ -96,7 +99,7 @@ export class Storage {
             login: user.login,
             name: user.name || null,
             avatarUrl: user.avatarUrl || null,
-            accessToken: user.accessToken || null,
+            accessToken: encryptedToken || null,
             publicRepos: Number(user.publicRepos) || 0,
             createdAt: user.createdAt ? new Date(user.createdAt) : new Date(),
           },
@@ -104,7 +107,7 @@ export class Storage {
             login: user.login,
             name: user.name || null,
             avatarUrl: user.avatarUrl || null,
-            accessToken: user.accessToken || null,
+            ...(encryptedToken !== undefined ? { accessToken: encryptedToken } : {}),
             publicRepos: Number(user.publicRepos) || 0,
           },
         });
@@ -113,13 +116,14 @@ export class Storage {
           login: result.login,
           name: result.name ?? undefined,
           avatarUrl: result.avatarUrl ?? undefined,
-          accessToken: result.accessToken ?? undefined,
+          accessToken: result.accessToken ? decryptSecret(result.accessToken) : undefined,
           publicRepos: result.publicRepos,
           createdAt: result.createdAt.toISOString(),
           updatedAt: result.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma saveUser failed, falling back to local memory:', err);
+        logger.error('Prisma saveUser failed', err, { userId: id });
+        throw err;
       }
     }
 
@@ -148,13 +152,14 @@ export class Storage {
           login: user.login,
           name: user.name ?? undefined,
           avatarUrl: user.avatarUrl ?? undefined,
-          accessToken: user.accessToken ?? undefined,
+          accessToken: user.accessToken ? decryptSecret(user.accessToken) : undefined,
           publicRepos: user.publicRepos,
           createdAt: user.createdAt.toISOString(),
           updatedAt: user.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma getUser fallback:', err);
+        logger.error('Prisma getUser failed', err, { userId: id });
+        throw err;
       }
     }
 
@@ -179,7 +184,8 @@ export class Storage {
         });
         return id;
       } catch (err) {
-        console.warn('Prisma createSession fallback:', err);
+        logger.error('Prisma createSession failed', err, { userId: uId });
+        throw err;
       }
     }
 
@@ -214,13 +220,14 @@ export class Storage {
             login: session.user.login,
             name: session.user.name ?? undefined,
             avatarUrl: session.user.avatarUrl ?? undefined,
-            accessToken: session.user.accessToken ?? undefined,
+            accessToken: session.user.accessToken ? decryptSecret(session.user.accessToken) : undefined,
             publicRepos: session.user.publicRepos,
             createdAt: session.user.createdAt.toISOString(),
           },
         };
       } catch (err) {
-        console.warn('Prisma getSession fallback:', err);
+        logger.error('Prisma getSession failed', err, { sessionId });
+        throw err;
       }
     }
 
@@ -244,7 +251,8 @@ export class Storage {
         await prisma.session.deleteMany({ where: { id: sessionId } });
         return;
       } catch (err) {
-        console.warn('Prisma deleteSession fallback:', err);
+        logger.error('Prisma deleteSession failed', err, { sessionId });
+        throw err;
       }
     }
 
@@ -313,7 +321,8 @@ export class Storage {
           updatedAt: created.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma createProject fallback:', err);
+        logger.error('Prisma createProject failed', err, { repo: project.repoFullName });
+        throw err;
       }
     }
 
@@ -364,7 +373,8 @@ export class Storage {
           updatedAt: p.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma getProjectById fallback:', err);
+        logger.error('Prisma getProjectById failed', err, { projectId: id });
+        throw err;
       }
     }
 
@@ -395,7 +405,8 @@ export class Storage {
           updatedAt: p.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma getProjectBySlug fallback:', err);
+        logger.error('Prisma getProjectBySlug failed', err, { slug });
+        throw err;
       }
     }
 
@@ -428,7 +439,8 @@ export class Storage {
           updatedAt: p.updatedAt.toISOString(),
         }));
       } catch (err) {
-        console.warn('Prisma getProjectsByOwner fallback:', err);
+        logger.error('Prisma getProjectsByOwner failed', err, { ownerLogin });
+        throw err;
       }
     }
 
@@ -460,7 +472,8 @@ export class Storage {
           updatedAt: p.updatedAt.toISOString(),
         }));
       } catch (err) {
-        console.warn('Prisma listProjects fallback:', err);
+        logger.error('Prisma listProjects failed', err);
+        throw err;
       }
     }
 
@@ -513,7 +526,8 @@ export class Storage {
           updatedAt: created.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma createApplicant fallback:', err);
+        logger.error('Prisma createApplicant failed', err, { projectId: applicant.projectId, userId });
+        throw err;
       }
     }
 
@@ -560,7 +574,8 @@ export class Storage {
           updatedAt: a.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma getApplicantById fallback:', err);
+        logger.error('Prisma getApplicantById failed', err, { applicantId: id });
+        throw err;
       }
     }
 
@@ -591,7 +606,8 @@ export class Storage {
           updatedAt: a.updatedAt.toISOString(),
         }));
       } catch (err) {
-        console.warn('Prisma getApplicantsByProject fallback:', err);
+        logger.error('Prisma getApplicantsByProject failed', err, { projectId });
+        throw err;
       }
     }
 
@@ -624,7 +640,8 @@ export class Storage {
           updatedAt: a.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma findApplicant fallback:', err);
+        logger.error('Prisma findApplicant failed', err, { projectId, userId: uId });
+        throw err;
       }
     }
 
@@ -667,7 +684,8 @@ export class Storage {
           updatedAt: updated.updatedAt.toISOString(),
         };
       } catch (err) {
-        console.warn('Prisma updateApplicantStatus fallback:', err);
+        logger.error('Prisma updateApplicantStatus failed', err, { applicantId: id, status });
+        throw err;
       }
     }
 

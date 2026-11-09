@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
+import { notifyApplicantRejected } from '@/lib/notifications';
 
 export async function POST(
   request: NextRequest,
@@ -32,8 +33,13 @@ export async function POST(
 
   const updated = await storage.updateApplicantStatus(applicant.id, 'rejected');
 
+  if (updated) {
+    notifyApplicantRejected(project, updated).catch(() => {});
+  }
+
   return NextResponse.json({
     success: true,
     applicant: updated,
   });
 }
+
