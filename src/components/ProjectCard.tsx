@@ -12,6 +12,7 @@ import {
   FileText,
   KeyRound,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { VisibilityBadge } from './VisibilityBadge';
 import { ProjectLogo } from './ProjectLogo';
@@ -26,6 +27,7 @@ interface ProjectCardProps {
   onApprove: (projectId: string, applicantId: string, login: string) => Promise<void>;
   onReject: (projectId: string, applicantId: string, login: string) => Promise<void>;
   onGenerateCode: (projectId: string) => Promise<void>;
+  onDelete: (projectId: string) => Promise<void>;
 }
 
 function statusFor(applicant: Applicant, joinMode: Project['joinMode']): string {
@@ -34,11 +36,12 @@ function statusFor(applicant: Applicant, joinMode: Project['joinMode']): string 
   return joinMode === 'screening' ? 'Screening' : 'Applied';
 }
 
-export function ProjectCard({ project, onApprove, onReject, onGenerateCode }: ProjectCardProps) {
+export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDelete }: ProjectCardProps) {
   const [copied, setCopied] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState<Applicant | null>(null);
   const [confirmReject, setConfirmReject] = useState<Applicant | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadingAction, setLoadingAction] = useState(false);
 
   const applicants = project.applicants ?? [];
@@ -81,6 +84,16 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode }: Pr
     }
   };
 
+  const handleConfirmDelete = async () => {
+    setLoadingAction(true);
+    try {
+      await onDelete(project.id);
+      setConfirmDelete(false);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
+
   return (
     <div className="overflow-hidden rounded-[10px] border border-line bg-panel">
       {/* Header */}
@@ -106,7 +119,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode }: Pr
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>
 
-          <div>
+          <div className="flex flex-wrap items-center gap-3">
             {!project.isPrivate ? (
               <a
                 href={`https://github.com/${project.repoFullName}`}
@@ -121,6 +134,15 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode }: Pr
             ) : (
               <span className="font-mono text-[11px] text-[#888]">{project.repoFullName}</span>
             )}
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#888] transition-colors hover:border-red-500/60 hover:text-red-300"
+              title="Delete this project"
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete
+            </button>
           </div>
         </div>
 
@@ -415,6 +437,37 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode }: Pr
                 className="h-9 rounded-md border border-red-500/60 px-4 text-[12px] text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-40"
               >
                 {loadingAction ? 'Rejecting…' : 'Reject applicant'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Confirm: delete */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-[#222] bg-panel p-6 shadow-2xl">
+            <h3 className="mb-2 text-base font-normal text-ink">Delete {project.title}?</h3>
+            <p className="mb-5 text-[12px] leading-relaxed text-[#999]">
+              This permanently removes the project, its join link, the applicant list and any uploaded
+              files. Your GitHub repository and its collaborators are <strong className="font-normal text-ink">not</strong>{' '}
+              affected. This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={loadingAction}
+                onClick={() => setConfirmDelete(false)}
+                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#888] transition-colors hover:border-[#555] hover:text-[#ccc] disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={loadingAction}
+                onClick={handleConfirmDelete}
+                className="h-9 rounded-md border border-red-500/60 px-4 text-[12px] text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-40"
+              >
+                {loadingAction ? 'Deleting…' : 'Delete project'}
               </button>
             </div>
           </div>

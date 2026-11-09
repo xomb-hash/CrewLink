@@ -10,6 +10,6 @@ Reusable UI components built with React 19, TypeScript, Tailwind CSS (v4), and L
 - `CreateProjectForm.tsx`: Shared admin-repo selection, optional project logo upload (PNG/JPEG/WebP, 2 MB), join mode, screening form, optional creator note, and required-credential toggles (resume, GitHub link, LinkedIn link). Referral projects get an invite code embedded in the join link.
 - `ProjectLogo.tsx`: Displays an uploaded project logo or deterministic gradient/initials art generated from the project name.
 - `VisibilityBadge.tsx`: Lock icon for private repositories and globe icon for public repositories.
-- `ProjectCard.tsx`: Owner project card with join-link copy, invite-code generation/regeneration, share triggers (LinkedIn, X, WhatsApp), applicant review rows (GitHub/LinkedIn links and resume download when provided), and confirmation dialogs for Approve/Reject.
+- `ProjectCard.tsx`: Owner project card with join-link copy, invite-code generation/regeneration, share triggers (LinkedIn, X, WhatsApp), applicant review rows (GitHub/LinkedIn links and resume download when provided), confirmation dialogs for Approve/Reject, and an owner-only Delete with confirmation.
 - `AdvisoryBanners.tsx`: GitHub personal-repository write-access and honour-system screening notices.
 - `ui/`: shadcn/ui primitives (`badge.tsx`, `button.tsx`, `card.tsx`, `input.tsx`, `label.tsx`, `textarea.tsx`).

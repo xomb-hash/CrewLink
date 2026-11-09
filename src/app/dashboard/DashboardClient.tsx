@@ -101,6 +101,17 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
     await reloadProjects();
   };
 
+  const handleDelete = async (projectId: string) => {
+    const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Failed to delete project');
+      return;
+    }
+    setProjects((prev) => prev.filter((project) => project.id !== projectId));
+    showToast('Project deleted.');
+  };
+
   return (
     <div className="mx-auto max-w-[1100px] px-6 py-8">
       <div className="mb-7 flex flex-wrap items-center gap-3.5 rounded-[10px] border border-line bg-panel p-5">
@@ -161,6 +172,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
               onApprove={handleApprove}
               onReject={handleReject}
               onGenerateCode={handleGenerateCode}
+              onDelete={handleDelete}
             />
           ))}
         </div>

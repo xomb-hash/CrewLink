@@ -530,6 +530,28 @@ export class Storage {
     return project;
   }
 
+  async deleteProject(id: string): Promise<boolean> {
+    if (this.isPrismaActive()) {
+      try {
+        // Applicants and drafts cascade via the schema's onDelete rules.
+        await prisma.project.delete({ where: { id } });
+        return true;
+      } catch (err) {
+        logger.error('Prisma deleteProject failed', err, { projectId: id });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const exists = this.data.projects.some((p) => p.id === id);
+    if (!exists) return false;
+    this.data.projects = this.data.projects.filter((p) => p.id !== id);
+    this.data.applicants = this.data.applicants.filter((a) => a.projectId !== id);
+    this.data.drafts = this.data.drafts.filter((d) => d.projectId !== id);
+    this.save();
+    return true;
+  }
+
   async listProjects(): Promise<Project[]> {
     if (this.isPrismaActive()) {
       try {

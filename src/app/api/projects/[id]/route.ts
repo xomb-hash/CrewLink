@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
+import { deleteLogo, deleteResume } from '@/lib/uploads';
 import { generateShareLinks } from '@/projects/share';
 
 export async function GET(
@@ -45,4 +46,37 @@ export async function GET(
       applicants,
     },
   });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Please sign in with GitHub.' }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const project = await storage.getProjectById(id);
+  if (!project) {
+    return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
+  }
+
+  const isOwner =
+    project.ownerLogin.toLowerCase() === user.login.toLowerCase() ||
+    String(project.ownerId) === String(user.id);
+  if (!isOwner) {
+    return NextResponse.json({ error: 'Only the project owner can delete this project.' }, { status: 403 });
+  }
+
+  const applicants = await storage.getApplicantsByProject(project.id);
+  await storage.deleteProject(project.id);
+
+  await Promise.all([
+    deleteLogo(project.logoPath),
+    ...applicants.map((applicant) => deleteResume(applicant.resumePath)),
+  ]);
+
+  return NextResponse.json({ success: true });
 }

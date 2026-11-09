@@ -2,7 +2,7 @@
 
 Core utilities for data storage, validation, authentication, security, and logging.
 
-- `storage.ts`: Dual-engine data store supporting PostgreSQL (via Prisma ORM) in production and development, and isolated JSON/in-memory store for unit tests.
+- `storage.ts`: Dual-engine data store supporting PostgreSQL (via Prisma ORM) in production and development, and isolated JSON/in-memory store for unit tests. Deleting a project cascades to its applicants and drafts.
 - `prisma.ts`: Singleton client connection pool for Prisma ORM.
 - `crypto.ts`: AES-256-GCM authenticated encryption at rest for sensitive secrets (GitHub OAuth tokens).
 - `rateLimit.ts`: Sliding-window rate limiter protecting API routes from abuse and spam.

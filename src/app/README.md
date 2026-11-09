@@ -16,7 +16,7 @@ Next.js App Router providing server-rendered pages and API Route Handlers.
 - `api/auth/me/route.ts`: Current authenticated user profile.
 - `api/repos/route.ts`: Repositories where user has admin access.
 - `api/projects/route.ts`: GET owner projects; POST create new project (JSON or multipart with optional logo, rate limited).
-- `api/projects/[id]/route.ts`: GET project details (owner-enforced).
+- `api/projects/[id]/route.ts`: GET project details (owner-enforced); DELETE project (owner-only, removes applicants, drafts, logo, and resume files; the GitHub repository is untouched).
 - `api/projects/[id]/logo/route.ts`: Public project logo image (404 when the project uses generated art).
 - `api/projects/[id]/referral-code/route.ts`: POST regenerate the active referral invite code (owner-only, referral projects only).
 - `api/projects/[id]/applicants/[applicantId]/approve/route.ts`: POST approve applicant (dispatches GitHub invitation and notification).
