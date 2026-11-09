@@ -159,8 +159,9 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
       }
 
       onSuccess?.();
-      router.push('/dashboard');
-      router.refresh();
+      // A same-route push + refresh can leave a stale RSC payload on screen,
+      // so load the dashboard from the server to guarantee the new project appears.
+      window.location.assign('/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to create project');
       setSubmitting(false);
