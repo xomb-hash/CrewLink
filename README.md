@@ -19,6 +19,7 @@ Crewlink **only connects people**. It is not a chat application and does not tra
 
 - **Framework**: [Next.js](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database / ORM**: PostgreSQL (Supabase) with [Prisma ORM](https://www.prisma.io/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Icons**: [Lucide Icons](https://lucide.dev/)
 - **Testing**: Built-in Node test runner (`node:test`) with `tsx` and mock GitHub
@@ -67,6 +68,18 @@ npm run dev     # start local development server at http://localhost:3000
 npm run build   # compile Next.js production build
 npm start       # start Next.js production server
 ```
+
+---
+
+## GitHub App Setup (Optional Alternative to OAuth App)
+
+If using a GitHub App rather than an OAuth App:
+1. GitHub > Settings > Developer settings > GitHub Apps > New GitHub App.
+2. Callback URL: `http://localhost:3000/auth/github/callback`.
+3. Repository permissions: Administration (Read and write) and Metadata (Read-only).
+4. Copy the App ID and Client ID. Generate a client secret and a private key (.pem).
+5. Put the .pem in the project directory, fill in `GITHUB_APP_PRIVATE_KEY_PATH` in `.env`, and install the app on a test repo.
+Never share or commit `.env` or the `.pem` file.
 
 ---
 

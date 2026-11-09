@@ -1,0 +1,12 @@
+/* Inputs, labels, radio cards, checkboxes and error text. */
+label.f{display:block;margin-bottom:14px}label.f>span{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+input[type=text],input[type=url],textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+textarea{min-height:64px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pv{font:12px ui-monospace,Menlo,monospace;color:var(--mute);margin:-6px 0 14px}
+.er{color:var(--bad);font-size:13px;margin-top:4px}
+fieldset{border:0;margin:0 0 14px;padding:0}legend{font-size:13px;color:var(--mute);margin-bottom:6px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer}
+.opt:has(input:checked){border-color:var(--blue);background:var(--card)}.opt small{display:block;color:var(--mute)}.opt input{margin-top:4px}
+.chk{display:flex;flex-wrap:wrap;gap:8px}.chk .opt{margin:0;flex:1 1 140px;align-items:center}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
