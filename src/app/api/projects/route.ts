@@ -84,6 +84,10 @@ export async function POST(request: NextRequest) {
     }
 
     const isPrivate = Boolean((body as { isPrivate?: boolean }).isPrivate);
+    const rawRoles = (body as { roles?: unknown }).roles;
+    const roles = Array.isArray(rawRoles)
+      ? rawRoles.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10)
+      : [];
 
     const project = await storage.createProject({
       ownerLogin: user.login,
@@ -95,9 +99,12 @@ export async function POST(request: NextRequest) {
       isPrivate,
       joinMode,
       screeningUrl,
+      screeningNote: validation.data.screeningNote,
+      roles,
       title: title || repo,
       description,
     });
+
 
     const shareLinks = generateShareLinks(project);
 

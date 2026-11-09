@@ -1,3 +1,3 @@
-# platforms
+# Platforms (`src/platforms`)
 
-`registry.js` is the central list of supported posting destinations and their draft limits. It has no credentials, sending code, or network calls.
+`registry.ts` is the central list of supported posting destinations and their draft limits (Discord, Telegram, Bluesky, Mastodon, LinkedIn, WhatsApp). It has no credentials, sending code, or network calls.

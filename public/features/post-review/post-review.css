@@ -1,1 +1,0 @@
-.draft{border-top:1px solid var(--line);padding:14px 0}.draft:first-child{border-top:0}.draft-head,.draft-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.draft-head{justify-content:space-between}.draft textarea{margin-top:8px}.draft-actions{margin-top:10px}.checks p{margin:5px 0;font-size:13px}

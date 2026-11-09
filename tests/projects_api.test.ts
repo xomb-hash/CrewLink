@@ -37,6 +37,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
         joinMode: 'referral',
         title: 'Mission to Orbit',
         description: 'Building an orbital engine.',
+        roles: ['Propulsion Engineer', 'Avionics Dev'],
       }),
     });
 
@@ -47,7 +48,9 @@ test('Project API route handlers (TypeScript)', async (t) => {
     assert.ok(data.project);
     assert.equal(data.project.title, 'Mission to Orbit');
     assert.equal(data.project.repoFullName, 'alice-owner/rocket-ship');
+    assert.deepEqual(data.project.roles, ['Propulsion Engineer', 'Avionics Dev']);
     assert.ok(data.project.shareLinks.joinUrl);
+
   });
 
   await t.test('rejects project creation if user is not repo admin', async () => {

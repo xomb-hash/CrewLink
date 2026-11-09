@@ -21,6 +21,8 @@ npm test
 - `projects_api.test.ts`: Next.js API route handlers for project creation and retrieval with admin permission check.
 - `applicants_api.test.ts`: Join page data, join request submissions, account age / public repo reporting, duplicate application prevention, and approval with GitHub collaborator invitation.
 - `security_checks.test.ts`: Server-side authorization checks ensuring only repository owners can approve, reject, or inspect applicant details.
+- `posting.test.ts`: Post draft creation, character and grapheme cluster limits, secret detection, duplicate warnings, and zero-network-call guarantees.
+
 
 ## Rules
 - Automated tests must **never** make live network requests to real GitHub.

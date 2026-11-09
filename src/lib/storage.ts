@@ -4,13 +4,14 @@ import path from 'node:path';
 import { prisma } from './prisma';
 import { encryptSecret, decryptSecret } from './crypto';
 import { logger } from './logger';
-import type { User, Project, Applicant, Session } from '../types/index';
+import type { User, Project, Applicant, Session, Draft, DraftStatus } from '../types/index';
 
 interface StorageData {
   projects: Project[];
   applicants: Applicant[];
   users: Record<string, User>;
   sessions: Record<string, Session>;
+  drafts: Draft[];
 }
 
 export class Storage {
@@ -25,6 +26,7 @@ export class Storage {
       applicants: [],
       users: {},
       sessions: {},
+      drafts: [],
     };
     this.ensureLoaded();
   }
@@ -49,6 +51,7 @@ export class Storage {
           applicants: parsed.applicants || [],
           users: parsed.users || {},
           sessions: parsed.sessions || {},
+          drafts: parsed.drafts || [],
         };
       } else {
         const dir = path.dirname(this.filePath);
@@ -58,7 +61,7 @@ export class Storage {
         this.save();
       }
     } catch {
-      this.data = { projects: [], applicants: [], users: {}, sessions: {} };
+      this.data = { projects: [], applicants: [], users: {}, sessions: {}, drafts: [] };
     }
     this.initialized = true;
   }
@@ -81,6 +84,7 @@ export class Storage {
       applicants: [],
       users: {},
       sessions: {},
+      drafts: [],
     };
     this.save();
   }
@@ -274,6 +278,8 @@ export class Storage {
     isPrivate?: boolean;
     joinMode?: 'referral' | 'screening';
     screeningUrl?: string;
+    screeningNote?: string;
+    roles?: string[];
     title?: string;
     description?: string;
   }): Promise<Project> {
@@ -283,6 +289,9 @@ export class Storage {
       .replace(/[^a-z0-9_-]/g, '-')
       .replace(/^-+|-+$/g, '') || 'project';
     const slug = `${baseSlug}-${crypto.randomBytes(3).toString('hex')}`;
+    const roles = Array.isArray(project.roles)
+      ? project.roles.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10)
+      : [];
 
     if (this.isPrismaActive()) {
       try {
@@ -299,6 +308,7 @@ export class Storage {
             isPrivate: Boolean(project.isPrivate),
             joinMode: project.joinMode === 'screening' ? 'screening' : 'referral',
             screeningUrl: project.joinMode === 'screening' ? project.screeningUrl || null : null,
+            roles,
             title: project.title || project.repoName,
             description: project.description || null,
           },
@@ -315,6 +325,7 @@ export class Storage {
           isPrivate: created.isPrivate,
           joinMode: created.joinMode as 'referral' | 'screening',
           screeningUrl: created.screeningUrl ?? undefined,
+          roles: created.roles,
           title: created.title,
           description: created.description ?? undefined,
           createdAt: created.createdAt.toISOString(),
@@ -339,6 +350,7 @@ export class Storage {
       isPrivate: Boolean(project.isPrivate),
       joinMode: project.joinMode === 'screening' ? 'screening' : 'referral',
       screeningUrl: project.joinMode === 'screening' ? project.screeningUrl || '' : '',
+      roles,
       title: project.title || project.repoName,
       description: project.description || '',
       createdAt: new Date().toISOString(),
@@ -367,6 +379,7 @@ export class Storage {
           isPrivate: p.isPrivate,
           joinMode: p.joinMode as 'referral' | 'screening',
           screeningUrl: p.screeningUrl ?? undefined,
+          roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
           createdAt: p.createdAt.toISOString(),
@@ -399,6 +412,7 @@ export class Storage {
           isPrivate: p.isPrivate,
           joinMode: p.joinMode as 'referral' | 'screening',
           screeningUrl: p.screeningUrl ?? undefined,
+          roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
           createdAt: p.createdAt.toISOString(),
@@ -433,6 +447,7 @@ export class Storage {
           isPrivate: p.isPrivate,
           joinMode: p.joinMode as 'referral' | 'screening',
           screeningUrl: p.screeningUrl ?? undefined,
+          roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
           createdAt: p.createdAt.toISOString(),
@@ -466,6 +481,7 @@ export class Storage {
           isPrivate: p.isPrivate,
           joinMode: p.joinMode as 'referral' | 'screening',
           screeningUrl: p.screeningUrl ?? undefined,
+          roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
           createdAt: p.createdAt.toISOString(),
@@ -701,6 +717,239 @@ export class Storage {
     }
     this.save();
     return applicant;
+  }
+
+  // --- Drafts ---
+  async createDraft(draft: {
+    projectId: string;
+    platformId: string;
+    text: string;
+  }): Promise<Draft> {
+    const id = `drf_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
+
+    if (this.isPrismaActive()) {
+      try {
+        const created = await prisma.draft.create({
+          data: {
+            id,
+            projectId: draft.projectId,
+            platformId: draft.platformId,
+            text: draft.text,
+            status: 'drafted',
+          },
+        });
+        return {
+          id: created.id,
+          projectId: created.projectId,
+          platformId: created.platformId,
+          text: created.text,
+          status: created.status as DraftStatus,
+          approvedText: created.approvedText ?? undefined,
+          approvedHash: created.approvedHash ?? undefined,
+          approvedAt: created.approvedAt ? created.approvedAt.toISOString() : undefined,
+          approvedBy: created.approvedBy ?? undefined,
+          createdAt: created.createdAt.toISOString(),
+          updatedAt: created.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        logger.error('Prisma createDraft failed', err, { projectId: draft.projectId });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const newDraft: Draft = {
+      id,
+      projectId: draft.projectId,
+      platformId: draft.platformId,
+      text: draft.text,
+      status: 'drafted',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    this.data.drafts.push(newDraft);
+    this.save();
+    return newDraft;
+  }
+
+  async getDraftsByProject(projectId: string): Promise<Draft[]> {
+    if (this.isPrismaActive()) {
+      try {
+        const list = await prisma.draft.findMany({
+          where: { projectId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return list.map((d) => ({
+          id: d.id,
+          projectId: d.projectId,
+          platformId: d.platformId,
+          text: d.text,
+          status: d.status as DraftStatus,
+          approvedText: d.approvedText ?? undefined,
+          approvedHash: d.approvedHash ?? undefined,
+          approvedAt: d.approvedAt ? d.approvedAt.toISOString() : undefined,
+          approvedBy: d.approvedBy ?? undefined,
+          createdAt: d.createdAt.toISOString(),
+          updatedAt: d.updatedAt.toISOString(),
+        }));
+      } catch (err) {
+        logger.error('Prisma getDraftsByProject failed', err, { projectId });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    return this.data.drafts.filter((d) => d.projectId === projectId);
+  }
+
+  async getDraftById(id: string): Promise<Draft | null> {
+    if (this.isPrismaActive()) {
+      try {
+        const d = await prisma.draft.findUnique({ where: { id } });
+        if (!d) return null;
+        return {
+          id: d.id,
+          projectId: d.projectId,
+          platformId: d.platformId,
+          text: d.text,
+          status: d.status as DraftStatus,
+          approvedText: d.approvedText ?? undefined,
+          approvedHash: d.approvedHash ?? undefined,
+          approvedAt: d.approvedAt ? d.approvedAt.toISOString() : undefined,
+          approvedBy: d.approvedBy ?? undefined,
+          createdAt: d.createdAt.toISOString(),
+          updatedAt: d.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        logger.error('Prisma getDraftById failed', err, { id });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    return this.data.drafts.find((d) => d.id === id) || null;
+  }
+
+  async updateDraft(id: string, text: string): Promise<Draft | null> {
+    if (this.isPrismaActive()) {
+      try {
+        const updated = await prisma.draft.update({
+          where: { id },
+          data: {
+            text: text.slice(0, 10000),
+            status: 'edited',
+            approvedText: null,
+            approvedHash: null,
+            approvedAt: null,
+            approvedBy: null,
+          },
+        });
+        return {
+          id: updated.id,
+          projectId: updated.projectId,
+          platformId: updated.platformId,
+          text: updated.text,
+          status: 'edited',
+          createdAt: updated.createdAt.toISOString(),
+          updatedAt: updated.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        logger.error('Prisma updateDraft failed', err, { id });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const draft = this.data.drafts.find((d) => d.id === id);
+    if (!draft) return null;
+    draft.text = text.slice(0, 10000);
+    draft.status = 'edited';
+    delete draft.approvedText;
+    delete draft.approvedHash;
+    delete draft.approvedAt;
+    delete draft.approvedBy;
+    draft.updatedAt = new Date().toISOString();
+    this.save();
+    return draft;
+  }
+
+  async approveDraft(id: string, approvedBy: string): Promise<Draft | null> {
+    const draft = await this.getDraftById(id);
+    if (!draft) return null;
+
+    const approvedHash = crypto.createHash('sha256').update(draft.text).digest('hex');
+    const now = new Date();
+
+    if (this.isPrismaActive()) {
+      try {
+        const updated = await prisma.draft.update({
+          where: { id },
+          data: {
+            status: 'approved',
+            approvedText: draft.text,
+            approvedHash,
+            approvedAt: now,
+            approvedBy,
+          },
+        });
+        return {
+          id: updated.id,
+          projectId: updated.projectId,
+          platformId: updated.platformId,
+          text: updated.text,
+          status: 'approved',
+          approvedText: updated.approvedText ?? undefined,
+          approvedHash: updated.approvedHash ?? undefined,
+          approvedAt: updated.approvedAt ? updated.approvedAt.toISOString() : undefined,
+          approvedBy: updated.approvedBy ?? undefined,
+          createdAt: updated.createdAt.toISOString(),
+          updatedAt: updated.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        logger.error('Prisma approveDraft failed', err, { id });
+        throw err;
+      }
+    }
+
+    draft.status = 'approved';
+    draft.approvedText = draft.text;
+    draft.approvedHash = approvedHash;
+    draft.approvedAt = now.toISOString();
+    draft.approvedBy = approvedBy;
+    draft.updatedAt = now.toISOString();
+    this.save();
+    return draft;
+  }
+
+  async skipDraft(id: string): Promise<Draft | null> {
+    if (this.isPrismaActive()) {
+      try {
+        const updated = await prisma.draft.update({
+          where: { id },
+          data: { status: 'skipped' },
+        });
+        return {
+          id: updated.id,
+          projectId: updated.projectId,
+          platformId: updated.platformId,
+          text: updated.text,
+          status: 'skipped',
+          createdAt: updated.createdAt.toISOString(),
+          updatedAt: updated.updatedAt.toISOString(),
+        };
+      } catch (err) {
+        logger.error('Prisma skipDraft failed', err, { id });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const draft = this.data.drafts.find((d) => d.id === id);
+    if (!draft) return null;
+    draft.status = 'skipped';
+    draft.updatedAt = new Date().toISOString();
+    this.save();
+    return draft;
   }
 }
 

@@ -89,7 +89,22 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
         {project.description && (
           <p className="text-sm text-gray-400 mt-1 leading-relaxed">{project.description}</p>
         )}
+
+        {project.roles && project.roles.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
+            <span className="text-xs text-gray-500">Roles wanted:</span>
+            {project.roles.map((role) => (
+              <span
+                key={role}
+                className="text-xs px-2 py-0.5 rounded bg-[#21262d] text-emerald-400/90 border border-emerald-500/20"
+              >
+                {role}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
+
 
       {/* Toolbar: Join link + Share buttons */}
       <div className="px-5 py-3 bg-[#0d1117] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-3">

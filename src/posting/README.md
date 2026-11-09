@@ -1,3 +1,3 @@
-# posting
+# Posting (`src/posting`)
 
-`drafts.js` creates local, deterministic copy; `checks.js` validates it. Neither module sends requests, stores credentials, or posts to a platform.
+`drafts.ts` creates deterministic post copy; `checks.ts` validates character limits, grapheme clusters, secrets, and private links. Neither module sends network requests, stores credentials, or posts to any external platform.

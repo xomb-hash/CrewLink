@@ -32,6 +32,8 @@ export interface Project {
   isPrivate: boolean;
   joinMode: JoinMode;
   screeningUrl?: string;
+  screeningNote?: string;
+  roles?: string[];
   title: string;
   description?: string;
   createdAt: string;
@@ -53,6 +55,39 @@ export interface Applicant {
   createdAt: string;
   updatedAt: string;
 }
+
+export type DraftStatus = 'drafted' | 'edited' | 'approved' | 'skipped';
+
+export interface DraftCheck {
+  level: 'error' | 'warning';
+  code: string;
+  message: string;
+}
+
+export interface Draft {
+  id: string;
+  projectId: string;
+  platformId: string;
+  text: string;
+  status: DraftStatus;
+  approvedText?: string;
+  approvedHash?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  checks?: DraftCheck[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Platform {
+  id: string;
+  name: string;
+  characterLimit: number;
+  mode: 'auto' | 'manual';
+  count?: 'characters' | 'graphemes';
+  note?: string;
+}
+
 
 export interface Session {
   userId: string;

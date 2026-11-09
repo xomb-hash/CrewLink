@@ -15,11 +15,13 @@ export function NewProjectClient() {
   const [selectedRepoFullName, setSelectedRepoFullName] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [rolesInput, setRolesInput] = useState('');
   const [joinMode, setJoinMode] = useState<'referral' | 'screening'>('referral');
   const [screeningUrl, setScreeningUrl] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     async function fetchRepos() {
@@ -63,6 +65,12 @@ export function NewProjectClient() {
     }
 
     const selectedRepo = repos.find((r) => r.fullName === selectedRepoFullName);
+    const roles = rolesInput
+      .split(',')
+      .map((r) => r.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+
     setSubmitting(true);
     setError(null);
 
@@ -75,10 +83,12 @@ export function NewProjectClient() {
           isPrivate: selectedRepo?.isPrivate || false,
           joinMode,
           screeningUrl: joinMode === 'screening' ? screeningUrl.trim() : '',
+          roles,
           title: title.trim() || selectedRepo?.name,
           description: description.trim(),
         }),
       });
+
 
       const data = await res.json();
       if (!res.ok) {
@@ -184,6 +194,25 @@ export function NewProjectClient() {
               Visible on the public join page (max 500 characters).
             </span>
           </div>
+
+          {/* Roles */}
+          <div>
+            <label htmlFor="project-roles" className="block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2">
+              Roles Wanted (Optional)
+            </label>
+            <input
+              id="project-roles"
+              type="text"
+              value={rolesInput}
+              onChange={(e) => setRolesInput(e.target.value)}
+              placeholder="e.g. Frontend Engineer, UI Designer, Tester"
+              className="w-full bg-[#0d1117] border border-[#30363d] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+            />
+            <span className="block text-xs text-gray-500 mt-1">
+              Comma-separated list of skills or roles you are looking for.
+            </span>
+          </div>
+
 
           {/* Join Mode Selection */}
           <div>
