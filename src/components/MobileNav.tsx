@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Home, LayoutGrid, Compass, LogOut, LogIn } from 'lucide-react';
+import { Home, LayoutGrid, Compass, Send, LogOut, LogIn } from 'lucide-react';
 import type { ShellUser } from './AppShell';
 
 interface MobileNavProps {
@@ -36,6 +36,15 @@ export function MobileNav({ user, pathname }: MobileNavProps) {
       >
         <Compass className="h-[18px] w-[18px]" strokeWidth={1.4} />
         Discover
+      </Link>
+      <Link
+        href="/applications"
+        prefetch={false}
+        aria-current={isActive('/applications') ? 'page' : undefined}
+        className={itemClass(isActive('/applications'))}
+      >
+        <Send className="h-[18px] w-[18px]" strokeWidth={1.4} />
+        Apps
       </Link>
       <Link
         href="/dashboard"

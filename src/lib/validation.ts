@@ -167,14 +167,34 @@ export function validateApplicantInput(data: {
   message?: string;
   githubUrl?: string;
   linkedinUrl?: string;
-}) {
+  proofUrl?: string;
+} = {}) {
   const errors: string[] = [];
-  const message = typeof data.message === 'string' ? data.message.trim().slice(0, 300) : '';
+  const safeData = data;
+  const message = typeof safeData.message === 'string' ? safeData.message.trim().slice(0, 300) : '';
 
-  const github = normalizeProfileUrl(data.githubUrl, 'github');
+  let proofUrl = '';
+  if (typeof safeData.proofUrl === 'string' && safeData.proofUrl.trim()) {
+    let clean = safeData.proofUrl.trim();
+    if (!/^https?:\/\//i.test(clean)) {
+      clean = `https://${clean}`;
+    }
+    try {
+      const parsed = new URL(clean);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        errors.push('Proof / CV link must use http or https.');
+      } else {
+        proofUrl = clean.slice(0, 300);
+      }
+    } catch {
+      errors.push('Proof / CV link must be a valid URL.');
+    }
+  }
+
+  const github = normalizeProfileUrl(safeData.githubUrl, 'github');
   if (github.error) errors.push(github.error);
 
-  const linkedin = normalizeProfileUrl(data.linkedinUrl, 'linkedin');
+  const linkedin = normalizeProfileUrl(safeData.linkedinUrl, 'linkedin');
   if (linkedin.error) errors.push(linkedin.error);
 
   return {
@@ -184,6 +204,7 @@ export function validateApplicantInput(data: {
       message,
       githubUrl: github.url,
       linkedinUrl: linkedin.url,
+      proofUrl: proofUrl || undefined,
     },
   };
 }

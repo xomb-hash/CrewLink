@@ -52,6 +52,7 @@ export async function POST(
   let rawMessage = '';
   let rawGithubUrl = '';
   let rawLinkedinUrl = '';
+  let rawProofUrl = '';
   let rawReferralCode = '';
   let resumeFile: File | null = null;
 
@@ -62,6 +63,7 @@ export async function POST(
       rawMessage = typeof form.get('message') === 'string' ? String(form.get('message')) : '';
       rawGithubUrl = typeof form.get('githubUrl') === 'string' ? String(form.get('githubUrl')) : '';
       rawLinkedinUrl = typeof form.get('linkedinUrl') === 'string' ? String(form.get('linkedinUrl')) : '';
+      rawProofUrl = typeof form.get('proofUrl') === 'string' ? String(form.get('proofUrl')) : '';
       rawReferralCode = typeof form.get('referralCode') === 'string' ? String(form.get('referralCode')) : '';
       const candidate = form.get('resume');
       if (candidate && typeof candidate === 'object' && 'arrayBuffer' in candidate) {
@@ -72,6 +74,7 @@ export async function POST(
       rawMessage = typeof body.message === 'string' ? body.message : '';
       rawGithubUrl = typeof body.githubUrl === 'string' ? body.githubUrl : '';
       rawLinkedinUrl = typeof body.linkedinUrl === 'string' ? body.linkedinUrl : '';
+      rawProofUrl = typeof body.proofUrl === 'string' ? body.proofUrl : '';
       rawReferralCode = typeof body.referralCode === 'string' ? body.referralCode : '';
     }
   } catch {
@@ -82,6 +85,7 @@ export async function POST(
     message: rawMessage,
     githubUrl: rawGithubUrl,
     linkedinUrl: rawLinkedinUrl,
+    proofUrl: rawProofUrl,
   });
 
   const errors = [...validation.errors];
@@ -131,6 +135,7 @@ export async function POST(
       message: validation.data.message,
       githubUrl: validation.data.githubUrl,
       linkedinUrl: validation.data.linkedinUrl,
+      proofUrl: validation.data.proofUrl,
       resumeFileName: savedResume?.fileName,
       resumePath: savedResume?.storedName,
     });

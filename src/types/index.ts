@@ -46,6 +46,15 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface ExploreProject extends Project {
+  applicantsCount: number;
+  joinUrl: string;
+}
+
+export interface UserApplication extends Applicant {
+  project: Project;
+}
+
 export interface Applicant {
   id: string;
   projectId: string;
@@ -57,6 +66,7 @@ export interface Applicant {
   message?: string;
   githubUrl?: string;
   linkedinUrl?: string;
+  proofUrl?: string;
   resumeFileName?: string;
   resumePath?: string;
   status: ApplicantStatus;
