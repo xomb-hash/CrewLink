@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Crewlink</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/components/button.css">
+  <link rel="stylesheet" href="/components/tag.css">
+  <link rel="stylesheet" href="/components/dialog.css">
+  <link rel="stylesheet" href="/components/toast.css">
+  <link rel="stylesheet" href="/components/visibility-icon.css">
+  <link rel="stylesheet" href="/components/project-card.css">
+</head>
+<body>
+  <div id="header-container"></div>
+
+  <main class="content">
+    <div class="container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: 1.85rem; font-weight: 700;">Owner Dashboard</h1>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">
+            Manage your connected repositories, share join links, and review collaborator requests.
+          </p>
+        </div>
+        <a href="/projects/new" class="btn btn-primary">+ Connect Repository</a>
+      </div>
+
+      <!-- Mandatory Spec Advisory Banners -->
+      <div class="alert alert-warning">
+        <strong>GitHub Access Level Notice:</strong> Read-only invitations only apply on organisation repositories. On personal repositories, GitHub grants write access to every collaborator.
+      </div>
+
+      <div class="alert alert-info">
+        <strong>Screening Policy:</strong> Screening is on the honour system. Crewlink cannot verify that an applicant completed a third-party test. Never treat screening as automatically verified.
+      </div>
+
+      <div id="loading-projects" style="padding: 2.5rem; text-align: center; color: var(--text-muted); background-color: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+        Loading your projects...
+      </div>
+
+      <div id="empty-projects" style="display: none; padding: 3rem 1.5rem; text-align: center; background-color: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">No repositories connected yet</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Connect a GitHub repository where you have admin permissions to generate your first join link.
+        </p>
+        <a href="/projects/new" class="btn btn-primary">+ Connect Your First Repository</a>
+      </div>
+
+      <div id="projects-container">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script type="module" src="/features/dashboard.js"></script>
+</body>
+</html>

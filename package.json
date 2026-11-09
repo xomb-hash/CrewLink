@@ -1,0 +1,20 @@
+{
+  "name": "crewlink",
+  "version": "1.0.0",
+  "description": "Where people who share an idea or goal find each other and start building together.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "crewlink",
+    "github",
+    "collaboration",
+    "teams"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

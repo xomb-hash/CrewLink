@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Project — Crewlink</title>
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/components/button.css">
+  <link rel="stylesheet" href="/components/form.css">
+  <link rel="stylesheet" href="/components/tag.css">
+  <link rel="stylesheet" href="/components/visibility-icon.css">
+  <link rel="stylesheet" href="/components/toast.css">
+</head>
+<body>
+  <div id="header-container"></div>
+
+  <main class="content">
+    <div class="container" style="max-width: 680px;">
+      <div id="loading" style="padding: 2.5rem; text-align: center; color: var(--text-muted); background-color: var(--bg-secondary); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+        Loading project details...
+      </div>
+
+      <div id="project-container" style="display: none;">
+        <article style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm);">
+          <!-- Project Header -->
+          <div style="padding: 1.75rem; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+              <span id="project-mode-tag"></span>
+              <span id="project-visibility-badge"></span>
+            </div>
+            
+            <h1 id="project-title" style="font-size: 1.85rem; font-weight: 700; margin-bottom: 0.5rem;"></h1>
+            
+            <div id="repo-link-container" style="margin-bottom: 0.75rem;"></div>
+
+            <p id="project-description" style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5;"></p>
+
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted);">
+              <span>Administered by</span>
+              <img id="owner-avatar" src="" alt="" style="width: 20px; height: 20px; border-radius: 50%;">
+              <a id="owner-link" href="" target="_blank" rel="noopener noreferrer" style="color: var(--text-secondary); font-weight: 500;"></a>
+            </div>
+          </div>
+
+          <!-- Join Mode Instructions / Screening Section -->
+          <div id="screening-section" style="display: none; padding: 1.25rem 1.75rem; background-color: rgba(163, 113, 247, 0.08); border-bottom: 1px solid var(--border-color);">
+            <h3 style="font-size: 1rem; color: #d2a8ff; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+              Step 1: Complete Screening Task
+            </h3>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+              The project owner requires applicants to review or complete this task before requesting access.
+            </p>
+            <a id="screening-link-btn" href="" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="font-weight: 600;">
+              Open Screening Task &rarr;
+            </a>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+              <em>Note: Screening is based on the honour system. Confirm you have completed it before submitting your request below.</em>
+            </p>
+          </div>
+
+          <!-- Application Area -->
+          <div style="padding: 1.75rem;">
+            <!-- If user is the owner -->
+            <div id="owner-notice" style="display: none;" class="alert alert-info">
+              You are the owner of this repository. Share this URL with potential collaborators so they can request to join!
+            </div>
+
+            <!-- If already applied -->
+            <div id="existing-application-box" style="display: none;">
+              <div style="text-align: center; padding: 1.5rem 1rem;">
+                <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Application Status</h3>
+                <div id="status-tag-container" style="margin-bottom: 1rem;"></div>
+                <p id="status-explanation" style="font-size: 0.9rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto;"></p>
+              </div>
+            </div>
+
+            <!-- Not signed in -->
+            <div id="not-signed-in" style="display: none; text-align: center; padding: 1.5rem 1rem;">
+              <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                Sign in with your GitHub account to request to join this project.
+              </p>
+              <a id="github-signin-btn" href="" class="btn btn-primary btn-lg">
+                Sign in with GitHub to Apply
+              </a>
+            </div>
+
+            <!-- Signed in, can apply -->
+            <form id="apply-form" style="display: none;">
+              <div style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                Applying as <strong id="current-user-login" style="color: var(--text-primary);"></strong>
+              </div>
+
+              <div class="form-group">
+                <label for="apply-message" class="form-label">
+                  Introduce yourself or share relevant experience (optional)
+                </label>
+                <textarea id="apply-message" class="form-control" placeholder="What parts of this project interest you?" maxlength="300"></textarea>
+                <span class="form-hint">The project owner will see your note alongside your GitHub account age and public repository count.</span>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; margin-top: 1.25rem;">
+                <button type="submit" id="submit-apply-btn" class="btn btn-primary">
+                  Request to Join Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </article>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-container"></div>
+
+  <script type="module" src="/features/join.js"></script>
+</body>
+</html>

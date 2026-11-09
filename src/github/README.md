@@ -1,0 +1,12 @@
+# GitHub Module
+
+Handles all communication with GitHub's REST and OAuth APIs.
+
+- `api.js`: Real GitHub API client for OAuth authorization, fetching authenticated user info, listing repositories where user is admin, and sending collaborator invitations (`PUT /repos/{owner}/{repo}/collaborators/{username}`).
+- `fake.js`: Mock GitHub implementation used for automated tests. Tests never hit live GitHub servers.
+- `index.js`: Exports the active GitHub client, switching to the fake mock during test runs or via `setGitHubClient()`.
+
+## Rules
+- All GitHub API communication must reside within this folder.
+- Automated tests must use `fakeGitHub`.
+- Verification against real GitHub requires manual two-account testing with a registered GitHub OAuth App.
