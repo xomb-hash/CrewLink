@@ -24,6 +24,19 @@ function verifyWebhookSignature(
   }
 }
 
+interface GitHubWebhookPayload {
+  action?: string;
+  zen?: string;
+  repository?: {
+    full_name?: string;
+  };
+  member?: {
+    login?: string;
+    id?: number;
+  };
+  [key: string]: unknown;
+}
+
 export async function POST(request: NextRequest) {
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
   const signature = request.headers.get('x-hub-signature-256');
@@ -40,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  let payload: Record<string, any> = {};
+  let payload: GitHubWebhookPayload = {};
   try {
     payload = JSON.parse(rawBody);
   } catch {

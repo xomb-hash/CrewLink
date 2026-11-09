@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { config } from '../config/index';
+import { logger } from './logger';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12; // 96 bits for GCM
@@ -72,8 +73,8 @@ export function decryptSecret(encryptedPayload?: string | null): string {
     let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
-  } catch {
-    console.error('Decryption failed: auth tag invalid or corrupted secret.');
+  } catch (err) {
+    logger.error('Decryption failed: auth tag invalid or corrupted secret', err);
     return '';
   }
 }

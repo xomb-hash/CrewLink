@@ -664,7 +664,7 @@ export class Storage {
     this.ensureLoaded();
     return (
       this.data.applicants.find(
-        (a) => a.projectId === projectId && String(a.userId) === uId
+        (a) => a.projectId === projectId && a.userId === uId
       ) || null
     );
   }
