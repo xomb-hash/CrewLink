@@ -35,10 +35,27 @@ test("create needs sign-in", async () => assert.equal((await api("/api/projects"
 test("bad callback state is rejected", async () => assert.equal((await fetch(B + "/auth/github/callback?code=x&state=nope")).status, 400));
 test("owner creates a project; repos they can't administer are refused", async () => {
   const alice = await login("alice");
+  const found = await api("/api/repositories/alice/proj", alice, null, "GET"); assert.equal(found.status, 200); assert.equal((await found.json()).found, true);
+  const missing = await api("/api/repositories/alice/missing", alice, null, "GET"); assert.equal(missing.status, 404);
   const bad = await api("/api/projects", alice, { ownerName: "other", repoName: "repo", mode: "referral" });
   assert.equal(bad.status, 400);
   const ok = await api("/api/projects", alice, { ownerName: "alice", repoName: "proj", mode: "referral", share: ["x"] });
   assert.equal(ok.status, 201); const d = await ok.json(); assert.equal(d.project.isPrivate, false); jt = d.joinUrl.split("/").pop(); pid = d.project.id;
+});
+test("draft routes enforce ownership, checks, approval, and edited status", async () => {
+  const alice = await login("alice"), bob = await login("bob");
+  assert.equal((await api(`/api/projects/${pid}/drafts`, bob, null, "GET")).status, 403);
+  const made = await api(`/api/projects/${pid}/drafts`, alice, { platforms: ["discord"] }); assert.equal(made.status, 201);
+  const draft = (await made.json()).drafts[0]; assert.equal(draft.status, "drafted");
+  assert.equal((await api(`/api/projects/${pid}/personal-post`, bob, { tone: "casual" })).status, 403);
+  const personal = await api(`/api/projects/${pid}/personal-post`, alice, { tone: "casual" }); assert.equal(personal.status, 200); assert.match((await personal.json()).text, new RegExp(`/join/${jt}`));
+  const badEdit = await api(`/api/drafts/${draft.id}`, alice, { text: "missing required link" }, "PUT"); assert.equal(badEdit.status, 200);
+  const refused = await api(`/api/drafts/${draft.id}/approve`, alice); assert.equal(refused.status, 400);
+  const text = `Join our project: ${B}/join/${jt}`;
+  const edited = await api(`/api/drafts/${draft.id}`, alice, { text }, "PUT"); assert.equal((await edited.json()).draft.status, "edited");
+  const approved = await api(`/api/drafts/${draft.id}/approve`, alice); const approvedData = await approved.json(); assert.equal(approved.status, 200); assert.equal(approvedData.draft.status, "approved"); assert.equal(approvedData.draft.approvedText, text); assert.match(approvedData.draft.approvedHash, /^[a-f0-9]{64}$/);
+  const changed = await api(`/api/drafts/${draft.id}`, alice, { text: `${text} now` }, "PUT"); const changedData = await changed.json(); assert.equal(changedData.draft.status, "edited"); assert.equal(changedData.draft.approvedText, undefined);
+  const skipped = await api(`/api/drafts/${draft.id}/skip`, alice); assert.equal((await skipped.json()).draft.status, "skipped");
 });
 test("applicants must sign in, and duplicates are ignored", async () => {
   assert.equal((await api("/api/join/" + jt, "")).status, 401);

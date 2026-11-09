@@ -18,6 +18,6 @@ export function projectCard(p) {
   const view = pub ? ` <a class="btn o sm" href="${esc(codeUrl(p))}" target="_blank" rel="noopener noreferrer">View code</a>` : "";
   const rows = p.applicants.length ? p.applicants.map((a) => applicantRow(p, a)).join("") : '<p class="mu" style="font-size:13px">No requests yet. Share your join link.</p>';
   return `<div class="pc"><b>${visibilityIcon(p.isPrivate)}${title}</b>${tag(pub ? "Public" : "Private")}${tag(p.mode === "screening" ? "Screening first" : "Referral link")}${tag(p.applicants.length + " requests")}
-<p class="mu" style="margin:10px 0">${esc(p.description || "No description")}</p>${button("Copy join link", { variant: "o", size: "sm", attrs: { "data-l": p.joinUrl } })}${view}
+<p class="mu" style="margin:10px 0">${esc(p.description || "No description")}</p>${p.roles && p.roles.length ? `<p class="mu" style="font-size:13px">Roles: ${p.roles.map(esc).join(", ")}</p>` : ""}${button("Copy join link", { variant: "o", size: "sm", attrs: { "data-l": p.joinUrl } })}${button("Review posts", { variant: "o", size: "sm", attrs: { "data-review": p.id } })}${button("Personal post", { variant: "o", size: "sm", attrs: { "data-personal": p.id } })}${view}
 <div style="margin-top:12px">${rows}</div></div>`;
 }

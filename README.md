@@ -17,11 +17,13 @@ Connects project owners with people who want to join, using GitHub. Plain Node.j
 | `src/lib/` | Shared helpers: storage, validation, requests | change validation rules or move to a database |
 | `src/github/` | Everything that talks to GitHub | change the invitation or permissions |
 | `src/auth/` | Sign in with GitHub and sessions | change login behaviour |
-| `src/projects/` | Create and list projects, share links | add project fields or a new share platform |
+| `src/projects/` | Create and list projects, roles, share links | add project fields or a new share platform |
+| `src/platforms/` | Supported post destinations and limits | add or adjust a draft platform |
+| `src/posting/` | Local post drafting, checks, and approval routes | change post templates or review rules |
 | `src/applicants/` | Join page, requests, approve and reject | change the join flow |
 | `public/styles/` | Colours and page layout | change the look of the whole app |
 | `public/components/` | Buttons, forms, pop-up window, tags, messages, project card | change one piece everywhere (for example every button) |
-| `public/features/` | Sign in, create project, my projects | change what a person can do on the page |
+| `public/features/` | Sign in, create project, project list, post review, personal post | change what a person can do on the page |
 | `public/shared/` | Backend calls and small helpers | a backend route changed |
 | `tests/` | Automatic checks | add a check for a new feature |
 
