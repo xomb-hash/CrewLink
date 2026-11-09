@@ -26,7 +26,7 @@ test('Validation functions (TypeScript)', async (t) => {
 
   await t.test('validates project input with referral mode', () => {
     const valid = validateProjectInput({
-      repoFullName: 'owner/project',
+      repoFullName: 'owner/project.git',
       joinMode: 'referral',
       title: 'Valid Project',
       description: 'Cool description',
@@ -35,7 +35,16 @@ test('Validation functions (TypeScript)', async (t) => {
     assert.equal(valid.isValid, true);
     assert.equal(valid.data.joinMode, 'referral');
     assert.equal(valid.data.repoFullName, 'owner/project');
+
+    // Strips full github URL if provided
+    const urlValid = validateProjectInput({
+      repoFullName: 'https://github.com/alice/rocket-ship.git',
+      joinMode: 'referral',
+    });
+    assert.equal(urlValid.isValid, true);
+    assert.equal(urlValid.data.repoFullName, 'alice/rocket-ship');
   });
+
 
   await t.test('validates project input with screening mode and URL requirement', () => {
     const invalid = validateProjectInput({

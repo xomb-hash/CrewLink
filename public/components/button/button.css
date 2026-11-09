@@ -1,7 +1,0 @@
-/* All buttons. .btn is the main button, .o is the outlined one, .sm is the small size. */
-.btn{background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:0 20px;height:38px;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
-.btn:hover{background:var(--blue);color:#fff}
-.btn.o{background:none;color:var(--ink);border:1px solid var(--line)}.btn.o:hover{background:var(--card);color:var(--ink)}
-.btn.sm{height:30px;padding:0 12px;font-size:13px}
-.btn[disabled]{opacity:.5;pointer-events:none}
-.plus{font-size:20px;line-height:1}

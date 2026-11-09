@@ -1,6 +1,0 @@
-/* The pop-up window (used by Create project). */
-dialog{border:1px solid var(--line);border-radius:14px;background:var(--bg);color:var(--ink);padding:0;width:min(560px,calc(100% - 24px));max-height:calc(100% - 24px)}
-dialog::backdrop{background:rgba(0,0,0,.55)}
-.dh{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line)}.dh h2{font-size:20px}
-.x{background:none;border:0;font-size:20px;width:32px;height:32px;border-radius:50%}.x:hover{background:var(--card)}
-.db{padding:20px 24px 24px}

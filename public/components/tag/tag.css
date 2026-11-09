@@ -1,3 +1,0 @@
-/* Small labels: .tag for info, .st for an applicant's status. */
-.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:12px;margin:8px 6px 0 0}
-.st{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:0 8px}.st.approved{color:var(--ok)}.st.rejected{color:var(--bad)}

@@ -1,4 +1,0 @@
-.pc{border:1px solid var(--line);border-radius:10px;padding:16px;background:var(--card)}
-.pc>b{display:block;font-size:17px;word-break:break-all}
-.ar{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--line);flex-wrap:wrap}
-.who{display:flex;gap:8px;align-items:center}.ar img{border-radius:50%}

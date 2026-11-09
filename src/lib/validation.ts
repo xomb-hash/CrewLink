@@ -34,6 +34,7 @@ export interface ProjectInput {
   repoFullName: string;
   joinMode?: 'referral' | 'screening';
   screeningUrl?: string;
+  screeningNote?: string;
   title?: string;
   description?: string;
   isPrivate?: boolean;
@@ -42,10 +43,20 @@ export interface ProjectInput {
 export function validateProjectInput(data: Partial<ProjectInput>) {
   const errors: string[] = [];
 
+  let cleanRepoFullName = '';
   if (!data.repoFullName || typeof data.repoFullName !== 'string') {
     errors.push('Repository full name is required (e.g. owner/repo).');
-  } else if (!/^[\w.-]+\/[\w.-]+$/.test(data.repoFullName.trim())) {
-    errors.push('Invalid repository format. Expected "owner/repo".');
+  } else {
+    // Strip leading github.com/ if pasted as full URL, and strip trailing .git
+    cleanRepoFullName = data.repoFullName
+      .trim()
+      .replace(/^https?:\/\/github\.com\//i, '')
+      .replace(/\.git$/, '')
+      .replace(/^\/+|\/+$/g, '');
+
+    if (!/^[\w.-]+\/[\w.-]+$/.test(cleanRepoFullName)) {
+      errors.push('Invalid repository format. Expected "owner/repo".');
+    }
   }
 
   const joinMode: 'referral' | 'screening' = data.joinMode === 'screening' ? 'screening' : 'referral';
@@ -70,8 +81,8 @@ export function validateProjectInput(data: Partial<ProjectInput>) {
   const title =
     data.title && typeof data.title === 'string'
       ? data.title.trim().slice(0, 100)
-      : data.repoFullName
-      ? data.repoFullName.split('/')[1]
+      : cleanRepoFullName
+      ? cleanRepoFullName.split('/')[1]
       : '';
 
   const description =
@@ -79,19 +90,26 @@ export function validateProjectInput(data: Partial<ProjectInput>) {
       ? data.description.trim().slice(0, 500)
       : '';
 
+  const screeningNote =
+    data.screeningNote && typeof data.screeningNote === 'string'
+      ? data.screeningNote.trim().slice(0, 280)
+      : '';
+
   return {
     isValid: errors.length === 0,
     errors,
     data: {
-      repoFullName: data.repoFullName ? data.repoFullName.trim() : '',
+      repoFullName: cleanRepoFullName,
       joinMode,
       screeningUrl,
+      screeningNote,
       title,
       description,
       isPrivate: Boolean(data.isPrivate),
     },
   };
 }
+
 
 export function validateApplicantInput(data: { message?: string }) {
   const errors: string[] = [];

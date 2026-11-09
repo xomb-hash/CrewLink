@@ -1,8 +1,6 @@
-# Public Assets
+# Public Assets (`public/`)
 
-Static assets and legacy assets for Crewlink.
+Public static assets served at the root URL path by Next.js.
 
-- `styles/`: Styles and icons.
-- `components/`: UI assets and components.
-- `features/`: Client-side feature helpers.
-- `shared/`: Shared frontend utilities.
+- Place static files such as `favicon.ico`, logos, `robots.txt`, or social card previews here.
+- `AGENTS.md`: Agent rules and guidelines for posting agent integration.

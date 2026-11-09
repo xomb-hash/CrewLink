@@ -1,4 +1,0 @@
-/* The small lock (private) or globe (public) icon shown next to a project's name. */
-.vis{display:inline-flex;vertical-align:-3px;margin-right:6px;color:var(--mute)}
-.vis.pub{color:var(--ok)}
-.pc>b a{color:inherit;text-decoration:underline;text-underline-offset:3px}.pc>b a:hover{color:var(--blue)}

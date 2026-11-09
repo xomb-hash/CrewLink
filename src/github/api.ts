@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { config } from '../config/index';
 
 const GITHUB_API_URL = 'https://api.github.com';
@@ -150,12 +152,79 @@ export class GitHubApi {
     }
   }
 
+  private getAppJwt(): string | null {
+    const appId = config.githubAppId;
+    const keyPath = config.githubPrivateKeyPath;
+    if (!appId || !keyPath) return null;
+
+    try {
+      if (!fs.existsSync(keyPath)) return null;
+      const privateKey = fs.readFileSync(keyPath, 'utf8');
+      const now = Math.floor(Date.now() / 1000);
+      const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+      const header = b64({ alg: 'RS256', typ: 'JWT' });
+      const payload = b64({ iat: now - 60, exp: now + 540, iss: appId });
+      const sign = crypto.createSign('RSA-SHA256');
+      sign.update(`${header}.${payload}`);
+      const signature = sign.sign(privateKey, 'base64url');
+      return `${header}.${payload}.${signature}`;
+    } catch {
+      return null;
+    }
+  }
+
+  async getInstallationToken(owner: string, repo: string): Promise<{ token?: string; error?: string }> {
+    const jwt = this.getAppJwt();
+    if (!jwt) return {};
+
+    try {
+      const instRes = await fetch(`${GITHUB_API_URL}/repos/${owner}/${repo}/installation`, {
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'Crewlink',
+        },
+      });
+
+      if (instRes.status === 404) {
+        return {
+          error: `The Crewlink GitHub App isn't installed on this repository. Please install it on ${owner}/${repo}, then try again.`,
+        };
+      }
+
+      if (!instRes.ok) {
+        return {
+          error: `Failed to verify GitHub App installation on ${owner}/${repo}: HTTP ${instRes.status}`,
+        };
+      }
+
+      const inst = await instRes.json();
+      const tokRes = await fetch(`${GITHUB_API_URL}/app/installations/${inst.id}/access_tokens`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'Crewlink',
+        },
+      });
+
+      if (!tokRes.ok) {
+        return { error: `Couldn't obtain installation token from GitHub (HTTP ${tokRes.status}).` };
+      }
+
+      const tokData = await tokRes.json();
+      return { token: tokData.token };
+    } catch (err: unknown) {
+      return { error: `Network error connecting to GitHub: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  }
+
   async inviteCollaborator({
     accessToken,
     owner,
     repo,
     username,
-    permission = 'push',
+    permission = 'pull',
   }: {
     accessToken: string;
     owner: string;
@@ -163,12 +232,23 @@ export class GitHubApi {
     username: string;
     permission?: string;
   }): Promise<InvitationResult> {
+    // If a GitHub App is configured with a valid private key, use installation token with 'pull' (read-only)
+    let authHeader = `Bearer ${accessToken}`;
+
+    const appTokenResult = await this.getInstallationToken(owner, repo);
+    if (appTokenResult.error) {
+      throw new Error(appTokenResult.error);
+    }
+    if (appTokenResult.token) {
+      authHeader = `token ${appTokenResult.token}`;
+    }
+
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${owner}/${repo}/collaborators/${encodeURIComponent(username)}`,
       {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: authHeader,
           Accept: 'application/vnd.github+json',
           'Content-Type': 'application/json',
           'User-Agent': 'Crewlink',
@@ -191,6 +271,14 @@ export class GitHubApi {
         status: 'already_collaborator',
         message: `${username} is already a collaborator`,
       };
+    }
+
+    if (response.status === 404) {
+      throw new Error(`GitHub couldn't find user ${username}.`);
+    }
+
+    if (response.status === 403) {
+      throw new Error('GitHub refused invitation. Check repository administration permissions.');
     }
 
     const errorData = await response.json().catch(() => ({}));
