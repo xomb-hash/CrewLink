@@ -1,3 +1,5 @@
 .env
 *.pem
 data/
+node_modules/
+.next/

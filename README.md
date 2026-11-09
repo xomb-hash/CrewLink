@@ -15,10 +15,13 @@ Crewlink **only connects people**. It is not a chat application and does not tra
 
 ---
 
-## Requirements
+## Tech Stack
 
-- Node.js 18 or newer
-- Zero npm packages to install (pure standard library: `node:http`, `node:crypto`, `node:fs`, `node:test`)
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide Icons](https://lucide.dev/)
+- **Testing**: Built-in Node test runner (`node:test`) with `tsx` and mock GitHub
 
 ---
 
@@ -28,61 +31,46 @@ Crewlink **only connects people**. It is not a chat application and does not tra
    ```bash
    cp .env.example .env
    ```
-   *(On Windows PowerShell, you can run: `Copy-Item .env.example .env`)*
+   *(On Windows PowerShell: `Copy-Item .env.example .env`)*
 
-2. Add your GitHub OAuth App credentials in `.env`:
+2. Configure GitHub OAuth App credentials in `.env`:
    - Visit [GitHub Developer Settings](https://github.com/settings/developers) -> **OAuth Apps** -> **New OAuth App**.
    - Application name: `Crewlink`
    - Homepage URL: `http://localhost:3000`
    - Authorization callback URL: `http://localhost:3000/auth/github/callback`
    - Copy the Client ID and create a Client Secret, then paste them into `.env`.
 
-3. Run automatic tests:
+3. Install dependencies:
    ```bash
-   node --test
+   npm install
    ```
 
-4. Start the server:
+4. Run automated tests:
    ```bash
-   node server.js
+   npm test
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
 ## Commands
 
 ```bash
-node --test        # run all automated tests (uses mock GitHub)
-node server.js     # start the HTTP server
-```
-
----
-
-## Project Structure
-
-```text
-server.js                 starts the server
-src/
-  app.js                  main router: routes URLs to features
-  config/                 reads configuration from .env
-  lib/                    storage, validation, request helpers
-  github/                 GitHub API integration & invitations (plus test mock)
-  auth/                   GitHub OAuth sign-in and session handling
-  projects/               create, list projects, share links
-  applicants/             join page, requests, approve, reject
-public/                   web interface
-  components/             button, form, dialog, tag, toast, project card, visibility icon
-  features/               dashboard, join page, project creation
-  shared/                 header, footer, API client
-  styles/                 main stylesheet
-tests/                    automated tests using node:test
+npm test        # run automated test suites (uses mock GitHub)
+npm run dev     # start local development server at http://localhost:3000
+npm run build   # compile Next.js production build
+npm start       # start Next.js production server
 ```
 
 ---
 
 ## Testing Policy
 
-Automated tests in `tests/` use an isolated **fake GitHub** client (`src/github/fake.js`). They will never make outbound requests to real GitHub.
+Automated tests in `tests/` use an isolated **fake GitHub** client (`src/github/fake.ts`). They will never make outbound requests to real GitHub.
 Real GitHub testing requires setting up a GitHub OAuth App and completing a two-account manual test (owner and applicant).

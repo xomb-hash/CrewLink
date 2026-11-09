@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
+import { storage } from '@/lib/storage';
+import { generateShareLinks } from '@/projects/share';
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await getCurrentUser(request);
+  if (!user) {
+    return NextResponse.json({ error: 'Please sign in with GitHub.' }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const project = storage.getProjectById(id);
+  if (!project) {
+    return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
+  }
+
+  if (project.ownerLogin.toLowerCase() !== user.login.toLowerCase()) {
+    return NextResponse.json(
+      { error: 'Access denied. You are not the owner of this project.' },
+      { status: 403 }
+    );
+  }
+
+  const applicants = storage.getApplicantsByProject(project.id).map((applicant) => ({
+    id: applicant.id,
+    userLogin: applicant.userLogin,
+    userAvatar: applicant.userAvatar,
+    accountAge: applicant.accountAge,
+    publicRepoCount: applicant.publicRepoCount,
+    message: applicant.message,
+    status: applicant.status,
+    invitationSent: applicant.invitationSent,
+    createdAt: applicant.createdAt,
+  }));
+
+  return NextResponse.json({
+    project: {
+      ...project,
+      shareLinks: generateShareLinks(project),
+      applicants,
+    },
+  });
+}

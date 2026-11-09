@@ -1,20 +1,29 @@
 {
   "name": "crewlink",
   "version": "1.0.0",
-  "description": "Where people who share an idea or goal find each other and start building together.",
+  "private": true,
   "type": "module",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --import tsx --test tests/**/*.test.ts"
   },
-  "keywords": [
-    "crewlink",
-    "github",
-    "collaboration",
-    "teams"
-  ],
-  "engines": {
-    "node": ">=18.0.0"
+  "dependencies": {
+    "lucide-react": "^1.16.0",
+    "next": "^16.0.3",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^24.10.15",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.22",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }
