@@ -69,6 +69,8 @@ export async function POST(
     accountAge,
     publicRepoCount: currentUser.publicRepos || 0,
     message: validation.data.message,
+    proofUrl: validation.data.proofUrl,
+    linkedinUrl: validation.data.linkedinUrl,
   });
 
   // Non-blocking notification dispatch

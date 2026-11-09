@@ -71,16 +71,26 @@ test('Validation functions (TypeScript)', async (t) => {
     assert.equal(valid.data.screeningUrl, 'https://forms.gle/sample123');
   });
 
-  await t.test('validates applicant input length', () => {
+  await t.test('validates applicant input length and proof urls', () => {
     const valid = validateApplicantInput({
       message: 'Hello, I want to contribute!',
+      proofUrl: 'portfolio.dev/cv.pdf',
+      linkedinUrl: 'https://linkedin.com/in/builder',
     });
     assert.equal(valid.isValid, true);
     assert.equal(valid.data.message, 'Hello, I want to contribute!');
+    assert.equal(valid.data.proofUrl, 'https://portfolio.dev/cv.pdf');
+    assert.equal(valid.data.linkedinUrl, 'https://linkedin.com/in/builder');
 
     const longMsg = 'A'.repeat(500);
     const result = validateApplicantInput({ message: longMsg });
     assert.equal(result.data.message.length, 300);
+
+    const invalidProof = validateApplicantInput({
+      proofUrl: 'javascript:alert(1)',
+    });
+    assert.equal(invalidProof.isValid, false);
+    assert.ok(invalidProof.errors.length > 0);
   });
 
   await t.test('escapes HTML entities safely', () => {

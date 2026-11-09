@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, ExternalLink, Copy, Check, Users, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, ExternalLink, Copy, Check, Users, ShieldCheck, ArrowRight, Sparkles, X, Info } from 'lucide-react';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,17 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ExploreProject | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedProject(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleCopyLink = (joinUrl: string, slug: string) => {
     navigator.clipboard.writeText(joinUrl).then(() => {
@@ -166,7 +177,8 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
             return (
               <Card
                 key={project.id}
-                className="bg-[#1f1c19] border-[#38322c] overflow-hidden flex flex-col hover:border-[#4a423a] transition shadow-sm rounded-xl"
+                onClick={() => setSelectedProject(project)}
+                className="bg-[#1f1c19] border-[#38322c] overflow-hidden flex flex-col hover:border-[#4a423a] transition shadow-sm rounded-xl cursor-pointer group hover:shadow-lg"
               >
                 {/* Visual Banner Header */}
                 <div
@@ -192,7 +204,7 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                   </div>
 
                   <div>
-                    <h2 className="text-lg font-bold text-[#faf6f0] tracking-tight line-clamp-1">
+                    <h2 className="text-lg font-bold text-[#faf6f0] tracking-tight line-clamp-1 group-hover:text-amber-400 transition-colors">
                       {project.title}
                     </h2>
                     <span className="text-xs text-[#d6cec3] font-mono opacity-80">
@@ -260,7 +272,10 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                     type="button"
                     variant="ghost"
                     size="xs"
-                    onClick={() => handleCopyLink(project.joinUrl, project.slug)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyLink(project.joinUrl, project.slug);
+                    }}
                     className="gap-1 text-xs text-[#a89f91] hover:text-[#faf6f0]"
                     title="Copy join link"
                   >
@@ -272,16 +287,221 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                     <span>{copiedSlug === project.slug ? 'Copied' : 'Share'}</span>
                   </Button>
 
-                  <Button asChild size="sm" className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0 h-8 text-xs">
-                    <Link href={`/join/${project.slug}`} className="inline-flex items-center gap-1.5">
-                      <span>Request to Join</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedProject(project);
+                      }}
+                      className="text-xs text-[#a89f91] hover:text-[#faf6f0] hidden sm:inline-flex"
+                    >
+                      Details
+                    </Button>
+
+                    <Button
+                      asChild
+                      size="sm"
+                      onClick={(e) => e.stopPropagation()}
+                      className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0 h-8 text-xs"
+                    >
+                      <Link href={`/join/${project.slug}`} className="inline-flex items-center gap-1.5">
+                        <span>Request to Join</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setSelectedProject(null)}
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[#1f1c19] border border-[#38322c] rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl my-8 relative flex flex-col max-h-[90vh]"
+          >
+            {/* Modal Header */}
+            <div className="p-6 border-b border-[#38322c] relative bg-[#141210]/70">
+              <button
+                type="button"
+                onClick={() => setSelectedProject(null)}
+                className="absolute right-4 top-4 p-2 rounded-full text-[#a89f91] hover:text-[#faf6f0] hover:bg-[#2a2622] transition"
+                aria-label="Close modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-2 mb-3 flex-wrap pr-8">
+                <VisibilityBadge isPrivate={selectedProject.isPrivate} />
+                <Badge
+                  variant="outline"
+                  className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                    selectedProject.joinMode === 'screening'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                      : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                  }`}
+                >
+                  {selectedProject.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                </Badge>
+              </div>
+
+              <h2 className="text-2xl font-bold text-[#faf6f0] tracking-tight mb-1">
+                {selectedProject.title}
+              </h2>
+
+              <div className="flex items-center gap-2 text-xs font-mono text-[#a89f91] flex-wrap">
+                <span>{selectedProject.repoFullName}</span>
+                {!selectedProject.isPrivate && (
+                  <>
+                    <span>&bull;</span>
+                    <a
+                      href={`https://github.com/${selectedProject.repoFullName}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-amber-400 hover:underline"
+                    >
+                      <span>Open on GitHub</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Body (Scrollable) */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {/* Description */}
+              <div>
+                <h3 className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2">
+                  About the Project
+                </h3>
+                <p className="text-sm text-[#d6cec3] leading-relaxed whitespace-pre-line">
+                  {selectedProject.description || 'No detailed project description provided by the repository owner.'}
+                </p>
+              </div>
+
+              {/* Roles Wanted */}
+              {selectedProject.roles && selectedProject.roles.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2">
+                    Looking for Collaborators in
+                  </h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {selectedProject.roles.map((role) => (
+                      <Badge
+                        key={role}
+                        variant="outline"
+                        className="text-xs px-2.5 py-1 rounded-md bg-[#141210] text-amber-400 border-amber-500/30 font-medium"
+                      >
+                        Needs {role}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Screening Notice if applicable */}
+              {selectedProject.joinMode === 'screening' && selectedProject.screeningUrl && (
+                <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 text-purple-300 font-semibold text-xs">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Screening Task Required</span>
+                  </div>
+                  <p className="text-xs text-[#d6cec3] leading-relaxed">
+                    The owner asks applicants to complete an initial questionnaire or screening test before request approval.
+                  </p>
+                  <div className="pt-1">
+                    <a
+                      href={selectedProject.screeningUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-[#2a2622] text-purple-300 border border-purple-500/30 hover:bg-[#38322c] transition"
+                    >
+                      <span>Open Screening Task</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Owner and Stats Box */}
+              <div className="p-4 bg-[#141210] border border-[#38322c] rounded-xl flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedProject.ownerAvatar || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'}
+                    alt={selectedProject.ownerLogin}
+                    className="w-10 h-10 rounded-full border border-[#38322c]"
+                  />
+                  <div>
+                    <div className="text-xs text-[#a89f91]">Project Owner</div>
+                    <a
+                      href={`https://github.com/${selectedProject.ownerLogin}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-sm text-[#faf6f0] hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>@{selectedProject.ownerLogin}</span>
+                      <ExternalLink className="w-3 h-3 text-[#a89f91]" />
+                    </a>
+                  </div>
+                </div>
+
+                <div className="text-right text-xs text-[#a89f91]">
+                  <div><strong>{selectedProject.applicantsCount}</strong> {selectedProject.applicantsCount === 1 ? 'applicant' : 'applicants'}</div>
+                  <div className="text-[11px] mt-0.5">Posted {formatTimeAgo(selectedProject.createdAt)}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="p-4 bg-[#141210] border-t border-[#38322c] flex items-center justify-between gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleCopyLink(selectedProject.joinUrl, selectedProject.slug)}
+                className="bg-[#2a2622] border-[#38322c] text-[#d6cec3] hover:bg-[#38322c] hover:text-[#faf6f0]"
+              >
+                {copiedSlug === selectedProject.slug ? (
+                  <Check className="w-3.5 h-3.5 text-amber-400 mr-1.5" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5 mr-1.5" />
+                )}
+                <span>{copiedSlug === selectedProject.slug ? 'Link Copied' : 'Share Join Link'}</span>
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedProject(null)}
+                  className="text-xs text-[#a89f91] hover:text-[#faf6f0]"
+                >
+                  Close
+                </Button>
+
+                <Button asChild size="sm" className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0 h-9">
+                  <Link href={`/join/${selectedProject.slug}`} className="inline-flex items-center gap-1.5">
+                    <span>Request to Join</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

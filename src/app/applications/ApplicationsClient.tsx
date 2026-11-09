@@ -2,12 +2,20 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Clock, XCircle, ExternalLink, ArrowRight, Sparkles, FolderGit2 } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, ExternalLink, ArrowRight, Sparkles, FolderGit2, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
 import type { UserApplication, User } from '@/types/index';
+
+function LinkedInIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9h2.78v8.37H6.46v-8.37M7.85 6.25a1.62 1.62 0 1 0 0 3.24 1.62 1.62 0 0 0 0-3.24Z" />
+    </svg>
+  );
+}
 
 interface ApplicationsClientProps {
   applications: UserApplication[];
@@ -96,6 +104,36 @@ export function ApplicationsClient({ applications, user }: ApplicationsClientPro
                   {app.message && (
                     <div className="mt-2 text-xs text-[#a89f91] bg-[#141210] p-2.5 rounded border border-[#38322c]/60">
                       <span className="text-[#a89f91]/70">Your intro note: </span>&ldquo;{app.message}&rdquo;
+                    </div>
+                  )}
+
+                  {(app.proofUrl || app.linkedinUrl) && (
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {app.proofUrl && (
+                        <a
+                          href={app.proofUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 transition"
+                        >
+                          <FileText className="w-3 h-3 text-amber-400" />
+                          <span>Attached CV / Portfolio</span>
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                        </a>
+                      )}
+
+                      {app.linkedinUrl && (
+                        <a
+                          href={app.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30 hover:bg-blue-500/20 transition"
+                        >
+                          <LinkedInIcon className="w-3 h-3 text-blue-400" />
+                          <span>Attached LinkedIn</span>
+                          <ExternalLink className="w-2.5 h-2.5 opacity-60" />
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

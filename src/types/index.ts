@@ -58,6 +58,8 @@ export interface Applicant {
   accountAge: string;
   publicRepoCount: number;
   message?: string;
+  proofUrl?: string;
+  linkedinUrl?: string;
   status: ApplicantStatus;
   invitationSent: boolean;
   invitationDetails?: unknown;

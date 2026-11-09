@@ -111,15 +111,58 @@ export function validateProjectInput(data: Partial<ProjectInput>) {
 }
 
 
-export function validateApplicantInput(data: { message?: string }) {
+export function validateApplicantInput(data?: {
+  message?: string;
+  proofUrl?: string;
+  linkedinUrl?: string;
+}) {
   const errors: string[] = [];
-  const message = typeof data.message === 'string' ? data.message.trim().slice(0, 300) : '';
+  const safeData = data || {};
+  const message = typeof safeData.message === 'string' ? safeData.message.trim().slice(0, 300) : '';
+
+  let proofUrl = '';
+  if (typeof safeData.proofUrl === 'string' && safeData.proofUrl.trim()) {
+    let clean = safeData.proofUrl.trim();
+    if (!/^https?:\/\//i.test(clean)) {
+      clean = `https://${clean}`;
+    }
+    try {
+      const parsed = new URL(clean);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        errors.push('Proof / CV link must use http or https.');
+      } else {
+        proofUrl = clean.slice(0, 300);
+      }
+    } catch {
+      errors.push('Proof / CV link must be a valid URL.');
+    }
+  }
+
+  let linkedinUrl = '';
+  if (typeof safeData.linkedinUrl === 'string' && safeData.linkedinUrl.trim()) {
+    let clean = safeData.linkedinUrl.trim();
+    if (!/^https?:\/\//i.test(clean)) {
+      clean = `https://${clean}`;
+    }
+    try {
+      const parsed = new URL(clean);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        errors.push('LinkedIn link must use http or https.');
+      } else {
+        linkedinUrl = clean.slice(0, 300);
+      }
+    } catch {
+      errors.push('LinkedIn link must be a valid URL.');
+    }
+  }
 
   return {
     isValid: errors.length === 0,
     errors,
     data: {
       message,
+      proofUrl: proofUrl || undefined,
+      linkedinUrl: linkedinUrl || undefined,
     },
   };
 }

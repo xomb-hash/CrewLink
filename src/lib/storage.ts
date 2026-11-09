@@ -506,9 +506,15 @@ export class Storage {
     accountAge: string;
     publicRepoCount: number;
     message?: string;
+    proofUrl?: string;
+    linkedinUrl?: string;
   }): Promise<Applicant> {
     const id = `app_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
     const userId = String(applicant.userId);
+    const proofDetails = {
+      proofUrl: applicant.proofUrl || null,
+      linkedinUrl: applicant.linkedinUrl || null,
+    };
 
     if (this.isPrismaActive()) {
       try {
@@ -524,6 +530,7 @@ export class Storage {
             message: applicant.message || null,
             status: 'pending',
             invitationSent: false,
+            invitationDetails: proofDetails,
           },
         });
         return {
@@ -535,6 +542,8 @@ export class Storage {
           accountAge: created.accountAge,
           publicRepoCount: created.publicRepoCount,
           message: created.message ?? undefined,
+          proofUrl: applicant.proofUrl || undefined,
+          linkedinUrl: applicant.linkedinUrl || undefined,
           status: created.status as 'pending' | 'approved' | 'rejected',
           invitationSent: created.invitationSent,
           invitationDetails: created.invitationDetails,
@@ -557,9 +566,11 @@ export class Storage {
       accountAge: applicant.accountAge || 'Unknown',
       publicRepoCount: Number(applicant.publicRepoCount) || 0,
       message: applicant.message || '',
+      proofUrl: applicant.proofUrl || undefined,
+      linkedinUrl: applicant.linkedinUrl || undefined,
       status: 'pending',
       invitationSent: false,
-      invitationDetails: null,
+      invitationDetails: proofDetails,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -574,6 +585,9 @@ export class Storage {
       try {
         const a = await prisma.applicant.findUnique({ where: { id } });
         if (!a) return null;
+        const details = (a.invitationDetails && typeof a.invitationDetails === 'object')
+          ? (a.invitationDetails as Record<string, unknown>)
+          : {};
         return {
           id: a.id,
           projectId: a.projectId,
@@ -583,6 +597,8 @@ export class Storage {
           accountAge: a.accountAge,
           publicRepoCount: a.publicRepoCount,
           message: a.message ?? undefined,
+          proofUrl: typeof details.proofUrl === 'string' && details.proofUrl ? details.proofUrl : undefined,
+          linkedinUrl: typeof details.linkedinUrl === 'string' && details.linkedinUrl ? details.linkedinUrl : undefined,
           status: a.status as 'pending' | 'approved' | 'rejected',
           invitationSent: a.invitationSent,
           invitationDetails: a.invitationDetails,
@@ -606,21 +622,28 @@ export class Storage {
           where: { projectId },
           orderBy: { createdAt: 'desc' },
         });
-        return list.map((a) => ({
-          id: a.id,
-          projectId: a.projectId,
-          userId: a.userId,
-          userLogin: a.userLogin,
-          userAvatar: a.userAvatar ?? undefined,
-          accountAge: a.accountAge,
-          publicRepoCount: a.publicRepoCount,
-          message: a.message ?? undefined,
-          status: a.status as 'pending' | 'approved' | 'rejected',
-          invitationSent: a.invitationSent,
-          invitationDetails: a.invitationDetails,
-          createdAt: a.createdAt.toISOString(),
-          updatedAt: a.updatedAt.toISOString(),
-        }));
+        return list.map((a) => {
+          const details = (a.invitationDetails && typeof a.invitationDetails === 'object')
+            ? (a.invitationDetails as Record<string, unknown>)
+            : {};
+          return {
+            id: a.id,
+            projectId: a.projectId,
+            userId: a.userId,
+            userLogin: a.userLogin,
+            userAvatar: a.userAvatar ?? undefined,
+            accountAge: a.accountAge,
+            publicRepoCount: a.publicRepoCount,
+            message: a.message ?? undefined,
+            proofUrl: typeof details.proofUrl === 'string' && details.proofUrl ? details.proofUrl : undefined,
+            linkedinUrl: typeof details.linkedinUrl === 'string' && details.linkedinUrl ? details.linkedinUrl : undefined,
+            status: a.status as 'pending' | 'approved' | 'rejected',
+            invitationSent: a.invitationSent,
+            invitationDetails: a.invitationDetails,
+            createdAt: a.createdAt.toISOString(),
+            updatedAt: a.updatedAt.toISOString(),
+          };
+        });
       } catch (err) {
         logger.error('Prisma getApplicantsByProject failed', err, { projectId });
         throw err;
@@ -642,39 +665,46 @@ export class Storage {
           orderBy: { createdAt: 'desc' },
         });
 
-        return list.map((a) => ({
-          id: a.id,
-          projectId: a.projectId,
-          userId: a.userId,
-          userLogin: a.userLogin,
-          userAvatar: a.userAvatar ?? undefined,
-          accountAge: a.accountAge,
-          publicRepoCount: a.publicRepoCount,
-          message: a.message ?? undefined,
-          status: a.status as 'pending' | 'approved' | 'rejected',
-          invitationSent: a.invitationSent,
-          invitationDetails: a.invitationDetails,
-          createdAt: a.createdAt.toISOString(),
-          updatedAt: a.updatedAt.toISOString(),
-          project: {
-            id: a.project.id,
-            slug: a.project.slug,
-            ownerLogin: a.project.ownerLogin,
-            ownerId: a.project.ownerId,
-            ownerAvatar: a.project.ownerAvatar ?? undefined,
-            repoFullName: a.project.repoFullName,
-            repoName: a.project.repoName,
-            repoOwner: a.project.repoOwner,
-            isPrivate: a.project.isPrivate,
-            joinMode: a.project.joinMode as 'referral' | 'screening',
-            screeningUrl: a.project.screeningUrl ?? undefined,
-            roles: a.project.roles,
-            title: a.project.title,
-            description: a.project.description ?? undefined,
-            createdAt: a.project.createdAt.toISOString(),
-            updatedAt: a.project.updatedAt.toISOString(),
-          },
-        }));
+        return list.map((a) => {
+          const details = (a.invitationDetails && typeof a.invitationDetails === 'object')
+            ? (a.invitationDetails as Record<string, unknown>)
+            : {};
+          return {
+            id: a.id,
+            projectId: a.projectId,
+            userId: a.userId,
+            userLogin: a.userLogin,
+            userAvatar: a.userAvatar ?? undefined,
+            accountAge: a.accountAge,
+            publicRepoCount: a.publicRepoCount,
+            message: a.message ?? undefined,
+            proofUrl: typeof details.proofUrl === 'string' && details.proofUrl ? details.proofUrl : undefined,
+            linkedinUrl: typeof details.linkedinUrl === 'string' && details.linkedinUrl ? details.linkedinUrl : undefined,
+            status: a.status as 'pending' | 'approved' | 'rejected',
+            invitationSent: a.invitationSent,
+            invitationDetails: a.invitationDetails,
+            createdAt: a.createdAt.toISOString(),
+            updatedAt: a.updatedAt.toISOString(),
+            project: {
+              id: a.project.id,
+              slug: a.project.slug,
+              ownerLogin: a.project.ownerLogin,
+              ownerId: a.project.ownerId,
+              ownerAvatar: a.project.ownerAvatar ?? undefined,
+              repoFullName: a.project.repoFullName,
+              repoName: a.project.repoName,
+              repoOwner: a.project.repoOwner,
+              isPrivate: a.project.isPrivate,
+              joinMode: a.project.joinMode as 'referral' | 'screening',
+              screeningUrl: a.project.screeningUrl ?? undefined,
+              roles: a.project.roles,
+              title: a.project.title,
+              description: a.project.description ?? undefined,
+              createdAt: a.project.createdAt.toISOString(),
+              updatedAt: a.project.updatedAt.toISOString(),
+            },
+          };
+        });
       } catch (err) {
         logger.error('Prisma getApplicationsByUserId failed', err, { userId: uId });
         throw err;
@@ -702,6 +732,9 @@ export class Storage {
           where: { projectId_userId: { projectId, userId: uId } },
         });
         if (!a) return null;
+        const details = (a.invitationDetails && typeof a.invitationDetails === 'object')
+          ? (a.invitationDetails as Record<string, unknown>)
+          : {};
         return {
           id: a.id,
           projectId: a.projectId,
@@ -711,6 +744,8 @@ export class Storage {
           accountAge: a.accountAge,
           publicRepoCount: a.publicRepoCount,
           message: a.message ?? undefined,
+          proofUrl: typeof details.proofUrl === 'string' && details.proofUrl ? details.proofUrl : undefined,
+          linkedinUrl: typeof details.linkedinUrl === 'string' && details.linkedinUrl ? details.linkedinUrl : undefined,
           status: a.status as 'pending' | 'approved' | 'rejected',
           invitationSent: a.invitationSent,
           invitationDetails: a.invitationDetails,
@@ -738,12 +773,18 @@ export class Storage {
   ): Promise<Applicant | null> {
     if (this.isPrismaActive()) {
       try {
+        const existing = await prisma.applicant.findUnique({ where: { id } });
+        const existingDetails = (existing?.invitationDetails && typeof existing.invitationDetails === 'object')
+          ? (existing.invitationDetails as Record<string, unknown>)
+          : {};
+        const mergedDetails = details ? { ...existingDetails, invitation: details } : existingDetails;
+
         const updated = await prisma.applicant.update({
           where: { id },
           data: {
             status,
             invitationSent: status === 'approved',
-            invitationDetails: details ? (details as object) : undefined,
+            invitationDetails: mergedDetails as any,
           },
         });
         return {
@@ -755,6 +796,8 @@ export class Storage {
           accountAge: updated.accountAge,
           publicRepoCount: updated.publicRepoCount,
           message: updated.message ?? undefined,
+          proofUrl: typeof mergedDetails.proofUrl === 'string' && mergedDetails.proofUrl ? mergedDetails.proofUrl : undefined,
+          linkedinUrl: typeof mergedDetails.linkedinUrl === 'string' && mergedDetails.linkedinUrl ? mergedDetails.linkedinUrl : undefined,
           status: updated.status as 'pending' | 'approved' | 'rejected',
           invitationSent: updated.invitationSent,
           invitationDetails: updated.invitationDetails,
@@ -768,17 +811,17 @@ export class Storage {
     }
 
     this.ensureLoaded();
-    const applicant = await this.getApplicantById(id);
-    if (!applicant) return null;
-
-    applicant.status = status;
-    applicant.updatedAt = new Date().toISOString();
-    if (status === 'approved') {
-      applicant.invitationSent = true;
-      applicant.invitationDetails = details;
-    }
+    const app = this.data.applicants.find((a) => a.id === id);
+    if (!app) return null;
+    app.status = status;
+    app.invitationSent = status === 'approved';
+    const existingDetails = (app.invitationDetails && typeof app.invitationDetails === 'object')
+      ? (app.invitationDetails as Record<string, unknown>)
+      : {};
+    app.invitationDetails = details ? { ...existingDetails, invitation: details } : existingDetails;
+    app.updatedAt = new Date().toISOString();
     this.save();
-    return applicant;
+    return app;
   }
 
   // --- Drafts ---

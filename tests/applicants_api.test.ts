@@ -69,7 +69,11 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
         'Content-Type': 'application/json',
         cookie: applicantCookie,
       },
-      body: JSON.stringify({ message: 'I have experience in propulsion systems.' }),
+      body: JSON.stringify({
+        message: 'I have experience in propulsion systems.',
+        proofUrl: 'https://bob-portfolio.dev/resume.pdf',
+        linkedinUrl: 'https://linkedin.com/in/bob-builder',
+      }),
     });
 
     const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
@@ -84,6 +88,8 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     assert.ok(stored?.accountAge);
     assert.equal(stored?.publicRepoCount, 8);
     assert.equal(stored?.userLogin, 'bob-builder');
+    assert.equal(stored?.proofUrl, 'https://bob-portfolio.dev/resume.pdf');
+    assert.equal(stored?.linkedinUrl, 'https://linkedin.com/in/bob-builder');
   });
 
   await t.test('prevents duplicate applications', async () => {
