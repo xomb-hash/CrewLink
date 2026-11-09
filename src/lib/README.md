@@ -10,3 +10,4 @@ Core utilities for data storage, validation, authentication, security, and loggi
 - `notifications.ts`: Transactional notification dispatcher for applicant requests, approvals, and rejections.
 - `validation.ts`: Validation for project input, applicant notes, HTML escaping, and GitHub account age calculation.
 - `auth.ts`: Cookie-based HMAC-SHA256 session management and authentication helpers.
+- `utils.ts`: Standard class-merging helper (`cn`) combining `clsx` and `tailwind-merge` for shadcn/ui components.

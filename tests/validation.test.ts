@@ -88,4 +88,10 @@ test('Validation functions (TypeScript)', async (t) => {
     const escaped = escapeHtml(dangerous);
     assert.equal(escaped, '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;&amp;&quot;&#039;');
   });
+
+  await t.test('merges tailwind class names properly with cn utility', async () => {
+    const { cn } = await import('../src/lib/utils');
+    const result = cn('px-2 py-1', false && 'hidden', 'px-4', undefined);
+    assert.equal(result, 'py-1 px-4');
+  });
 });

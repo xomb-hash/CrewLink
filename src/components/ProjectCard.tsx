@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import { ExternalLink, Copy, Check, CheckCircle2, XCircle, Share2 } from 'lucide-react';
 import { VisibilityBadge } from './VisibilityBadge';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import type { Project, Applicant, ShareLinks } from '../types/index';
 
 interface ProjectCardProps {
@@ -50,21 +53,22 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
   };
 
   return (
-    <article className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-sm mb-6">
+    <Card className="bg-[#161b22] border-[#30363d] p-0 overflow-hidden shadow-sm mb-6 gap-0">
       {/* Header */}
       <div className="p-5 border-b border-[#30363d]">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h2 className="text-lg font-bold text-white">{project.title}</h2>
-            <span
+            <Badge
+              variant="outline"
               className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 project.joinMode === 'screening'
-                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                  : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
               }`}
             >
               {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
-            </span>
+            </Badge>
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>
 
@@ -94,17 +98,17 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
           <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
             <span className="text-xs text-gray-500">Roles wanted:</span>
             {project.roles.map((role) => (
-              <span
+              <Badge
                 key={role}
-                className="text-xs px-2 py-0.5 rounded bg-[#21262d] text-emerald-400/90 border border-emerald-500/20"
+                variant="outline"
+                className="text-xs px-2 py-0.5 rounded bg-[#21262d] text-emerald-400/90 border-emerald-500/20"
               >
                 {role}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
       </div>
-
 
       {/* Toolbar: Join link + Share buttons */}
       <div className="px-5 py-3 bg-[#0d1117] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-3">
@@ -112,14 +116,16 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
           <span className="text-xs font-mono text-gray-300 truncate flex-1 select-all">
             {project.shareLinks.joinUrl}
           </span>
-          <button
+          <Button
             type="button"
+            size="xs"
+            variant="outline"
             onClick={handleCopyLink}
-            className="inline-flex items-center gap-1 text-xs text-gray-300 hover:text-white bg-[#21262d] px-2 py-0.5 rounded border border-[#30363d] transition"
+            className="gap-1 text-xs text-gray-300 hover:text-white bg-[#21262d] border-[#30363d] hover:bg-[#30363d]"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
@@ -188,17 +194,18 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                       >
                         @{applicant.userLogin}
                       </a>
-                      <span
+                      <Badge
+                        variant="outline"
                         className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${
                           applicant.status === 'approved'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                             : applicant.status === 'rejected'
-                            ? 'bg-red-500/10 text-red-400 border border-red-500/30'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                            ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                            : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                         }`}
                       >
                         {applicant.status}
-                      </span>
+                      </Badge>
                     </div>
 
                     {/* Restricted to Account Age and Public Repo count only */}
@@ -219,20 +226,23 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                 <div className="flex items-center gap-2">
                   {applicant.status === 'pending' ? (
                     <>
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={() => setConfirmApprove(applicant)}
-                        className="px-3 py-1 text-xs font-medium rounded bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                        className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-8"
                       >
                         Approve
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="destructive"
                         onClick={() => setConfirmReject(applicant)}
-                        className="px-3 py-1 text-xs font-medium rounded bg-red-600/80 text-white hover:bg-red-600 transition"
+                        className="bg-red-600/80 hover:bg-red-600 h-8"
                       >
                         Reject
-                      </button>
+                      </Button>
                     </>
                   ) : applicant.status === 'approved' ? (
                     <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
@@ -261,22 +271,25 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
               Approving will send a <strong>real GitHub collaborator invitation</strong> for repository <code>{project.repoFullName}</code>. The user must accept the invitation on GitHub to get access.
             </p>
             <div className="flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 disabled={loadingAction}
                 onClick={() => setConfirmApprove(null)}
-                className="px-4 py-1.5 text-xs font-medium rounded bg-[#21262d] text-gray-300 border border-[#30363d] hover:bg-[#30363d]"
+                className="bg-[#21262d] text-gray-300 border-[#30363d] hover:bg-[#30363d]"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
                 disabled={loadingAction}
                 onClick={handleConfirmApprove}
-                className="px-4 py-1.5 text-xs font-medium rounded bg-emerald-600 text-white hover:bg-emerald-500"
+                className="bg-emerald-600 text-white hover:bg-emerald-500 border-0"
               >
                 {loadingAction ? 'Sending Invite...' : 'Confirm & Send Invitation'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -293,26 +306,30 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
               Are you sure you want to decline this applicant&apos;s request to join?
             </p>
             <div className="flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 disabled={loadingAction}
                 onClick={() => setConfirmReject(null)}
-                className="px-4 py-1.5 text-xs font-medium rounded bg-[#21262d] text-gray-300 border border-[#30363d] hover:bg-[#30363d]"
+                className="bg-[#21262d] text-gray-300 border-[#30363d] hover:bg-[#30363d]"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant="destructive"
                 disabled={loadingAction}
                 onClick={handleConfirmReject}
-                className="px-4 py-1.5 text-xs font-medium rounded bg-red-600 text-white hover:bg-red-500"
+                className="bg-red-600 text-white hover:bg-red-500"
               >
                 {loadingAction ? 'Rejecting...' : 'Reject Applicant'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </article>
+    </Card>
   );
 }

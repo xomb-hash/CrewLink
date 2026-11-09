@@ -3,6 +3,10 @@
 import React, { useState } from 'react';
 import { ExternalLink, CheckCircle2, Clock, XCircle, ArrowRight } from 'lucide-react';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import type { Project, User, Applicant } from '@/types/index';
 
 interface JoinClientProps {
@@ -50,19 +54,20 @@ export function JoinClient({
 
   return (
     <div className="max-w-xl mx-auto px-4">
-      <article className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden shadow-sm">
+      <Card className="bg-[#161b22] border-[#30363d] p-0 overflow-hidden shadow-sm gap-0">
         {/* Project Header */}
         <div className="p-6 border-b border-[#30363d]">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <span
+            <Badge
+              variant="outline"
               className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 project.joinMode === 'screening'
-                  ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
+                  : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
               }`}
             >
               {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
-            </span>
+            </Badge>
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>
 
@@ -197,14 +202,14 @@ export function JoinClient({
                 <label htmlFor="intro" className="block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2">
                   Introduce yourself or share relevant experience (optional)
                 </label>
-                <textarea
+                <Textarea
                   id="intro"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="What parts of this project interest you?"
                   maxLength={300}
                   rows={3}
-                  className="w-full bg-[#0d1117] border border-[#30363d] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="bg-[#0d1117] border-[#30363d] text-white focus-visible:border-blue-500"
                 />
                 <span className="block text-xs text-gray-500 mt-1">
                   The owner will see your note along with your account age and public repository count.
@@ -212,18 +217,18 @@ export function JoinClient({
               </div>
 
               <div className="flex justify-end pt-2">
-                <button
+                <Button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 text-xs font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition shadow disabled:opacity-50"
+                  className="bg-emerald-600 text-white hover:bg-emerald-500 border-0"
                 >
                   {submitting ? 'Submitting request...' : 'Request to Join Project'}
-                </button>
+                </Button>
               </div>
             </form>
           )}
         </div>
-      </article>
+      </Card>
     </div>
   );
 }
