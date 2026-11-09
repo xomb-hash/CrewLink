@@ -54,16 +54,16 @@ export function JoinClient({
 
   return (
     <div className="max-w-xl mx-auto px-4">
-      <Card className="bg-[#161b22] border-[#30363d] p-0 overflow-hidden shadow-sm gap-0">
+      <Card className="bg-[#1f1c19] border-[#38322c] p-0 overflow-hidden shadow-sm gap-0">
         {/* Project Header */}
-        <div className="p-6 border-b border-[#30363d]">
+        <div className="p-6 border-b border-[#38322c]">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <Badge
               variant="outline"
               className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 project.joinMode === 'screening'
                   ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
               }`}
             >
               {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
@@ -71,7 +71,7 @@ export function JoinClient({
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>
 
-          <h1 className="text-2xl font-bold text-white mb-2">{project.title}</h1>
+          <h1 className="text-2xl font-bold text-[#faf6f0] mb-2">{project.title}</h1>
 
           <div className="mb-3">
             {!project.isPrivate && project.githubUrl ? (
@@ -79,33 +79,33 @@ export function JoinClient({
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-mono text-blue-400 hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm font-mono text-amber-400 hover:underline"
                 title="Open code on GitHub"
               >
                 <span>{project.repoFullName}</span>
                 <ExternalLink className="w-4 h-4" />
               </a>
             ) : (
-              <span className="text-sm font-mono text-gray-400">{project.repoFullName}</span>
+              <span className="text-sm font-mono text-[#a89f91]">{project.repoFullName}</span>
             )}
           </div>
 
-          <p className="text-sm text-gray-300 leading-relaxed">
+          <p className="text-sm text-[#d6cec3] leading-relaxed">
             {project.description || 'No description provided.'}
           </p>
 
-          <div className="flex items-center gap-2 mt-5 text-xs text-gray-400">
+          <div className="flex items-center gap-2 mt-5 text-xs text-[#a89f91]">
             <span>Administered by</span>
             <img
               src={project.ownerAvatar || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'}
               alt={project.ownerLogin}
-              className="w-5 h-5 rounded-full border border-[#30363d]"
+              className="w-5 h-5 rounded-full border border-[#38322c]"
             />
             <a
               href={`https://github.com/${project.ownerLogin}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white font-medium"
+              className="text-[#d6cec3] hover:text-[#faf6f0] font-medium"
             >
               @{project.ownerLogin}
             </a>
@@ -114,11 +114,11 @@ export function JoinClient({
 
         {/* Screening Section if applicable */}
         {project.joinMode === 'screening' && project.screeningUrl && (
-          <div className="p-5 bg-purple-500/5 border-b border-[#30363d] space-y-2">
+          <div className="p-5 bg-purple-500/5 border-b border-[#38322c] space-y-2">
             <h3 className="text-sm font-bold text-purple-300">
               Step 1: Complete Screening Task
             </h3>
-            <p className="text-xs text-gray-300 leading-relaxed">
+            <p className="text-xs text-[#d6cec3] leading-relaxed">
               The project owner requires applicants to review or complete their screening task before requesting access.
             </p>
             <div className="pt-1">
@@ -126,13 +126,13 @@ export function JoinClient({
                 href={project.screeningUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-[#21262d] text-purple-300 border border-purple-500/30 hover:bg-[#30363d] transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-[#2a2622] text-purple-300 border border-purple-500/30 hover:bg-[#38322c] transition"
               >
                 <span>Open Screening Task</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
-            <p className="text-xs text-gray-500 italic pt-1">
+            <p className="text-xs text-[#a89f91] italic pt-1">
               Note: Screening is based on the honour system. Confirm you have completed it before requesting approval below.
             </p>
           </div>
@@ -141,12 +141,12 @@ export function JoinClient({
         {/* Application Section */}
         <div className="p-6">
           {isOwner ? (
-            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs leading-relaxed text-center">
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs leading-relaxed text-center">
               You are the owner of this repository. Share this join link with potential collaborators to receive requests!
             </div>
           ) : existingApplication ? (
             <div className="text-center py-6 px-4">
-              <div className="inline-flex p-3 rounded-full mb-3 bg-[#0d1117] border border-[#30363d]">
+              <div className="inline-flex p-3 rounded-full mb-3 bg-[#141210] border border-[#38322c]">
                 {existingApplication.status === 'approved' ? (
                   <CheckCircle2 className="w-8 h-8 text-emerald-400" />
                 ) : existingApplication.status === 'rejected' ? (
@@ -156,11 +156,11 @@ export function JoinClient({
                 )}
               </div>
 
-              <h3 className="text-base font-bold text-white capitalize mb-1">
+              <h3 className="text-base font-bold text-[#faf6f0] capitalize mb-1">
                 Application {existingApplication.status}
               </h3>
 
-              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-[#a89f91] max-w-sm mx-auto leading-relaxed">
                 {existingApplication.status === 'approved' ? (
                   <>
                     <strong className="text-emerald-400">You have been approved!</strong><br />
@@ -175,12 +175,12 @@ export function JoinClient({
             </div>
           ) : !currentUser ? (
             <div className="text-center py-6 px-4 space-y-4">
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-[#d6cec3]">
                 Sign in with your GitHub account to request to join this project.
               </p>
               <a
                 href={`/auth/github?redirect_to=${encodeURIComponent(`/join/${project.slug}`)}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition shadow"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-md bg-amber-500 text-stone-950 hover:bg-amber-400 transition shadow"
               >
                 <span>Sign in with GitHub to Apply</span>
                 <ArrowRight className="w-4 h-4" />
@@ -188,8 +188,8 @@ export function JoinClient({
             </div>
           ) : (
             <form onSubmit={handleApply} className="space-y-4">
-              <div className="text-xs text-gray-400">
-                Applying as <strong className="text-white">@{currentUser.login}</strong>
+              <div className="text-xs text-[#a89f91]">
+                Applying as <strong className="text-[#faf6f0]">@{currentUser.login}</strong>
               </div>
 
               {error && (
@@ -199,7 +199,7 @@ export function JoinClient({
               )}
 
               <div>
-                <label htmlFor="intro" className="block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2">
+                <label htmlFor="intro" className="block text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2">
                   Introduce yourself or share relevant experience (optional)
                 </label>
                 <Textarea
@@ -209,9 +209,9 @@ export function JoinClient({
                   placeholder="What parts of this project interest you?"
                   maxLength={300}
                   rows={3}
-                  className="bg-[#0d1117] border-[#30363d] text-white focus-visible:border-blue-500"
+                  className="bg-[#141210] border-[#38322c] text-[#faf6f0] focus-visible:border-amber-500 placeholder:text-[#a89f91]"
                 />
-                <span className="block text-xs text-gray-500 mt-1">
+                <span className="block text-xs text-[#a89f91] mt-1">
                   The owner will see your note along with your account age and public repository count.
                 </span>
               </div>
@@ -220,7 +220,7 @@ export function JoinClient({
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-emerald-600 text-white hover:bg-emerald-500 border-0"
+                  className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0"
                 >
                   {submitting ? 'Submitting request...' : 'Request to Join Project'}
                 </Button>

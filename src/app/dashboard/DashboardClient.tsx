@@ -68,12 +68,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
     <div className="max-w-5xl mx-auto px-4">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Owner Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
+          <h1 className="text-2xl font-bold text-[#faf6f0]">Owner Dashboard</h1>
+          <p className="text-sm text-[#a89f91] mt-0.5">
             Manage your connected repositories, share join links, and review collaborator requests.
           </p>
         </div>
-        <Button asChild size="sm" className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-9">
+        <Button asChild size="sm" className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0 h-9">
           <Link href="/projects/new" className="inline-flex items-center gap-1.5">
             <Plus className="w-4 h-4" />
             <span>Connect Repository</span>
@@ -86,12 +86,12 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
       {/* Projects List */}
       {projects.length === 0 ? (
-        <div className="text-center py-16 px-4 bg-[#161b22] border border-dashed border-[#30363d] rounded-xl">
-          <h3 className="text-lg font-bold text-white mb-2">No repositories connected yet</h3>
-          <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
+        <div className="text-center py-16 px-4 bg-[#1f1c19] border border-dashed border-[#38322c] rounded-xl">
+          <h3 className="text-lg font-bold text-[#faf6f0] mb-2">No repositories connected yet</h3>
+          <p className="text-sm text-[#a89f91] max-w-md mx-auto mb-6">
             Connect a GitHub repository where you have admin permissions to generate your first join link.
           </p>
-          <Button asChild className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-10">
+          <Button asChild className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0 h-10">
             <Link href="/projects/new" className="inline-flex items-center gap-2">
               <Plus className="w-4 h-4" />
               <span>Connect Your First Repository</span>
@@ -113,7 +113,7 @@ export function DashboardClient({ initialProjects }: DashboardClientProps) {
 
       {/* Floating Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 bg-[#161b22] border-l-4 border-emerald-500 border border-[#30363d] text-white px-4 py-3 rounded-lg shadow-xl text-sm z-50">
+        <div className="fixed bottom-6 right-6 bg-[#1f1c19] border-l-4 border-amber-500 border border-[#38322c] text-[#faf6f0] px-4 py-3 rounded-lg shadow-xl text-sm z-50">
           {toastMessage}
         </div>
       )}

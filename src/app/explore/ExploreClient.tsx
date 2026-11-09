@@ -84,19 +84,19 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
       <div className="mb-8">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-semibold uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5" /> Explore Open Projects
             </div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-3xl font-extrabold text-[#faf6f0] tracking-tight">
               Find a Project &amp; Start Building
             </h1>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-[#a89f91] mt-1">
               Browse repositories looking for teammates. Request to join, get approved, and start collaborating on GitHub.
             </p>
           </div>
 
           {!currentUser && (
-            <Button asChild size="sm" className="bg-emerald-600 text-white hover:bg-emerald-500 border-0">
+            <Button asChild size="sm" className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0">
               <a href="/auth/github">Sign in with GitHub</a>
             </Button>
           )}
@@ -104,13 +104,13 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
 
         {/* Search Bar */}
         <div className="relative max-w-2xl mt-4">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-[#a89f91] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <Input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by project name, description, role, or technology..."
-            className="pl-10 h-11 bg-[#161b22] border-[#30363d] text-white rounded-xl focus-visible:border-blue-500 text-sm"
+            className="pl-10 h-11 bg-[#141210] border-[#38322c] text-[#faf6f0] rounded-xl focus-visible:border-amber-500 text-sm placeholder:text-[#a89f91]"
           />
         </div>
 
@@ -125,8 +125,8 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                 onClick={() => setActiveFilter(tag)}
                 className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition border ${
                   isSelected
-                    ? 'bg-white text-gray-900 border-white font-semibold'
-                    : 'bg-[#161b22] text-gray-300 border-[#30363d] hover:bg-[#21262d] hover:text-white'
+                    ? 'bg-[#faf6f0] text-stone-900 border-[#faf6f0] font-semibold shadow-sm'
+                    : 'bg-[#1f1c19] text-[#d6cec3] border-[#38322c] hover:bg-[#2a2622] hover:text-[#faf6f0]'
                 }`}
               >
                 {tag}
@@ -138,10 +138,10 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
-        <Card className="p-12 text-center bg-[#161b22] border-[#30363d] rounded-xl">
-          <Users className="w-10 h-10 text-gray-500 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-white mb-1">No matching projects found</h3>
-          <p className="text-sm text-gray-400 max-w-sm mx-auto mb-4">
+        <Card className="p-12 text-center bg-[#1f1c19] border-[#38322c] rounded-xl">
+          <Users className="w-10 h-10 text-[#a89f91] mx-auto mb-3" />
+          <h3 className="text-base font-bold text-[#faf6f0] mb-1">No matching projects found</h3>
+          <p className="text-sm text-[#a89f91] max-w-sm mx-auto mb-4">
             Try adjusting your search terms or filter chips, or be the first to connect a project!
           </p>
           {(searchQuery || activeFilter !== 'All') && (
@@ -152,7 +152,7 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                 setSearchQuery('');
                 setActiveFilter('All');
               }}
-              className="bg-[#21262d] border-[#30363d] text-gray-200 hover:bg-[#30363d]"
+              className="bg-[#2a2622] border-[#38322c] text-[#d6cec3] hover:bg-[#38322c] hover:text-[#faf6f0]"
             >
               Clear filters
             </Button>
@@ -161,20 +161,20 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project, index) => {
-            // Generate a distinct aesthetic hue based on project id/index
-            const hue = (index * 47 + 190) % 360;
+            // Generate a warm aesthetic tone based on project id/index
+            const hue = (index * 42 + 25) % 360;
             return (
               <Card
                 key={project.id}
-                className="bg-[#161b22] border-[#30363d] overflow-hidden flex flex-col hover:border-gray-500 transition shadow-sm rounded-xl"
+                className="bg-[#1f1c19] border-[#38322c] overflow-hidden flex flex-col hover:border-[#4a423a] transition shadow-sm rounded-xl"
               >
                 {/* Visual Banner Header */}
                 <div
                   className="h-28 p-4 flex flex-col justify-between relative"
                   style={{
-                    background: `linear-gradient(135deg, hsl(${hue}, 40%, 18%) 0%, hsl(${
-                      (hue + 35) % 360
-                    }, 45%, 10%) 100%)`,
+                    background: `linear-gradient(135deg, hsl(${hue}, 35%, 16%) 0%, hsl(${
+                      (hue + 30) % 360
+                    }, 40%, 10%) 100%)`,
                   }}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -184,7 +184,7 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                       className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                         project.joinMode === 'screening'
                           ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                          : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                       }`}
                     >
                       {project.joinMode === 'screening' ? 'Screening first' : 'Referral'}
@@ -192,10 +192,10 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                   </div>
 
                   <div>
-                    <h2 className="text-lg font-bold text-white tracking-tight line-clamp-1">
+                    <h2 className="text-lg font-bold text-[#faf6f0] tracking-tight line-clamp-1">
                       {project.title}
                     </h2>
-                    <span className="text-xs text-gray-300 font-mono opacity-80">
+                    <span className="text-xs text-[#d6cec3] font-mono opacity-80">
                       {project.repoFullName}
                     </span>
                   </div>
@@ -205,7 +205,7 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                 <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
                   <div>
                     {/* Description */}
-                    <p className="text-xs text-gray-300 leading-relaxed line-clamp-3 mb-3">
+                    <p className="text-xs text-[#d6cec3] leading-relaxed line-clamp-3 mb-3">
                       {project.description || 'No project summary provided.'}
                     </p>
 
@@ -216,13 +216,13 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                           <Badge
                             key={role}
                             variant="outline"
-                            className="text-[11px] px-2 py-0.5 rounded bg-[#0d1117] text-emerald-400 border-emerald-500/20"
+                            className="text-[11px] px-2 py-0.5 rounded bg-[#141210] text-amber-400 border-amber-500/20"
                           >
                             Needs {role}
                           </Badge>
                         ))}
                         {project.roles.length > 4 && (
-                          <span className="text-[10px] text-gray-500">
+                          <span className="text-[10px] text-[#a89f91]">
                             +{project.roles.length - 4} more
                           </span>
                         )}
@@ -231,7 +231,7 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                   </div>
 
                   {/* Owner & Meta Footer */}
-                  <div className="pt-3 border-t border-[#30363d]/60 flex items-center justify-between text-xs text-gray-400">
+                  <div className="pt-3 border-t border-[#38322c]/60 flex items-center justify-between text-xs text-[#a89f91]">
                     <div className="flex items-center gap-2">
                       <img
                         src={
@@ -239,9 +239,9 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                           'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
                         }
                         alt={project.ownerLogin}
-                        className="w-5 h-5 rounded-full border border-[#30363d]"
+                        className="w-5 h-5 rounded-full border border-[#38322c]"
                       />
-                      <span className="truncate max-w-[100px] text-gray-300">
+                      <span className="truncate max-w-[100px] text-[#d6cec3]">
                         @{project.ownerLogin}
                       </span>
                     </div>
@@ -255,24 +255,24 @@ export function ExploreClient({ initialProjects, currentUser }: ExploreClientPro
                 </div>
 
                 {/* Actions Bar */}
-                <div className="p-3 bg-[#0d1117] border-t border-[#30363d] flex items-center justify-between gap-2">
+                <div className="p-3 bg-[#141210] border-t border-[#38322c] flex items-center justify-between gap-2">
                   <Button
                     type="button"
                     variant="ghost"
                     size="xs"
                     onClick={() => handleCopyLink(project.joinUrl, project.slug)}
-                    className="gap-1 text-xs text-gray-400 hover:text-white"
+                    className="gap-1 text-xs text-[#a89f91] hover:text-[#faf6f0]"
                     title="Copy join link"
                   >
                     {copiedSlug === project.slug ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <Check className="w-3.5 h-3.5 text-amber-400" />
                     ) : (
                       <Copy className="w-3.5 h-3.5" />
                     )}
                     <span>{copiedSlug === project.slug ? 'Copied' : 'Share'}</span>
                   </Button>
 
-                  <Button asChild size="sm" className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-8 text-xs">
+                  <Button asChild size="sm" className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0 h-8 text-xs">
                     <Link href={`/join/${project.slug}`} className="inline-flex items-center gap-1.5">
                       <span>Request to Join</span>
                       <ArrowRight className="w-3.5 h-3.5" />

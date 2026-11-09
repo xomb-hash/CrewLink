@@ -18,7 +18,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className="bg-[#0d1117] text-[#f0f6fc] min-h-screen flex flex-col antialiased">
+      <body className="bg-[#141210] text-[#faf6f0] min-h-screen flex flex-col antialiased">
         <Navbar user={user} />
         <main className="flex-1 py-8">{children}</main>
         <Footer />

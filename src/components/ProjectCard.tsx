@@ -53,18 +53,18 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
   };
 
   return (
-    <Card className="bg-[#161b22] border-[#30363d] p-0 overflow-hidden shadow-sm mb-6 gap-0">
+    <Card className="bg-[#1f1c19] border-[#38322c] p-0 overflow-hidden shadow-sm mb-6 gap-0">
       {/* Header */}
-      <div className="p-5 border-b border-[#30363d]">
+      <div className="p-5 border-b border-[#38322c]">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-lg font-bold text-white">{project.title}</h2>
+            <h2 className="text-lg font-bold text-[#faf6f0]">{project.title}</h2>
             <Badge
               variant="outline"
               className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 project.joinMode === 'screening'
-                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                  ? 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+                  : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
               }`}
             >
               {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
@@ -78,30 +78,30 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                 href={`https://github.com/${project.repoFullName}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-mono text-gray-400 hover:text-blue-400 transition"
+                className="inline-flex items-center gap-1.5 text-xs font-mono text-[#a89f91] hover:text-amber-400 transition"
                 title="Open code on GitHub"
               >
                 <span>{project.repoFullName}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             ) : (
-              <span className="text-xs font-mono text-gray-400">{project.repoFullName}</span>
+              <span className="text-xs font-mono text-[#a89f91]">{project.repoFullName}</span>
             )}
           </div>
         </div>
 
         {project.description && (
-          <p className="text-sm text-gray-400 mt-1 leading-relaxed">{project.description}</p>
+          <p className="text-sm text-[#a89f91] mt-1 leading-relaxed">{project.description}</p>
         )}
 
         {project.roles && project.roles.length > 0 && (
           <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
-            <span className="text-xs text-gray-500">Roles wanted:</span>
+            <span className="text-xs text-[#a89f91]">Roles wanted:</span>
             {project.roles.map((role) => (
               <Badge
                 key={role}
                 variant="outline"
-                className="text-xs px-2 py-0.5 rounded bg-[#21262d] text-emerald-400/90 border-emerald-500/20"
+                className="text-xs px-2 py-0.5 rounded bg-[#2a2622] text-amber-400 border-amber-500/20"
               >
                 {role}
               </Badge>
@@ -111,9 +111,9 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
       </div>
 
       {/* Toolbar: Join link + Share buttons */}
-      <div className="px-5 py-3 bg-[#0d1117] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-md px-3 py-1.5 max-w-md w-full">
-          <span className="text-xs font-mono text-gray-300 truncate flex-1 select-all">
+      <div className="px-5 py-3 bg-[#141210] border-b border-[#38322c] flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 bg-[#1f1c19] border border-[#38322c] rounded-md px-3 py-1.5 max-w-md w-full">
+          <span className="text-xs font-mono text-[#d6cec3] truncate flex-1 select-all">
             {project.shareLinks.joinUrl}
           </span>
           <Button
@@ -121,7 +121,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
             size="xs"
             variant="outline"
             onClick={handleCopyLink}
-            className="gap-1 text-xs text-gray-300 hover:text-white bg-[#21262d] border-[#30363d] hover:bg-[#30363d]"
+            className="gap-1 text-xs text-[#d6cec3] hover:text-[#faf6f0] bg-[#2a2622] border-[#38322c] hover:bg-[#38322c]"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
@@ -129,14 +129,14 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-gray-500 flex items-center gap-1">
+          <span className="text-[#a89f91] flex items-center gap-1">
             <Share2 className="w-3.5 h-3.5" /> Share:
           </span>
           <a
             href={project.shareLinks.linkedIn}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded bg-[#21262d] text-gray-300 hover:text-white border border-[#30363d] transition"
+            className="px-2.5 py-1 rounded bg-[#2a2622] text-[#d6cec3] hover:text-[#faf6f0] border border-[#38322c] transition"
           >
             LinkedIn
           </a>
@@ -144,7 +144,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
             href={project.shareLinks.x}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded bg-[#21262d] text-gray-300 hover:text-white border border-[#30363d] transition"
+            className="px-2.5 py-1 rounded bg-[#2a2622] text-[#d6cec3] hover:text-[#faf6f0] border border-[#38322c] transition"
           >
             X
           </a>
@@ -152,7 +152,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
             href={project.shareLinks.whatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded bg-[#21262d] text-gray-300 hover:text-white border border-[#30363d] transition"
+            className="px-2.5 py-1 rounded bg-[#2a2622] text-[#d6cec3] hover:text-[#faf6f0] border border-[#38322c] transition"
           >
             WhatsApp
           </a>
@@ -162,13 +162,13 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
       {/* Applicants Section */}
       <div className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-200">
+          <h3 className="text-sm font-semibold text-[#faf6f0]">
             Applicants ({project.applicants?.length || 0})
           </h3>
         </div>
 
         {project.applicants?.length === 0 ? (
-          <div className="text-center py-8 px-4 border border-dashed border-[#30363d] rounded-lg text-sm text-gray-500">
+          <div className="text-center py-8 px-4 border border-dashed border-[#38322c] rounded-lg text-sm text-[#a89f91]">
             No applicants yet. Share your join link on LinkedIn, X, or WhatsApp to connect with builders!
           </div>
         ) : (
@@ -176,13 +176,13 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
             {project.applicants.map((applicant) => (
               <div
                 key={applicant.id}
-                className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 flex flex-wrap items-center justify-between gap-4"
+                className="bg-[#141210] border border-[#38322c] rounded-lg p-4 flex flex-wrap items-center justify-between gap-4"
               >
                 <div className="flex items-start gap-3">
                   <img
                     src={applicant.userAvatar || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'}
                     alt={applicant.userLogin}
-                    className="w-10 h-10 rounded-full border border-[#30363d] shrink-0"
+                    className="w-10 h-10 rounded-full border border-[#38322c] shrink-0"
                   />
                   <div>
                     <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                         href={`https://github.com/${applicant.userLogin}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-semibold text-sm text-white hover:underline"
+                        className="font-semibold text-sm text-[#faf6f0] hover:underline"
                       >
                         @{applicant.userLogin}
                       </a>
@@ -209,14 +209,14 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                     </div>
 
                     {/* Restricted to Account Age and Public Repo count only */}
-                    <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
+                    <div className="text-xs text-[#a89f91] mt-1 flex items-center gap-2">
                       <span>Account age: <strong>{applicant.accountAge}</strong></span>
                       <span>&bull;</span>
                       <span>Public repositories: <strong>{applicant.publicRepoCount}</strong></span>
                     </div>
 
                     {applicant.message && (
-                      <p className="mt-2 text-xs text-gray-300 bg-[#161b22] px-2.5 py-1.5 rounded border-l-2 border-[#30363d]">
+                      <p className="mt-2 text-xs text-[#d6cec3] bg-[#1f1c19] px-2.5 py-1.5 rounded border-l-2 border-[#38322c]">
                         &ldquo;{applicant.message}&rdquo;
                       </p>
                     )}
@@ -249,7 +249,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                       <CheckCircle2 className="w-3.5 h-3.5" /> Invitation sent
                     </span>
                   ) : (
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <span className="text-xs text-[#a89f91] flex items-center gap-1">
                       <XCircle className="w-3.5 h-3.5" /> Declined
                     </span>
                   )}
@@ -263,11 +263,11 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
       {/* Confirmation Modal: Approve */}
       {confirmApprove && (
         <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-2">
+          <div className="bg-[#1f1c19] border border-[#38322c] rounded-xl max-w-md w-full p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-[#faf6f0] mb-2">
               Approve @{confirmApprove.userLogin}?
             </h3>
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
+            <p className="text-sm text-[#d6cec3] leading-relaxed mb-4">
               Approving will send a <strong>real GitHub collaborator invitation</strong> for repository <code>{project.repoFullName}</code>. The user must accept the invitation on GitHub to get access.
             </p>
             <div className="flex justify-end gap-3">
@@ -277,7 +277,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                 size="sm"
                 disabled={loadingAction}
                 onClick={() => setConfirmApprove(null)}
-                className="bg-[#21262d] text-gray-300 border-[#30363d] hover:bg-[#30363d]"
+                className="bg-[#2a2622] text-[#d6cec3] border-[#38322c] hover:bg-[#38322c]"
               >
                 Cancel
               </Button>
@@ -298,11 +298,11 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
       {/* Confirmation Modal: Reject */}
       {confirmReject && (
         <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-2">
+          <div className="bg-[#1f1c19] border border-[#38322c] rounded-xl max-w-md w-full p-6 shadow-xl">
+            <h3 className="text-lg font-bold text-[#faf6f0] mb-2">
               Reject @{confirmReject.userLogin}?
             </h3>
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
+            <p className="text-sm text-[#d6cec3] leading-relaxed mb-4">
               Are you sure you want to decline this applicant&apos;s request to join?
             </p>
             <div className="flex justify-end gap-3">
@@ -312,7 +312,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                 size="sm"
                 disabled={loadingAction}
                 onClick={() => setConfirmReject(null)}
-                className="bg-[#21262d] text-gray-300 border-[#30363d] hover:bg-[#30363d]"
+                className="bg-[#2a2622] text-[#d6cec3] border-[#38322c] hover:bg-[#38322c]"
               >
                 Cancel
               </Button>

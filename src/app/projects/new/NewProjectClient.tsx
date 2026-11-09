@@ -108,29 +108,29 @@ export function NewProjectClient() {
   return (
     <div className="max-w-xl mx-auto px-4">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Connect a Repository</h1>
-        <p className="text-sm text-gray-400 mt-1">
+        <h1 className="text-2xl font-bold text-[#faf6f0]">Connect a Repository</h1>
+        <p className="text-sm text-[#a89f91] mt-1">
           Select a repository you administer to generate a unique join link for collaborators.
         </p>
       </div>
 
       {loadingRepos ? (
-        <Card className="p-8 text-center text-sm text-gray-400 bg-[#161b22] border-[#30363d]">
+        <Card className="p-8 text-center text-sm text-[#a89f91] bg-[#1f1c19] border-[#38322c]">
           Loading your administrative repositories from GitHub...
         </Card>
       ) : repoError ? (
-        <Card className="p-6 bg-[#161b22] border-red-500/30 text-center">
+        <Card className="p-6 bg-[#1f1c19] border-red-500/30 text-center">
           <p className="text-sm text-red-400 mb-4">{repoError}</p>
           <a
             href="/auth/github"
-            className="inline-flex px-4 py-1.5 text-xs font-semibold rounded bg-[#21262d] text-white border border-[#30363d] hover:bg-[#30363d]"
+            className="inline-flex px-4 py-1.5 text-xs font-semibold rounded bg-[#2a2622] text-[#faf6f0] border border-[#38322c] hover:bg-[#38322c]"
           >
             Re-authenticate with GitHub
           </a>
         </Card>
       ) : (
         <form onSubmit={handleSubmit}>
-          <Card className="bg-[#161b22] border-[#30363d] p-6 space-y-5">
+          <Card className="bg-[#1f1c19] border-[#38322c] p-6 space-y-5">
             {error && (
               <div className="p-3 text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-md">
                 {error}
@@ -139,7 +139,7 @@ export function NewProjectClient() {
 
             {/* Repo Selection */}
             <div>
-              <Label htmlFor="repo-select" className="text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2 block">
+              <Label htmlFor="repo-select" className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2 block">
                 GitHub Repository <span className="text-red-400">*</span>
               </Label>
               <select
@@ -147,23 +147,23 @@ export function NewProjectClient() {
                 value={selectedRepoFullName}
                 onChange={handleRepoSelect}
                 required
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                className="w-full bg-[#141210] border border-[#38322c] rounded-md px-3 py-2 text-sm text-[#faf6f0] focus:outline-none focus:border-amber-500"
               >
                 <option value="" disabled>Select a repository you administer...</option>
                 {repos.map((repo) => (
-                  <option key={repo.id} value={repo.fullName}>
+                  <option key={repo.id} value={repo.fullName} className="bg-[#1f1c19] text-[#faf6f0]">
                     {repo.fullName} ({repo.isPrivate ? '🔒 Private' : '🌐 Public'})
                   </option>
                 ))}
               </select>
-              <span className="block text-xs text-gray-500 mt-1">
+              <span className="block text-xs text-[#a89f91] mt-1">
                 Only repositories where you have admin permissions are displayed.
               </span>
             </div>
 
             {/* Title */}
             <div>
-              <Label htmlFor="project-title" className="text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2 block">
+              <Label htmlFor="project-title" className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2 block">
                 Project Title
               </Label>
               <Input
@@ -173,16 +173,16 @@ export function NewProjectClient() {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Next-Gen Dev Tools"
                 maxLength={100}
-                className="bg-[#0d1117] border-[#30363d] text-white focus-visible:border-blue-500"
+                className="bg-[#141210] border-[#38322c] text-[#faf6f0] focus-visible:border-amber-500 placeholder:text-[#a89f91]"
               />
-              <span className="block text-xs text-gray-500 mt-1">
+              <span className="block text-xs text-[#a89f91] mt-1">
                 Defaults to repository name if left blank.
               </span>
             </div>
 
             {/* Description */}
             <div>
-              <Label htmlFor="project-desc" className="text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2 block">
+              <Label htmlFor="project-desc" className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2 block">
                 Project Summary
               </Label>
               <Textarea
@@ -192,16 +192,16 @@ export function NewProjectClient() {
                 placeholder="Describe the goals and what collaborators you are looking for..."
                 maxLength={500}
                 rows={3}
-                className="bg-[#0d1117] border-[#30363d] text-white focus-visible:border-blue-500"
+                className="bg-[#141210] border-[#38322c] text-[#faf6f0] focus-visible:border-amber-500 placeholder:text-[#a89f91]"
               />
-              <span className="block text-xs text-gray-500 mt-1">
+              <span className="block text-xs text-[#a89f91] mt-1">
                 Visible on the public join page (max 500 characters).
               </span>
             </div>
 
             {/* Roles */}
             <div>
-              <Label htmlFor="project-roles" className="text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2 block">
+              <Label htmlFor="project-roles" className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2 block">
                 Roles Wanted (Optional)
               </Label>
               <Input
@@ -210,24 +210,24 @@ export function NewProjectClient() {
                 value={rolesInput}
                 onChange={(e) => setRolesInput(e.target.value)}
                 placeholder="e.g. Frontend Engineer, UI Designer, Tester"
-                className="bg-[#0d1117] border-[#30363d] text-white focus-visible:border-blue-500"
+                className="bg-[#141210] border-[#38322c] text-[#faf6f0] focus-visible:border-amber-500 placeholder:text-[#a89f91]"
               />
-              <span className="block text-xs text-gray-500 mt-1">
+              <span className="block text-xs text-[#a89f91] mt-1">
                 Comma-separated list of skills or roles you are looking for.
               </span>
             </div>
 
             {/* Join Mode Selection */}
             <div>
-              <Label className="text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2 block">
+              <Label className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-2 block">
                 Join Mode <span className="text-red-400">*</span>
               </Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label
                   className={`p-3.5 rounded-lg border cursor-pointer transition flex items-start gap-3 ${
                     joinMode === 'referral'
-                      ? 'bg-blue-500/10 border-blue-500/50'
-                      : 'bg-[#0d1117] border-[#30363d] hover:border-gray-500'
+                      ? 'bg-amber-500/10 border-amber-500/50'
+                      : 'bg-[#141210] border-[#38322c] hover:border-[#4a423a]'
                   }`}
                 >
                   <input
@@ -239,8 +239,8 @@ export function NewProjectClient() {
                     className="mt-1"
                   />
                   <div>
-                    <div className="font-semibold text-sm text-white">Referral link</div>
-                    <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+                    <div className="font-semibold text-sm text-[#faf6f0]">Referral link</div>
+                    <div className="text-xs text-[#a89f91] mt-0.5 leading-relaxed">
                       People sign in with GitHub and request to join. You review and approve.
                     </div>
                   </div>
@@ -250,7 +250,7 @@ export function NewProjectClient() {
                   className={`p-3.5 rounded-lg border cursor-pointer transition flex items-start gap-3 ${
                     joinMode === 'screening'
                       ? 'bg-purple-500/10 border-purple-500/50'
-                      : 'bg-[#0d1117] border-[#30363d] hover:border-gray-500'
+                      : 'bg-[#141210] border-[#38322c] hover:border-[#4a423a]'
                   }`}
                 >
                   <input
@@ -262,8 +262,8 @@ export function NewProjectClient() {
                     className="mt-1"
                   />
                   <div>
-                    <div className="font-semibold text-sm text-white">Screening first</div>
-                    <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">
+                    <div className="font-semibold text-sm text-[#faf6f0]">Screening first</div>
+                    <div className="text-xs text-[#a89f91] mt-0.5 leading-relaxed">
                       Applicants complete your test or questionnaire link before approval.
                     </div>
                   </div>
@@ -273,9 +273,9 @@ export function NewProjectClient() {
 
             {/* Screening Link input if screening mode is selected */}
             {joinMode === 'screening' && (
-              <div className="p-4 bg-[#0d1117] border border-[#30363d] rounded-lg space-y-3">
+              <div className="p-4 bg-[#141210] border border-[#38322c] rounded-lg space-y-3">
                 <div>
-                  <Label htmlFor="screening-url" className="text-xs font-semibold text-gray-200 uppercase tracking-wider mb-1 block">
+                  <Label htmlFor="screening-url" className="text-xs font-semibold text-[#faf6f0] uppercase tracking-wider mb-1 block">
                     Screening Link <span className="text-red-400">*</span>
                   </Label>
                   <Input
@@ -285,7 +285,7 @@ export function NewProjectClient() {
                     onChange={(e) => setScreeningUrl(e.target.value)}
                     placeholder="https://forms.gle/... or https://typeform.com/..."
                     required
-                    className="bg-[#161b22] border-[#30363d] text-white focus-visible:border-purple-500"
+                    className="bg-[#1f1c19] border-[#38322c] text-[#faf6f0] focus-visible:border-purple-500 placeholder:text-[#a89f91]"
                   />
                 </div>
 
@@ -299,17 +299,17 @@ export function NewProjectClient() {
             )}
 
             {/* Form Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#30363d]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#38322c]">
               <Link
                 href="/dashboard"
-                className="px-4 py-2 text-xs font-medium text-gray-400 hover:text-white transition"
+                className="px-4 py-2 text-xs font-medium text-[#a89f91] hover:text-[#faf6f0] transition"
               >
                 Cancel
               </Link>
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-emerald-600 text-white hover:bg-emerald-500 border-0"
+                className="bg-amber-500 text-stone-950 font-semibold hover:bg-amber-400 border-0"
               >
                 {submitting ? 'Connecting...' : 'Connect & Generate Join Link'}
               </Button>
