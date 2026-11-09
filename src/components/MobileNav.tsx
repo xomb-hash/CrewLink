@@ -16,7 +16,7 @@ export function MobileNav({ user, pathname }: MobileNavProps) {
 
   const itemClass = (active: boolean) =>
     `flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] font-light tracking-[0.04em] ${
-      active ? 'text-ink' : 'text-[#666]'
+      active ? 'text-ink' : 'text-[#9c9c9c]'
     }`;
 
   return (

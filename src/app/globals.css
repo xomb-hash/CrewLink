@@ -5,33 +5,33 @@
 
 @theme {
   --color-background: #000000;
-  --color-foreground: #f0f0f0;
+  --color-foreground: #ffffff;
 
-  --color-card: #0a0a0a;
-  --color-card-foreground: #f0f0f0;
+  --color-card: #0b0b0b;
+  --color-card-foreground: #ffffff;
   --color-popover: #0d0d0d;
-  --color-popover-foreground: #f0f0f0;
-  --color-primary: #f0f0f0;
+  --color-popover-foreground: #ffffff;
+  --color-primary: #ffffff;
   --color-primary-foreground: #000000;
-  --color-secondary: #161616;
-  --color-secondary-foreground: #f0f0f0;
-  --color-muted: #161616;
-  --color-muted-foreground: #888888;
-  --color-accent: #1a1a1a;
-  --color-accent-foreground: #f0f0f0;
-  --color-destructive: #b91c1c;
-  --color-border: #262626;
-  --color-input: #262626;
-  --color-ring: #f0f0f0;
+  --color-secondary: #1c1c1c;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #1c1c1c;
+  --color-muted-foreground: #a3a3a3;
+  --color-accent: #262626;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #dc2626;
+  --color-border: #333333;
+  --color-input: #333333;
+  --color-ring: #ffffff;
 
-  --color-ink: #f0f0f0;
-  --color-ink-soft: #a3a3a3;
-  --color-ink-muted: #888888;
-  --color-ink-dim: #555555;
-  --color-line: #1a1a1a;
-  --color-line-soft: #262626;
-  --color-panel: #0a0a0a;
-  --color-panel-2: #111111;
+  --color-ink: #ffffff;
+  --color-ink-soft: #c9c9c9;
+  --color-ink-muted: #a3a3a3;
+  --color-ink-dim: #808080;
+  --color-line: #2b2b2b;
+  --color-line-soft: #3d3d3d;
+  --color-panel: #0b0b0b;
+  --color-panel-2: #151515;
 
   --font-sans: 'Archivo', system-ui, sans-serif;
 }
@@ -47,7 +47,7 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-stretch: 116%;
-    font-weight: 300;
+    font-weight: 400;
     font-size: 13px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -71,13 +71,13 @@
   }
 
   ::selection {
-    background: #f0f0f0;
+    background: #ffffff;
     color: #000;
   }
 
   a:focus-visible,
   button:focus-visible {
-    outline: 1px solid #f0f0f0;
+    outline: 1px solid #ffffff;
     outline-offset: 3px;
   }
 
@@ -87,7 +87,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #4a4a4a;
     border-radius: 99px;
   }
 }

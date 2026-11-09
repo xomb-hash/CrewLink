@@ -11,10 +11,10 @@ interface CreateProjectFormProps {
   onCancel?: () => void;
 }
 
-const labelClass = 'mb-1.5 block text-[11px] tracking-[0.03em] text-[#888]';
+const labelClass = 'mb-1.5 block text-[11px] tracking-[0.03em] text-[#b3b3b3]';
 const fieldClass =
-  'w-full rounded-md border border-[#262626] bg-black px-3 py-2 text-[13px] text-[#f0f0f0] outline-none transition-colors focus:border-[#f0f0f0]';
-const hintClass = 'mt-1 block text-[11px] text-[#555]';
+  'w-full rounded-md border border-[#3d3d3d] bg-black px-3 py-2 text-[13px] text-[#ffffff] outline-none transition-colors focus:border-[#ffffff]';
+const hintClass = 'mt-1 block text-[11px] text-[#808080]';
 
 export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProps) {
   const router = useRouter();
@@ -179,7 +179,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
           <p className="mb-3 text-xs text-red-300">{repoError}</p>
           <a
             href="/auth/github?redirect_to=%2Fdashboard"
-            className="inline-flex items-center gap-1.5 rounded-md border border-[#262626] px-3 py-1.5 text-xs text-[#ccc] transition-colors hover:border-[#555]"
+            className="inline-flex items-center gap-1.5 rounded-md border border-[#3d3d3d] px-3 py-1.5 text-xs text-[#dedede] transition-colors hover:border-[#808080]"
           >
             Re-authenticate with GitHub
             <ExternalLink className="h-3 w-3" />
@@ -188,7 +188,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
             <button
               type="button"
               onClick={() => (onCancel ? onCancel() : router.push('/dashboard'))}
-              className="text-xs text-[#888] transition-colors hover:text-[#ccc]"
+              className="text-xs text-[#b3b3b3] transition-colors hover:text-[#dedede]"
             >
               Cancel
             </button>
@@ -198,7 +198,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
         <>
           <div>
             <label htmlFor="create-repo" className={labelClass}>
-              GitHub repository <span className="text-[#f0f0f0]">*</span>
+              GitHub repository <span className="text-[#ffffff]">*</span>
             </label>
             <select
               id="create-repo"
@@ -238,7 +238,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
 
           <div>
             <span className={labelClass}>Project logo (optional)</span>
-            <div className="flex items-center gap-3 rounded-md border border-[#262626] bg-black p-3">
+            <div className="flex items-center gap-3 rounded-md border border-[#3d3d3d] bg-black p-3">
               {logoPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -258,7 +258,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
                   <button
                     type="button"
                     onClick={() => logoInputRef.current?.click()}
-                    className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#bbb] transition-colors hover:border-[#666] hover:text-ink"
+                    className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#d6d6d6] transition-colors hover:border-[#9c9c9c] hover:text-ink"
                   >
                     <ImagePlus className="h-3.5 w-3.5" />
                     {logoFile ? 'Change logo' : 'Upload logo'}
@@ -267,14 +267,14 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
                     <button
                       type="button"
                       onClick={clearLogo}
-                      className="inline-flex h-7 items-center gap-1 rounded px-1.5 text-[11px] text-[#777] transition-colors hover:text-ink"
+                      className="inline-flex h-7 items-center gap-1 rounded px-1.5 text-[11px] text-[#a8a8a8] transition-colors hover:text-ink"
                     >
                       <X className="h-3.5 w-3.5" />
                       Remove
                     </button>
                   )}
                 </div>
-                <p className="mt-1.5 text-[11px] leading-relaxed text-[#555]">
+                <p className="mt-1.5 text-[11px] leading-relaxed text-[#808080]">
                   PNG, JPEG, or WebP up to 2 MB. Without one we generate art from the project name.
                 </p>
               </div>
@@ -314,7 +314,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
             <div className="space-y-2.5">
               <div>
                 <label htmlFor="create-screening" className={labelClass}>
-                  Screening link <span className="text-[#f0f0f0]">*</span>
+                  Screening link <span className="text-[#ffffff]">*</span>
                 </label>
                 <input
                   id="create-screening"
@@ -326,8 +326,8 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
                   className={fieldClass}
                 />
               </div>
-              <div className="flex items-start gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.06] p-2.5 text-[11px] leading-relaxed text-amber-200/90">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+              <div className="flex items-start gap-2 rounded-md border border-line-soft bg-white/[0.03] p-2.5 text-[11px] leading-relaxed text-[#dedede]">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink" />
                 <span>
                   Screening is on the honour system. Crewlink cannot check that someone finished a test.
                 </span>
@@ -384,7 +384,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
           <div>
             <span className={labelClass}>Ask applicants for</span>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#262626] bg-black px-3 py-2 text-[12px] text-[#ccc] transition-colors hover:border-[#444]">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#3d3d3d] bg-black px-3 py-2 text-[12px] text-[#dedede] transition-colors hover:border-[#6b6b6b]">
                 <input
                   type="checkbox"
                   checked={requireResume}
@@ -393,7 +393,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
                 />
                 Resume required
               </label>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#262626] bg-black px-3 py-2 text-[12px] text-[#ccc] transition-colors hover:border-[#444]">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#3d3d3d] bg-black px-3 py-2 text-[12px] text-[#dedede] transition-colors hover:border-[#6b6b6b]">
                 <input
                   type="checkbox"
                   checked={requireGithubLink}
@@ -402,7 +402,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
                 />
                 GitHub link required
               </label>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#262626] bg-black px-3 py-2 text-[12px] text-[#ccc] transition-colors hover:border-[#444]">
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-[#3d3d3d] bg-black px-3 py-2 text-[12px] text-[#dedede] transition-colors hover:border-[#6b6b6b]">
                 <input
                   type="checkbox"
                   checked={requireLinkedinLink}
@@ -421,14 +421,14 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
             <button
               type="button"
               onClick={() => (onCancel ? onCancel() : router.push('/dashboard'))}
-              className="h-9 rounded-md border border-line-soft px-5 text-[13px] text-[#888] transition-colors hover:border-[#555] hover:text-[#ccc]"
+              className="h-9 rounded-md border border-line-soft px-5 text-[13px] text-[#b3b3b3] transition-colors hover:border-[#808080] hover:text-[#dedede]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting || loadingRepos}
-              className="h-9 rounded-md border border-ink px-5 text-[13px] font-normal text-ink transition-colors hover:bg-ink hover:text-black disabled:pointer-events-none disabled:opacity-40"
+              className="h-9 rounded-md border border-ink bg-ink px-5 text-[13px] font-normal text-black transition-colors hover:border-[#d6d6d6] hover:bg-[#d6d6d6] disabled:pointer-events-none disabled:opacity-40"
             >
               {submitting ? 'Creating…' : 'Create & get link'}
             </button>

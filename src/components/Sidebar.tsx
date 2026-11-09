@@ -36,7 +36,7 @@ export function Sidebar({ user, pathname }: SidebarProps) {
       {user ? (
         <a
           href="/auth/logout"
-          className="flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] text-[#666] transition-colors hover:bg-[#141414] hover:text-[#ccc]"
+          className="flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] text-[#9c9c9c] transition-colors hover:bg-[#1c1c1c] hover:text-[#dedede]"
         >
           <LogOut className="h-[18px] w-[18px]" strokeWidth={1.4} />
           Sign out
@@ -45,7 +45,7 @@ export function Sidebar({ user, pathname }: SidebarProps) {
       ) : (
         <a
           href="/auth/github?redirect_to=%2Fdashboard"
-          className="flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] text-[#666] transition-colors hover:bg-[#141414] hover:text-[#ccc]"
+          className="flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] text-[#9c9c9c] transition-colors hover:bg-[#1c1c1c] hover:text-[#dedede]"
         >
           <LogIn className="h-[18px] w-[18px]" strokeWidth={1.4} />
           Sign in
@@ -72,8 +72,8 @@ function NavItem({
       href={href}
       prefetch={false}
       aria-current={active ? 'page' : undefined}
-      className={`flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] transition-colors hover:bg-[#141414] hover:text-[#ccc] ${
-        active ? 'text-ink' : 'text-[#666]'
+      className={`flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] transition-colors hover:bg-[#1c1c1c] hover:text-[#dedede] ${
+        active ? 'text-ink' : 'text-[#9c9c9c]'
       }`}
     >
       {icon}

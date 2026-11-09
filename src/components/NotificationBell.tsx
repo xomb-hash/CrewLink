@@ -85,7 +85,7 @@ export function NotificationBell() {
         onClick={toggle}
         aria-label="Notifications"
         aria-expanded={open}
-        className="relative grid h-9 w-9 place-items-center rounded-full text-[#aaa] transition-colors hover:bg-[#141414] hover:text-ink"
+        className="relative grid h-9 w-9 place-items-center rounded-full text-[#c9c9c9] transition-colors hover:bg-[#1c1c1c] hover:text-ink"
       >
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.4} />
         {pendingCount > 0 && (
@@ -100,7 +100,7 @@ export function NotificationBell() {
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="text-[12px] text-ink">Notifications</span>
             {pendingCount > 0 && (
-              <span className="text-[10px] uppercase tracking-[0.08em] text-[#777]">
+              <span className="text-[10px] uppercase tracking-[0.08em] text-[#a8a8a8]">
                 {pendingCount} pending
               </span>
             )}
@@ -108,11 +108,11 @@ export function NotificationBell() {
 
           <div className="max-h-[360px] overflow-y-auto">
             {loading ? (
-              <div className="px-4 py-6 text-center text-[12px] text-[#666]">Loading…</div>
+              <div className="px-4 py-6 text-center text-[12px] text-[#9c9c9c]">Loading…</div>
             ) : error ? (
               <div className="px-4 py-6 text-center text-[12px] text-red-300">{error}</div>
             ) : items.length === 0 ? (
-              <div className="px-4 py-8 text-center text-[12px] text-[#666]">
+              <div className="px-4 py-8 text-center text-[12px] text-[#9c9c9c]">
                 No new activity. Join requests and decisions will appear here.
               </div>
             ) : (
@@ -127,25 +127,25 @@ export function NotificationBell() {
                     : Clock;
                 const iconClass =
                   item.kind === 'join_request'
-                    ? 'text-blue-300'
+                    ? 'text-ink'
                     : item.title.startsWith('You were approved')
-                    ? 'text-emerald-400'
+                    ? 'text-ink'
                     : item.title.startsWith('Your request')
                     ? 'text-red-300'
-                    : 'text-amber-300';
+                    : 'text-[#c9c9c9]';
                 return (
                   <Link
                     key={item.id}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="flex items-start gap-3 border-b border-[#161616] px-4 py-3 transition-colors last:border-0 hover:bg-[#101010]"
+                    className="flex items-start gap-3 border-b border-[#3d3d3d] px-4 py-3 transition-colors last:border-0 hover:bg-[#1c1c1c]"
                   >
                     <Icon className={`mt-0.5 h-4 w-4 flex-none ${iconClass}`} strokeWidth={1.6} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] leading-snug text-[#ddd]">{item.title}</p>
-                      {item.detail && <p className="mt-0.5 text-[11px] text-[#777]">{item.detail}</p>}
+                      <p className="text-[12px] leading-snug text-[#eaeaea]">{item.title}</p>
+                      {item.detail && <p className="mt-0.5 text-[11px] text-[#a8a8a8]">{item.detail}</p>}
                     </div>
-                    <span className="flex-none text-[10px] text-[#555]">{timeAgo(item.createdAt)}</span>
+                    <span className="flex-none text-[10px] text-[#808080]">{timeAgo(item.createdAt)}</span>
                   </Link>
                 );
               })

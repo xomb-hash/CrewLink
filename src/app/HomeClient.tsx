@@ -92,13 +92,13 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div>
               <h2 className="text-[15px] font-normal text-ink">Projects looking for collaborators</h2>
-              <p className="mt-0.5 text-[11px] text-[#666]">
+              <p className="mt-0.5 text-[11px] text-[#9c9c9c]">
                 Public projects from other creators. You still need their invite code to request access.
               </p>
             </div>
             <Link
               href="/discover"
-              className="inline-flex items-center gap-1 text-[11px] text-[#aaa] transition-colors hover:text-ink"
+              className="inline-flex items-center gap-1 text-[11px] text-[#c9c9c9] transition-colors hover:text-ink"
             >
               Discover all
               <ArrowRight className="h-3.5 w-3.5" />
@@ -110,7 +110,7 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
               <Link
                 key={project.id}
                 href={`/join/${project.slug}`}
-                className="group flex items-start gap-3 rounded-[10px] border border-line bg-panel p-4 transition-colors hover:border-[#444]"
+                className="group flex items-start gap-3 rounded-[10px] border border-line bg-panel p-4 transition-colors hover:border-[#9c9c9c]"
               >
                 <ProjectLogo
                   title={project.title}
@@ -120,13 +120,13 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
                 />
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-[13px] font-normal text-ink">{project.title}</h3>
-                  <p className="mt-0.5 text-[11px] text-[#666]">@{project.ownerLogin}</p>
+                  <p className="mt-0.5 text-[11px] text-[#9c9c9c]">@{project.ownerLogin}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="rounded-full border border-[#222] px-2 py-0.5 text-[10px] text-[#888]">
+                    <span className="rounded-full border border-[#333333] px-2 py-0.5 text-[10px] text-[#b3b3b3]">
                       {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
                     </span>
                     {project.requiresCode && (
-                      <span className="rounded-full border border-[#222] px-2 py-0.5 text-[10px] text-[#888]">
+                      <span className="rounded-full border border-[#333333] px-2 py-0.5 text-[10px] text-[#b3b3b3]">
                         Invite code
                       </span>
                     )}
@@ -147,7 +147,7 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
             className={`h-7 flex-none whitespace-nowrap rounded-full border px-3.5 text-[12px] font-light transition-colors ${
               filter === f
                 ? 'border-ink bg-ink text-black'
-                : 'border-line-soft text-[#888] hover:border-[#555] hover:text-[#ccc]'
+                : 'border-line-soft text-[#b3b3b3] hover:border-[#808080] hover:text-[#dedede]'
             }`}
           >
             {f}
@@ -156,7 +156,7 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
       </div>
 
       {filtered.length === 0 ? (
-        <div className="px-6 py-20 text-center text-[13px] text-[#555]">
+        <div className="px-6 py-20 text-center text-[13px] text-[#808080]">
           {projects.length === 0
             ? 'No projects yet. Use Create to connect your first repository.'
             : 'Nothing here — try a different filter.'}
@@ -172,10 +172,10 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
               onKeyDown={(e) => {
                 if (e.key === 'Enter') openProject(project);
               }}
-              className="cl-rise group cursor-pointer overflow-hidden rounded-[10px] border border-line bg-panel transition duration-200 hover:-translate-y-0.5 hover:border-[#444] hover:shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+              className="cl-rise group cursor-pointer overflow-hidden rounded-[10px] border border-line bg-panel transition duration-200 hover:-translate-y-0.5 hover:border-[#9c9c9c] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.07),0_16px_48px_rgba(0,0,0,0.85)]"
               style={{ animationDelay: `${index * 25}ms` }}
             >
-              <div className="relative flex aspect-video items-end justify-between bg-[#121212] px-3.5 py-3">
+              <div className="relative flex aspect-video items-end justify-between bg-[#111111] px-3.5 py-3">
                 <div className="absolute left-3.5 top-3.5 flex max-w-[calc(100%-28px)] items-start gap-2.5">
                   <ProjectLogo
                     title={project.title}
@@ -187,25 +187,25 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
                     {project.title}
                   </h3>
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.08em] text-[#666]">
+                <span className="text-[10px] uppercase tracking-[0.08em] text-[#9c9c9c]">
                   {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
                 </span>
                 {project.isPrivate ? (
-                  <Lock className="h-3.5 w-3.5 text-[#555]" strokeWidth={1.5} aria-label="Private repository" />
+                  <Lock className="h-3.5 w-3.5 text-[#808080]" strokeWidth={1.5} aria-label="Private repository" />
                 ) : (
-                  <Globe className="h-3.5 w-3.5 text-[#555]" strokeWidth={1.5} aria-label="Public repository" />
+                  <Globe className="h-3.5 w-3.5 text-[#808080]" strokeWidth={1.5} aria-label="Public repository" />
                 )}
               </div>
 
               <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3.5">
-                <div className="grid h-7 w-7 flex-none place-items-center rounded-full border border-[#333] text-[11px] text-[#888]">
+                <div className="grid h-7 w-7 flex-none place-items-center rounded-full border border-[#3f3f3f] text-[11px] text-[#b3b3b3]">
                   {project.ownerLogin.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="line-clamp-2 text-[13px] font-normal leading-snug text-[#ddd]">
+                  <h4 className="line-clamp-2 text-[13px] font-normal leading-snug text-[#eaeaea]">
                     {project.description || 'No description yet.'}
                   </h4>
-                  <div className="mt-1 text-[11px] text-[#666]">
+                  <div className="mt-1 text-[11px] text-[#9c9c9c]">
                     {project.ownerLogin} &middot; {project.applicantCount}{' '}
                     {project.applicantCount === 1 ? 'applicant' : 'applicants'} &middot; {project.createdAtLabel}
                   </div>
@@ -218,17 +218,17 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
                   }}
                   title="Copy join link"
                   aria-label={`Copy join link for ${project.title}`}
-                  className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-[#555] transition-colors hover:bg-[#1a1a1a] hover:text-[#ccc]"
+                  className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-[#808080] transition-colors hover:bg-[#222222] hover:text-[#dedede]"
                 >
                   <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
                 </button>
               </div>
 
-              <div className="mx-3.5 h-px bg-[#161616]" />
+              <div className="mx-3.5 h-px bg-[#3d3d3d]" />
 
               <div className="flex flex-wrap gap-1.5 px-3.5 pb-3 pt-2.5">
                 {(project.roles.length ? project.roles : ['Any role']).map((role) => (
-                  <span key={role} className="rounded-full border border-[#222] px-2.5 py-0.5 text-[11px] text-[#777]">
+                  <span key={role} className="rounded-full border border-[#333333] px-2.5 py-0.5 text-[11px] text-[#a8a8a8]">
                     {role}
                   </span>
                 ))}

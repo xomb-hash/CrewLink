@@ -45,7 +45,7 @@ export function Topbar({ user }: TopbarProps) {
         <Link
           href="/projects/new"
           aria-label="Create project"
-          className="flex h-[34px] items-center gap-1.5 rounded-md border border-ink px-3 text-[13px] font-normal text-ink transition-colors hover:bg-ink hover:text-black"
+          className="flex h-[34px] items-center gap-1.5 rounded-md border border-ink bg-ink px-3 text-[13px] font-normal text-black transition-colors hover:border-[#d6d6d6] hover:bg-[#d6d6d6]"
         >
           <Plus className="h-[13px] w-[13px]" strokeWidth={1.5} />
           Create
@@ -57,7 +57,7 @@ export function Topbar({ user }: TopbarProps) {
             <Link
               href="/dashboard"
               title={`@${user.login}`}
-              className="grid h-[30px] w-[30px] place-items-center overflow-hidden rounded-full border border-[#333] text-[12px] text-[#aaa]"
+              className="grid h-[30px] w-[30px] place-items-center overflow-hidden rounded-full border border-[#3f3f3f] text-[12px] text-[#c9c9c9]"
             >
               {user.avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -70,7 +70,7 @@ export function Topbar({ user }: TopbarProps) {
         ) : (
           <a
             href="/auth/github?redirect_to=%2Fdashboard"
-            className="flex h-[34px] items-center rounded-md border border-ink px-3.5 text-[13px] text-ink transition-colors hover:bg-ink hover:text-black"
+            className="flex h-[34px] items-center rounded-md border border-ink bg-ink px-3.5 text-[13px] text-black transition-colors hover:border-[#d6d6d6] hover:bg-[#d6d6d6]"
           >
             Sign in
           </a>

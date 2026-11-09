@@ -115,7 +115,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
   return (
     <div className="mx-auto max-w-[1100px] px-6 py-8">
       <div className="mb-7 flex flex-wrap items-center gap-3.5 rounded-[10px] border border-line bg-panel p-5">
-        <div className="grid h-11 w-11 flex-none place-items-center overflow-hidden rounded-full border border-[#333] text-base text-[#aaa]">
+        <div className="grid h-11 w-11 flex-none place-items-center overflow-hidden rounded-full border border-[#3f3f3f] text-base text-[#c9c9c9]">
           {user.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={user.avatarUrl} alt={user.login} className="h-full w-full object-cover" />
@@ -125,11 +125,11 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
         </div>
         <div className="min-w-0">
           <h2 className="truncate text-sm font-normal text-ink">{user.name || user.login}</h2>
-          <p className="text-[11px] text-[#666]">Signed in with GitHub &middot; @{user.login}</p>
+          <p className="text-[11px] text-[#9c9c9c]">Signed in with GitHub &middot; @{user.login}</p>
         </div>
         <Link
           href="/discover"
-          className="ml-auto inline-flex h-8 flex-none items-center gap-1.5 rounded-md border border-line-soft px-3 text-[12px] text-[#aaa] transition-colors hover:border-[#555] hover:text-[#eee]"
+          className="ml-auto inline-flex h-8 flex-none items-center gap-1.5 rounded-md border border-line-soft px-3 text-[12px] text-[#c9c9c9] transition-colors hover:border-[#808080] hover:text-[#f2f2f2]"
         >
           <Compass className="h-3.5 w-3.5" />
           Discover projects
@@ -139,7 +139,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-light tracking-tight text-ink">Your projects</h1>
-          <p className="mt-0.5 text-[12px] text-[#666]">
+          <p className="mt-0.5 text-[12px] text-[#9c9c9c]">
             Manage join links, review requests, and send GitHub invitations.
           </p>
         </div>
@@ -151,7 +151,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
       {projects.length === 0 ? (
         <div className="rounded-[10px] border border-dashed border-line-soft bg-panel px-6 py-16 text-center">
           <h3 className="mb-2 text-sm font-normal text-ink">No repositories connected yet</h3>
-          <p className="mx-auto mb-6 max-w-md text-[12px] leading-relaxed text-[#777]">
+          <p className="mx-auto mb-6 max-w-md text-[12px] leading-relaxed text-[#a8a8a8]">
             Connect a GitHub repository where you have admin permissions with the Create button in the top
             right, or browse projects to join.
           </p>
@@ -182,7 +182,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
         <section className="mt-10">
           <div className="mb-4">
             <h2 className="text-lg font-light tracking-tight text-ink">Projects you joined</h2>
-            <p className="mt-0.5 text-[12px] text-[#666]">Requests you sent to other creators.</p>
+            <p className="mt-0.5 text-[12px] text-[#9c9c9c]">Requests you sent to other creators.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {joinedProjects.map((item) => {
@@ -190,15 +190,15 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
                 item.status === 'approved' ? 'Approved' : item.status === 'rejected' ? 'Declined' : 'Pending';
               const statusClass =
                 item.status === 'approved'
-                  ? 'border-emerald-500/40 text-emerald-300'
+                  ? 'border-ink text-ink'
                   : item.status === 'rejected'
-                  ? 'border-[#333] text-[#777]'
-                  : 'border-[#444] text-[#ccc]';
+                  ? 'border-[#3f3f3f] text-[#a8a8a8]'
+                  : 'border-[#6b6b6b] text-[#dedede]';
               return (
                 <Link
                   key={item.id}
                   href={`/join/${item.slug}`}
-                  className="group flex items-start gap-3 rounded-[10px] border border-line bg-panel p-4 transition-colors hover:border-[#444]"
+                  className="group flex items-start gap-3 rounded-[10px] border border-line bg-panel p-4 transition-colors hover:border-[#9c9c9c]"
                 >
                   <ProjectLogo
                     title={item.title}
@@ -215,8 +215,8 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
                         {statusLabel}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[11px] text-[#666]">by @{item.ownerLogin}</p>
-                    <p className="mt-1 text-[11px] text-[#777]">
+                    <p className="mt-0.5 text-[11px] text-[#9c9c9c]">by @{item.ownerLogin}</p>
+                    <p className="mt-1 text-[11px] text-[#a8a8a8]">
                       {item.status === 'approved'
                         ? 'Invitation sent — accept it on GitHub.'
                         : item.status === 'rejected'
