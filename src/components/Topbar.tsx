@@ -8,10 +8,9 @@ import type { ShellUser } from './AppShell';
 
 interface TopbarProps {
   user: ShellUser | null;
-  onCreate: () => void;
 }
 
-export function Topbar({ user, onCreate }: TopbarProps) {
+export function Topbar({ user }: TopbarProps) {
   return (
     <header className="fixed inset-x-0 top-0 z-[100] flex h-14 items-center gap-4 border-b border-line bg-black/90 px-6 backdrop-blur-xl">
       <Link href="/" className="flex min-w-[120px] flex-none items-center gap-2 text-[15px] font-normal tracking-[0.1em] text-ink">
@@ -43,15 +42,14 @@ export function Topbar({ user, onCreate }: TopbarProps) {
       </form>
 
       <div className="ml-auto flex flex-none items-center gap-2.5">
-        <button
-          type="button"
-          onClick={onCreate}
+        <Link
+          href="/projects/new"
           aria-label="Create project"
           className="flex h-[34px] items-center gap-1.5 rounded-md border border-ink px-3 text-[13px] font-normal text-ink transition-colors hover:bg-ink hover:text-black"
         >
           <Plus className="h-[13px] w-[13px]" strokeWidth={1.5} />
           Create
-        </button>
+        </Link>
 
         {user ? (
           <>

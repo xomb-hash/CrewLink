@@ -92,29 +92,7 @@
   }
 }
 
-/* Create dialog: native <dialog> is top-layer fixed; explicit inset + auto
-   margins keep it dead centre even though Tailwind's preflight strips margins. */
-dialog.cl-dialog {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: min(480px, calc(100vw - 32px));
-  height: fit-content;
-  max-height: calc(100vh - 48px);
-  overflow-y: auto;
-  border: 1px solid #222;
-  border-radius: 12px;
-  background: #0a0a0a;
-  color: #f0f0f0;
-  padding: 0;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-}
-
-dialog.cl-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(3px);
-}
-
+/* Create page entrance */
 @keyframes cl-rise {
   from {
     opacity: 0;

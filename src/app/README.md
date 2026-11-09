@@ -6,7 +6,7 @@ Next.js App Router providing server-rendered pages and API Route Handlers.
 - `page.tsx` + `HomeClient.tsx`: Landing page for signed-out visitors. Signed-in owners see their connected projects as a card grid with `All / Public / Private / Referral / Screening` filters and topbar search (`/?q=`), plus a "Projects looking for collaborators" preview. Public cards open the repository on GitHub; private cards open the join page.
 - `discover/page.tsx` & `DiscoverClient.tsx`: Browse public projects from other creators with search and All/Referral/Screening filters; cards show invite-code and application-status badges and link to the join page.
 - `dashboard/page.tsx` & `DashboardClient.tsx`: Owner dashboard with a GitHub profile block, project cards (join-link copy, share options, invite-code generation), applicant review (Approve/Reject), a "Projects you joined" section, and advisory banners.
-- `projects/new/page.tsx` & `NewProjectClient.tsx`: Centered create card reusing `CreateProjectForm`. The topbar Create action opens the same form in a centered modal dialog; it is the only Create entry point.
+- `projects/new/page.tsx` & `NewProjectClient.tsx`: Centered create card reusing `CreateProjectForm`. The single Create link in the top right opens this page.
 - `join/[slug]/page.tsx` & `JoinClient.tsx`: Public join page presenting the project overview, an "About the creator" card (avatar, GitHub link, account age, public repos, optional note), the screening task (if configured), and request submission. Referral projects require the invite code from the link (`?ref=`); applicants can add GitHub/LinkedIn profile links and attach a PDF resume (max 5 MB), with owner-marked fields enforced as required.
 
 ## API Routes
