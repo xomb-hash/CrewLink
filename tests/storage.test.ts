@@ -1,3 +1,4 @@
+import './setup';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { storage } from '../src/lib/storage';
