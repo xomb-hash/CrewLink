@@ -40,6 +40,15 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface ExploreProject extends Project {
+  applicantsCount: number;
+  joinUrl: string;
+}
+
+export interface UserApplication extends Applicant {
+  project: Project;
+}
+
 export interface Applicant {
   id: string;
   projectId: string;

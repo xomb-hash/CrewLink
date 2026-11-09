@@ -631,6 +631,68 @@ export class Storage {
     return this.data.applicants.filter((a) => a.projectId === projectId);
   }
 
+  async getApplicationsByUserId(userId: string | number): Promise<Array<Applicant & { project: Project }>> {
+    const uId = String(userId);
+
+    if (this.isPrismaActive()) {
+      try {
+        const list = await prisma.applicant.findMany({
+          where: { userId: uId },
+          include: { project: true },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        return list.map((a) => ({
+          id: a.id,
+          projectId: a.projectId,
+          userId: a.userId,
+          userLogin: a.userLogin,
+          userAvatar: a.userAvatar ?? undefined,
+          accountAge: a.accountAge,
+          publicRepoCount: a.publicRepoCount,
+          message: a.message ?? undefined,
+          status: a.status as 'pending' | 'approved' | 'rejected',
+          invitationSent: a.invitationSent,
+          invitationDetails: a.invitationDetails,
+          createdAt: a.createdAt.toISOString(),
+          updatedAt: a.updatedAt.toISOString(),
+          project: {
+            id: a.project.id,
+            slug: a.project.slug,
+            ownerLogin: a.project.ownerLogin,
+            ownerId: a.project.ownerId,
+            ownerAvatar: a.project.ownerAvatar ?? undefined,
+            repoFullName: a.project.repoFullName,
+            repoName: a.project.repoName,
+            repoOwner: a.project.repoOwner,
+            isPrivate: a.project.isPrivate,
+            joinMode: a.project.joinMode as 'referral' | 'screening',
+            screeningUrl: a.project.screeningUrl ?? undefined,
+            roles: a.project.roles,
+            title: a.project.title,
+            description: a.project.description ?? undefined,
+            createdAt: a.project.createdAt.toISOString(),
+            updatedAt: a.project.updatedAt.toISOString(),
+          },
+        }));
+      } catch (err) {
+        logger.error('Prisma getApplicationsByUserId failed', err, { userId: uId });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const userApplicants = this.data.applicants.filter((a) => a.userId === uId);
+    return userApplicants
+      .map((a) => {
+        const project = this.data.projects.find((p) => p.id === a.projectId);
+        if (!project) return null;
+        return { ...a, project };
+      })
+      .filter((item): item is Applicant & { project: Project } => item !== null)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async findApplicant(projectId: string, userId: string | number): Promise<Applicant | null> {
     const uId = String(userId);
 
