@@ -10,19 +10,19 @@ import { signValue } from '../src/lib/auth';
 test('Server-side security checks (TypeScript)', async (t) => {
   storage.reset();
 
-  const realOwner = storage.saveUser({
+  const realOwner = await storage.saveUser({
     id: 101,
     login: 'alice-owner',
     accessToken: 'fake-token-alice',
   });
 
-  const impostor = storage.saveUser({
+  const impostor = await storage.saveUser({
     id: 999,
     login: 'mallory-impostor',
     accessToken: 'fake-token-mallory',
   });
 
-  const project = storage.createProject({
+  const project = await storage.createProject({
     ownerLogin: realOwner.login,
     ownerId: realOwner.id,
     repoFullName: 'alice-owner/rocket-ship',
@@ -32,7 +32,7 @@ test('Server-side security checks (TypeScript)', async (t) => {
     title: 'Rocket Ship',
   });
 
-  const applicant = storage.createApplicant({
+  const applicant = await storage.createApplicant({
     projectId: project.id,
     userId: '202',
     userLogin: 'bob-builder',
@@ -40,7 +40,7 @@ test('Server-side security checks (TypeScript)', async (t) => {
     publicRepoCount: 10,
   });
 
-  const impostorSession = storage.createSession(impostor.id);
+  const impostorSession = await storage.createSession(impostor.id);
   const impostorCookie = `crewlink_session=${encodeURIComponent(signValue(impostorSession))}`;
 
   await t.test('blocks non-owner from approving applicants with 403 Forbidden', async () => {

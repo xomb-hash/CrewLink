@@ -62,7 +62,7 @@ export async function getCurrentUser(request?: NextRequest | Request): Promise<U
     const sessionId = verifySignedValue(rawSession);
     if (!sessionId) return null;
 
-    const sessionData = storage.getSession(sessionId);
+    const sessionData = await storage.getSession(sessionId);
     if (!sessionData) return null;
 
     return sessionData.user;

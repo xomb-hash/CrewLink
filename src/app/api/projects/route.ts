@@ -11,27 +11,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Please sign in with GitHub.' }, { status: 401 });
   }
 
-  const projects = storage.getProjectsByOwner(user.login);
+  const projects = await storage.getProjectsByOwner(user.login);
 
-  const projectsWithDetails = projects.map((project) => {
-    const applicants = storage.getApplicantsByProject(project.id).map((applicant) => ({
-      id: applicant.id,
-      userLogin: applicant.userLogin,
-      userAvatar: applicant.userAvatar,
-      accountAge: applicant.accountAge,
-      publicRepoCount: applicant.publicRepoCount,
-      message: applicant.message,
-      status: applicant.status,
-      invitationSent: applicant.invitationSent,
-      createdAt: applicant.createdAt,
-    }));
+  const projectsWithDetails = await Promise.all(
+    projects.map(async (project) => {
+      const applicants = (await storage.getApplicantsByProject(project.id)).map((applicant) => ({
+        id: applicant.id,
+        userLogin: applicant.userLogin,
+        userAvatar: applicant.userAvatar,
+        accountAge: applicant.accountAge,
+        publicRepoCount: applicant.publicRepoCount,
+        message: applicant.message,
+        status: applicant.status,
+        invitationSent: applicant.invitationSent,
+        createdAt: applicant.createdAt,
+      }));
 
-    return {
-      ...project,
-      shareLinks: generateShareLinks(project),
-      applicants,
-    };
-  });
+      return {
+        ...project,
+        shareLinks: generateShareLinks(project),
+        applicants,
+      };
+    })
+  );
 
   return NextResponse.json({ projects: projectsWithDetails });
 }
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     const isPrivate = Boolean((body as { isPrivate?: boolean }).isPrivate);
 
-    const project = storage.createProject({
+    const project = await storage.createProject({
       ownerLogin: user.login,
       ownerId: user.id,
       ownerAvatar: user.avatarUrl,

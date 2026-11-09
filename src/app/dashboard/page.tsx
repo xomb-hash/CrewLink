@@ -11,30 +11,33 @@ export default async function DashboardPage() {
     redirect('/auth/github?redirect_to=/dashboard');
   }
 
-  const rawProjects = storage.getProjectsByOwner(user.login);
+  const rawProjects = await storage.getProjectsByOwner(user.login);
 
-  const projects = rawProjects.map((project) => {
-    const applicants = storage.getApplicantsByProject(project.id).map((applicant) => ({
-      id: applicant.id,
-      projectId: applicant.projectId,
-      userId: applicant.userId,
-      userLogin: applicant.userLogin,
-      userAvatar: applicant.userAvatar,
-      accountAge: applicant.accountAge,
-      publicRepoCount: applicant.publicRepoCount,
-      message: applicant.message,
-      status: applicant.status,
-      invitationSent: applicant.invitationSent,
-      createdAt: applicant.createdAt,
-      updatedAt: applicant.updatedAt,
-    }));
+  const projects = await Promise.all(
+    rawProjects.map(async (project) => {
+      const rawApplicants = await storage.getApplicantsByProject(project.id);
+      const applicants = rawApplicants.map((applicant) => ({
+        id: applicant.id,
+        projectId: applicant.projectId,
+        userId: applicant.userId,
+        userLogin: applicant.userLogin,
+        userAvatar: applicant.userAvatar,
+        accountAge: applicant.accountAge,
+        publicRepoCount: applicant.publicRepoCount,
+        message: applicant.message,
+        status: applicant.status,
+        invitationSent: applicant.invitationSent,
+        createdAt: applicant.createdAt,
+        updatedAt: applicant.updatedAt,
+      }));
 
-    return {
-      ...project,
-      shareLinks: generateShareLinks(project),
-      applicants,
-    };
-  });
+      return {
+        ...project,
+        shareLinks: generateShareLinks(project),
+        applicants,
+      };
+    })
+  );
 
   return <DashboardClient initialProjects={projects} />;
 }

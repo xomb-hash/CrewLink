@@ -1,0 +1,82 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id          String      @id
+  login       String      @unique
+  name        String?
+  avatarUrl   String?
+  createdAt   DateTime    @default(now())
+  publicRepos Int         @default(0)
+  accessToken String?
+  updatedAt   DateTime    @updatedAt
+  projects    Project[]
+  applicants  Applicant[]
+  sessions    Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Project {
+  id           String      @id @default(cuid())
+  slug         String      @unique
+  ownerLogin   String
+  ownerId      String
+  ownerAvatar  String?
+  repoFullName String
+  repoName     String
+  repoOwner    String
+  isPrivate    Boolean     @default(false)
+  joinMode     String      @default("referral")
+  screeningUrl String?
+  title        String
+  description  String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  applicants   Applicant[]
+
+  @@index([ownerLogin])
+  @@index([ownerId])
+  @@map("projects")
+}
+
+model Applicant {
+  id                String   @id @default(cuid())
+  projectId         String
+  userId            String
+  userLogin         String
+  userAvatar        String?
+  accountAge        String
+  publicRepoCount   Int      @default(0)
+  message           String?
+  status            String   @default("pending")
+  invitationSent    Boolean  @default(false)
+  invitationDetails Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("applicants")
+}

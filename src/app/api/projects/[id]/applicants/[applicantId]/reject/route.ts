@@ -12,7 +12,7 @@ export async function POST(
   }
 
   const { id: projectId, applicantId } = await params;
-  const project = storage.getProjectById(projectId);
+  const project = await storage.getProjectById(projectId);
   if (!project) {
     return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
   }
@@ -25,12 +25,12 @@ export async function POST(
     );
   }
 
-  const applicant = storage.getApplicantById(applicantId);
+  const applicant = await storage.getApplicantById(applicantId);
   if (!applicant || applicant.projectId !== projectId) {
     return NextResponse.json({ error: 'Applicant not found.' }, { status: 404 });
   }
 
-  const updated = storage.updateApplicantStatus(applicant.id, 'rejected');
+  const updated = await storage.updateApplicantStatus(applicant.id, 'rejected');
 
   return NextResponse.json({
     success: true,

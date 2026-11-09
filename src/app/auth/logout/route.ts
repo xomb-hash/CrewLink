@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if (rawSession) {
     const sessionId = verifySignedValue(rawSession);
     if (sessionId) {
-      storage.deleteSession(sessionId);
+      await storage.deleteSession(sessionId);
     }
   }
 

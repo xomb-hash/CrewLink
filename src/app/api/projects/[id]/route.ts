@@ -13,7 +13,7 @@ export async function GET(
   }
 
   const { id } = await params;
-  const project = storage.getProjectById(id);
+  const project = await storage.getProjectById(id);
   if (!project) {
     return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
   }
@@ -25,7 +25,8 @@ export async function GET(
     );
   }
 
-  const applicants = storage.getApplicantsByProject(project.id).map((applicant) => ({
+  const rawApplicants = await storage.getApplicantsByProject(project.id);
+  const applicants = rawApplicants.map((applicant) => ({
     id: applicant.id,
     userLogin: applicant.userLogin,
     userAvatar: applicant.userAvatar,

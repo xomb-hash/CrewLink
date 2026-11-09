@@ -21,8 +21,8 @@ test('Authentication and session signing (TypeScript)', async (t) => {
     assert.equal(verifySignedValue(null), null);
   });
 
-  await t.test('retrieves user from session storage via valid session ID', () => {
-    const user = storage.saveUser({
+  await t.test('retrieves user from session storage via valid session ID', async () => {
+    const user = await storage.saveUser({
       id: 555,
       login: 'dana-dev',
       name: 'Dana',
@@ -31,8 +31,8 @@ test('Authentication and session signing (TypeScript)', async (t) => {
       publicRepos: 12,
     });
 
-    const sessionId = storage.createSession(user.id);
-    const sessionData = storage.getSession(sessionId);
+    const sessionId = await storage.createSession(user.id);
+    const sessionData = await storage.getSession(sessionId);
 
     assert.ok(sessionData);
     assert.equal(sessionData.user.login, 'dana-dev');

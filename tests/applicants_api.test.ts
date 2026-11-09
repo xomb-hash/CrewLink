@@ -7,7 +7,6 @@ import { FakeGitHubApi } from '../src/github/fake';
 import { GET as getJoinData } from '../src/app/api/join/[slug]/route';
 import { POST as applyToProject } from '../src/app/api/join/[slug]/apply/route';
 import { POST as approveApplicant } from '../src/app/api/projects/[id]/applicants/[applicantId]/approve/route';
-import { POST as rejectApplicant } from '../src/app/api/projects/[id]/applicants/[applicantId]/reject/route';
 import { signValue } from '../src/lib/auth';
 
 test('Applicants API route handlers (TypeScript)', async (t) => {
@@ -15,7 +14,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
   setGitHubClient(fakeGitHub);
   storage.reset();
 
-  const owner = storage.saveUser({
+  const owner = await storage.saveUser({
     id: 101,
     login: 'alice-owner',
     name: 'Alice',
@@ -24,7 +23,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     accessToken: 'fake-token-alice',
   });
 
-  const applicantUser = storage.saveUser({
+  const applicantUser = await storage.saveUser({
     id: 202,
     login: 'bob-builder',
     name: 'Bob',
@@ -33,7 +32,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     accessToken: 'fake-token-bob',
   });
 
-  const project = storage.createProject({
+  const project = await storage.createProject({
     ownerLogin: owner.login,
     ownerId: owner.id,
     repoFullName: 'alice-owner/rocket-ship',
@@ -44,10 +43,10 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     title: 'Rocket Ship',
   });
 
-  const applicantSession = storage.createSession(applicantUser.id);
+  const applicantSession = await storage.createSession(applicantUser.id);
   const applicantCookie = `crewlink_session=${encodeURIComponent(signValue(applicantSession))}`;
 
-  const ownerSession = storage.createSession(owner.id);
+  const ownerSession = await storage.createSession(owner.id);
   const ownerCookie = `crewlink_session=${encodeURIComponent(signValue(ownerSession))}`;
 
   let applicantId = '';
@@ -80,8 +79,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     assert.equal(data.applicant.status, 'pending');
     applicantId = data.applicant.id;
 
-    // Verify stored applicant data has account age and public repo count
-    const stored = storage.getApplicantById(applicantId);
+    const stored = await storage.getApplicantById(applicantId);
     assert.ok(stored?.accountAge);
     assert.equal(stored?.publicRepoCount, 8);
     assert.equal(stored?.userLogin, 'bob-builder');
@@ -122,7 +120,6 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     assert.equal(data.applicant.status, 'approved');
     assert.equal(data.applicant.invitationSent, true);
 
-    // Verify collaborator invitation was recorded by fake GitHub
     assert.equal(fakeGitHub.invitations.length, 1);
     assert.equal(fakeGitHub.invitations[0].username, 'bob-builder');
   });

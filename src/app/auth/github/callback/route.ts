@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const accessToken = await client.exchangeCodeForToken({ code, redirectUri });
     const ghUser = await client.getAuthenticatedUser(accessToken);
 
-    const savedUser = storage.saveUser({
+    const savedUser = await storage.saveUser({
       id: ghUser.id,
       login: ghUser.login,
       name: ghUser.name,
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       accessToken,
     });
 
-    const sessionId = storage.createSession(savedUser.id);
+    const sessionId = await storage.createSession(savedUser.id);
     const signedSession = signValue(sessionId);
 
     const response = NextResponse.redirect(new URL(redirectTarget, config.appUrl));

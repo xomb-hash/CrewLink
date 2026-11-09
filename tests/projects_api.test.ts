@@ -12,7 +12,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
   setGitHubClient(fakeGitHub);
   storage.reset();
 
-  const owner = storage.saveUser({
+  const owner = await storage.saveUser({
     id: 101,
     login: 'alice-owner',
     name: 'Alice Owner',
@@ -21,7 +21,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
     accessToken: 'fake-token-alice',
   });
 
-  const sessionId = storage.createSession(owner.id);
+  const sessionId = await storage.createSession(owner.id);
   const sessionCookie = `crewlink_session=${encodeURIComponent(signValue(sessionId))}`;
 
   await t.test('creates project successfully when user is admin', async () => {

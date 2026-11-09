@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const project = storage.getProjectBySlug(slug);
+  const project = await storage.getProjectBySlug(slug);
   if (!project) {
     return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
   }
@@ -18,7 +18,7 @@ export async function GET(
 
   if (currentUser) {
     isOwner = project.ownerLogin.toLowerCase() === currentUser.login.toLowerCase();
-    const applicant = storage.findApplicant(project.id, currentUser.id);
+    const applicant = await storage.findApplicant(project.id, currentUser.id);
     if (applicant) {
       existingApplication = {
         id: applicant.id,

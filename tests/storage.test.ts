@@ -5,8 +5,8 @@ import { storage } from '../src/lib/storage';
 test('Storage CRUD operations (TypeScript)', async (t) => {
   storage.reset();
 
-  await t.test('saves and retrieves user', () => {
-    const user = storage.saveUser({
+  await t.test('saves and retrieves user', async () => {
+    const user = await storage.saveUser({
       id: 101,
       login: 'alice',
       name: 'Alice',
@@ -18,25 +18,25 @@ test('Storage CRUD operations (TypeScript)', async (t) => {
     assert.equal(user.id, '101');
     assert.equal(user.login, 'alice');
 
-    const fetched = storage.getUser('101');
+    const fetched = await storage.getUser('101');
     assert.ok(fetched);
-    assert.equal(fetched.login, 'alice');
+    assert.equal(fetched?.login, 'alice');
   });
 
-  await t.test('creates and verifies session', () => {
-    const sessionId = storage.createSession('101');
+  await t.test('creates and verifies session', async () => {
+    const sessionId = await storage.createSession('101');
     assert.ok(sessionId);
 
-    const sessionData = storage.getSession(sessionId);
+    const sessionData = await storage.getSession(sessionId);
     assert.ok(sessionData);
     assert.equal(sessionData.user.login, 'alice');
 
-    storage.deleteSession(sessionId);
-    assert.equal(storage.getSession(sessionId), null);
+    await storage.deleteSession(sessionId);
+    assert.equal(await storage.getSession(sessionId), null);
   });
 
-  await t.test('creates and queries projects', () => {
-    const project = storage.createProject({
+  await t.test('creates and queries projects', async () => {
+    const project = await storage.createProject({
       ownerLogin: 'alice',
       ownerId: '101',
       repoFullName: 'alice/space-rover',
@@ -52,20 +52,21 @@ test('Storage CRUD operations (TypeScript)', async (t) => {
     assert.ok(project.slug.startsWith('space-rover-'));
     assert.equal(project.isPrivate, false);
 
-    const byId = storage.getProjectById(project.id);
+    const byId = await storage.getProjectById(project.id);
     assert.equal(byId?.title, 'Space Rover');
 
-    const bySlug = storage.getProjectBySlug(project.slug);
+    const bySlug = await storage.getProjectBySlug(project.slug);
     assert.equal(bySlug?.id, project.id);
 
-    const ownerProjects = storage.getProjectsByOwner('alice');
+    const ownerProjects = await storage.getProjectsByOwner('alice');
     assert.equal(ownerProjects.length, 1);
   });
 
-  await t.test('creates, queries, and updates applicants', () => {
-    const project = storage.listProjects()[0];
+  await t.test('creates, queries, and updates applicants', async () => {
+    const projects = await storage.listProjects();
+    const project = projects[0];
 
-    const applicant = storage.createApplicant({
+    const applicant = await storage.createApplicant({
       projectId: project.id,
       userId: '202',
       userLogin: 'bob',
@@ -79,11 +80,11 @@ test('Storage CRUD operations (TypeScript)', async (t) => {
     assert.equal(applicant.status, 'pending');
     assert.equal(applicant.accountAge, '1 year, 2 months');
 
-    const found = storage.findApplicant(project.id, '202');
+    const found = await storage.findApplicant(project.id, '202');
     assert.ok(found);
     assert.equal(found.id, applicant.id);
 
-    const updated = storage.updateApplicantStatus(applicant.id, 'approved', { inviteId: 999 });
+    const updated = await storage.updateApplicantStatus(applicant.id, 'approved', { inviteId: 999 });
     assert.equal(updated?.status, 'approved');
     assert.equal(updated?.invitationSent, true);
   });

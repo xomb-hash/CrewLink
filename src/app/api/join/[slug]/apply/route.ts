@@ -13,7 +13,7 @@ export async function POST(
   }
 
   const { slug } = await params;
-  const project = storage.getProjectBySlug(slug);
+  const project = await storage.getProjectBySlug(slug);
   if (!project) {
     return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
   }
@@ -27,7 +27,7 @@ export async function POST(
   }
 
   // Prevent duplicate applications
-  const existing = storage.findApplicant(project.id, currentUser.id);
+  const existing = await storage.findApplicant(project.id, currentUser.id);
   if (existing) {
     return NextResponse.json(
       { error: 'You have already applied to this project.' },
@@ -49,7 +49,7 @@ export async function POST(
 
   const accountAge = formatAccountAge(currentUser.createdAt);
 
-  const applicant = storage.createApplicant({
+  const applicant = await storage.createApplicant({
     projectId: project.id,
     userId: currentUser.id,
     userLogin: currentUser.login,
