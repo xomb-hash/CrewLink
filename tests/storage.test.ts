@@ -47,11 +47,19 @@ test('Storage CRUD operations (TypeScript)', async (t) => {
       joinMode: 'referral',
       title: 'Space Rover',
       description: 'Exploring Mars',
+      creatorNote: 'Mechanical engineer looking for a co-builder.',
+      requireResume: true,
+      requireGithubLink: true,
+      requireLinkedinLink: true,
     });
 
     assert.ok(project.id.startsWith('prj_'));
     assert.ok(project.slug.startsWith('space-rover-'));
     assert.equal(project.isPrivate, false);
+    assert.equal(project.creatorNote, 'Mechanical engineer looking for a co-builder.');
+    assert.equal(project.requireResume, true);
+    assert.equal(project.requireGithubLink, true);
+    assert.equal(project.requireLinkedinLink, true);
 
     const byId = await storage.getProjectById(project.id);
     assert.equal(byId?.title, 'Space Rover');
@@ -75,11 +83,18 @@ test('Storage CRUD operations (TypeScript)', async (t) => {
       accountAge: '1 year, 2 months',
       publicRepoCount: 7,
       message: 'Looking forward to building this!',
+      githubUrl: 'https://github.com/bob',
+      linkedinUrl: 'https://www.linkedin.com/in/bob',
+      resumeFileName: 'bob-resume.pdf',
+      resumePath: 'aaaa-bbbb.pdf',
     });
 
     assert.ok(applicant.id.startsWith('app_'));
     assert.equal(applicant.status, 'pending');
     assert.equal(applicant.accountAge, '1 year, 2 months');
+    assert.equal(applicant.githubUrl, 'https://github.com/bob');
+    assert.equal(applicant.linkedinUrl, 'https://www.linkedin.com/in/bob');
+    assert.equal(applicant.resumeFileName, 'bob-resume.pdf');
 
     const found = await storage.findApplicant(project.id, '202');
     assert.ok(found);

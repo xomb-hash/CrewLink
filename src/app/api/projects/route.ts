@@ -4,7 +4,27 @@ import { storage } from '@/lib/storage';
 import { getGitHubClient } from '@/github/index';
 import { validateProjectInput } from '@/lib/validation';
 import { generateShareLinks } from '@/projects/share';
+import { projectLogoUrl } from '@/projects/logo';
+import { deleteLogo, LogoUploadError, saveLogo } from '@/lib/uploads';
 import { rateLimiter } from '@/lib/rateLimit';
+
+function parseRoles(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10);
+  }
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10);
+      }
+    } catch {
+      // Fall back to comma-separated input.
+    }
+    return raw.split(',').map((r) => r.trim()).filter(Boolean).slice(0, 10);
+  }
+  return [];
+}
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser(request);
@@ -23,13 +43,18 @@ export async function GET(request: NextRequest) {
         accountAge: applicant.accountAge,
         publicRepoCount: applicant.publicRepoCount,
         message: applicant.message,
+        githubUrl: applicant.githubUrl,
+        linkedinUrl: applicant.linkedinUrl,
+        resumeFileName: applicant.resumeFileName,
         status: applicant.status,
         invitationSent: applicant.invitationSent,
         createdAt: applicant.createdAt,
       }));
 
+      const { logoPath: _logoPath, ...publicProject } = project;
       return {
-        ...project,
+        ...publicProject,
+        logoUrl: projectLogoUrl(project),
         shareLinks: generateShareLinks(project),
         applicants,
       };
@@ -56,11 +81,34 @@ export async function POST(request: NextRequest) {
   }
 
 
-  let body: unknown = {};
+  let body: Record<string, unknown> = {};
+  let logoFile: File | null = null;
+  const contentType = request.headers.get('content-type') || '';
   try {
-    body = await request.json();
+    if (contentType.includes('multipart/form-data')) {
+      const form = await request.formData();
+      body = {
+        repoFullName: String(form.get('repoFullName') || ''),
+        joinMode: form.get('joinMode') === 'screening' ? 'screening' : 'referral',
+        screeningUrl: String(form.get('screeningUrl') || ''),
+        title: String(form.get('title') || ''),
+        description: String(form.get('description') || ''),
+        creatorNote: String(form.get('creatorNote') || ''),
+        isPrivate: form.get('isPrivate') === 'true',
+        requireResume: form.get('requireResume') === 'true',
+        requireGithubLink: form.get('requireGithubLink') === 'true',
+        requireLinkedinLink: form.get('requireLinkedinLink') === 'true',
+        roles: parseRoles(form.get('roles')),
+      };
+      const candidate = form.get('logo');
+      if (candidate && typeof candidate === 'object' && 'arrayBuffer' in candidate) {
+        logoFile = candidate as File;
+      }
+    } else {
+      body = (await request.json()) as Record<string, unknown>;
+    }
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 
   const validation = validateProjectInput(body as Parameters<typeof validateProjectInput>[0]);
@@ -70,6 +118,7 @@ export async function POST(request: NextRequest) {
 
   const { repoFullName, joinMode, screeningUrl, title, description } = validation.data;
   const [owner, repo] = repoFullName.split('/');
+  let savedLogo: { storedName: string } | null = null;
 
   try {
     const client = getGitHubClient();
@@ -83,11 +132,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isPrivate = Boolean((body as { isPrivate?: boolean }).isPrivate);
-    const rawRoles = (body as { roles?: unknown }).roles;
-    const roles = Array.isArray(rawRoles)
-      ? rawRoles.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10)
-      : [];
+    if (logoFile) {
+      try {
+        savedLogo = await saveLogo(logoFile);
+      } catch (err: unknown) {
+        if (err instanceof LogoUploadError) {
+          return NextResponse.json({ errors: [err.message] }, { status: 400 });
+        }
+        throw err;
+      }
+    }
+
+    const isPrivate = Boolean(body.isPrivate);
+    const roles = parseRoles(body.roles);
 
     const project = await storage.createProject({
       ownerLogin: user.login,
@@ -103,21 +160,28 @@ export async function POST(request: NextRequest) {
       roles,
       title: title || repo,
       description,
+      creatorNote: validation.data.creatorNote,
+      requireResume: validation.data.requireResume,
+      requireGithubLink: validation.data.requireGithubLink,
+      requireLinkedinLink: validation.data.requireLinkedinLink,
+      logoPath: savedLogo?.storedName,
     });
 
-
     const shareLinks = generateShareLinks(project);
+    const { logoPath: _logoPath, ...publicProject } = project;
 
     return NextResponse.json(
       {
         project: {
-          ...project,
+          ...publicProject,
+          logoUrl: projectLogoUrl(project),
           shareLinks,
         },
       },
       { status: 201 }
     );
   } catch (err: unknown) {
+    if (savedLogo) await deleteLogo(savedLogo.storedName);
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Project creation failed:', msg);
     return NextResponse.json({ error: `Failed to create project: ${msg}` }, { status: 500 });

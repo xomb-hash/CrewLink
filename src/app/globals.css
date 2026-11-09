@@ -1,15 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@116,300;116,400;116,500&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #0d1117;
-  --foreground: #f0f6fc;
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-background: #000000;
+  --color-foreground: #f0f0f0;
+
+  --color-card: #0a0a0a;
+  --color-card-foreground: #f0f0f0;
+  --color-popover: #0d0d0d;
+  --color-popover-foreground: #f0f0f0;
+  --color-primary: #f0f0f0;
+  --color-primary-foreground: #000000;
+  --color-secondary: #161616;
+  --color-secondary-foreground: #f0f0f0;
+  --color-muted: #161616;
+  --color-muted-foreground: #888888;
+  --color-accent: #1a1a1a;
+  --color-accent-foreground: #f0f0f0;
+  --color-destructive: #b91c1c;
+  --color-border: #262626;
+  --color-input: #262626;
+  --color-ring: #f0f0f0;
+
+  --color-ink: #f0f0f0;
+  --color-ink-soft: #a3a3a3;
+  --color-ink-muted: #888888;
+  --color-ink-dim: #555555;
+  --color-line: #1a1a1a;
+  --color-line-soft: #262626;
+  --color-panel: #0a0a0a;
+  --color-panel-2: #111111;
+
+  --font-sans: 'Archivo', system-ui, sans-serif;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+@layer base {
+  html {
+    height: 100%;
+  }
+
+  body {
+    min-height: 100%;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-stretch: 116%;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    font-stretch: 116%;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-ink-dim);
+  }
+
+  ::selection {
+    background: #f0f0f0;
+    color: #000;
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    outline: 1px solid #f0f0f0;
+    outline-offset: 3px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 99px;
+  }
+}
+
+/* Create dialog: native <dialog> is top-layer fixed; explicit inset + auto
+   margins keep it dead centre even though Tailwind's preflight strips margins. */
+dialog.cl-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(480px, calc(100vw - 32px));
+  height: fit-content;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid #222;
+  border-radius: 12px;
+  background: #0a0a0a;
+  color: #f0f0f0;
+  padding: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+dialog.cl-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(3px);
+}
+
+@keyframes cl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cl-rise {
+  animation: cl-rise 0.35s ease backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

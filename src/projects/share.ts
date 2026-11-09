@@ -2,10 +2,13 @@ import { config } from '../config/index';
 import type { Project, ShareLinks } from '../types/index';
 
 export function generateShareLinks(
-  project: Pick<Project, 'slug' | 'title'>,
+  project: Pick<Project, 'slug' | 'title' | 'referralCode'>,
   baseUrl = config.appUrl
 ): ShareLinks {
-  const joinUrl = `${baseUrl}/join/${project.slug}`;
+  const code = project.referralCode?.trim().toUpperCase();
+  const joinUrl = code
+    ? `${baseUrl}/join/${project.slug}?ref=${encodeURIComponent(code)}`
+    : `${baseUrl}/join/${project.slug}`;
   const textPrompt = `Build with us on ${project.title}:`;
   const fullMessage = `${textPrompt} ${joinUrl}`;
 

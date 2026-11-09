@@ -4,6 +4,7 @@ import path from 'node:path';
 import { prisma } from './prisma';
 import { encryptSecret, decryptSecret } from './crypto';
 import { logger } from './logger';
+import { generateReferralCode } from '../projects/referral';
 import type { User, Project, Applicant, Session, Draft, DraftStatus } from '../types/index';
 
 interface StorageData {
@@ -282,6 +283,12 @@ export class Storage {
     roles?: string[];
     title?: string;
     description?: string;
+    creatorNote?: string;
+    requireResume?: boolean;
+    requireGithubLink?: boolean;
+    requireLinkedinLink?: boolean;
+    referralCode?: string;
+    logoPath?: string;
   }): Promise<Project> {
     const id = `prj_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
     const baseSlug = (project.repoName || 'project')
@@ -292,6 +299,8 @@ export class Storage {
     const roles = Array.isArray(project.roles)
       ? project.roles.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10)
       : [];
+    const joinMode = project.joinMode === 'screening' ? 'screening' : 'referral';
+    const referralCode = joinMode === 'referral' ? project.referralCode || generateReferralCode() : '';
 
     if (this.isPrismaActive()) {
       try {
@@ -306,11 +315,17 @@ export class Storage {
             repoName: project.repoName,
             repoOwner: project.repoOwner,
             isPrivate: Boolean(project.isPrivate),
-            joinMode: project.joinMode === 'screening' ? 'screening' : 'referral',
-            screeningUrl: project.joinMode === 'screening' ? project.screeningUrl || null : null,
+            joinMode,
+            screeningUrl: joinMode === 'screening' ? project.screeningUrl || null : null,
             roles,
             title: project.title || project.repoName,
             description: project.description || null,
+            creatorNote: project.creatorNote || null,
+            requireResume: Boolean(project.requireResume),
+            requireGithubLink: Boolean(project.requireGithubLink),
+            requireLinkedinLink: Boolean(project.requireLinkedinLink),
+            referralCode: referralCode || null,
+            logoPath: project.logoPath || null,
           },
         });
         return {
@@ -328,6 +343,12 @@ export class Storage {
           roles: created.roles,
           title: created.title,
           description: created.description ?? undefined,
+          creatorNote: created.creatorNote ?? undefined,
+          requireResume: created.requireResume,
+          requireGithubLink: created.requireGithubLink,
+          requireLinkedinLink: created.requireLinkedinLink,
+          referralCode: created.referralCode ?? undefined,
+          logoPath: created.logoPath ?? undefined,
           createdAt: created.createdAt.toISOString(),
           updatedAt: created.updatedAt.toISOString(),
         };
@@ -348,11 +369,17 @@ export class Storage {
       repoName: project.repoName,
       repoOwner: project.repoOwner,
       isPrivate: Boolean(project.isPrivate),
-      joinMode: project.joinMode === 'screening' ? 'screening' : 'referral',
-      screeningUrl: project.joinMode === 'screening' ? project.screeningUrl || '' : '',
+      joinMode,
+      screeningUrl: joinMode === 'screening' ? project.screeningUrl || '' : '',
       roles,
       title: project.title || project.repoName,
       description: project.description || '',
+      creatorNote: project.creatorNote || '',
+      requireResume: Boolean(project.requireResume),
+      requireGithubLink: Boolean(project.requireGithubLink),
+      requireLinkedinLink: Boolean(project.requireLinkedinLink),
+      referralCode,
+      logoPath: project.logoPath || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -382,6 +409,12 @@ export class Storage {
           roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
+          creatorNote: p.creatorNote ?? undefined,
+          requireResume: p.requireResume,
+          requireGithubLink: p.requireGithubLink,
+          requireLinkedinLink: p.requireLinkedinLink,
+          referralCode: p.referralCode ?? undefined,
+          logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
         };
@@ -415,6 +448,12 @@ export class Storage {
           roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
+          creatorNote: p.creatorNote ?? undefined,
+          requireResume: p.requireResume,
+          requireGithubLink: p.requireGithubLink,
+          requireLinkedinLink: p.requireLinkedinLink,
+          referralCode: p.referralCode ?? undefined,
+          logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
         };
@@ -450,6 +489,12 @@ export class Storage {
           roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
+          creatorNote: p.creatorNote ?? undefined,
+          requireResume: p.requireResume,
+          requireGithubLink: p.requireGithubLink,
+          requireLinkedinLink: p.requireLinkedinLink,
+          referralCode: p.referralCode ?? undefined,
+          logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
         }));
@@ -463,6 +508,26 @@ export class Storage {
     return this.data.projects.filter(
       (p) => p.ownerLogin.toLowerCase() === String(ownerLogin).toLowerCase()
     );
+  }
+
+  async updateProjectReferralCode(id: string, referralCode: string): Promise<Project | null> {
+    if (this.isPrismaActive()) {
+      try {
+        await prisma.project.update({ where: { id }, data: { referralCode } });
+        return this.getProjectById(id);
+      } catch (err) {
+        logger.error('Prisma updateProjectReferralCode failed', err, { projectId: id });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const project = this.data.projects.find((p) => p.id === id);
+    if (!project) return null;
+    project.referralCode = referralCode;
+    project.updatedAt = new Date().toISOString();
+    this.save();
+    return project;
   }
 
   async listProjects(): Promise<Project[]> {
@@ -484,6 +549,12 @@ export class Storage {
           roles: p.roles,
           title: p.title,
           description: p.description ?? undefined,
+          creatorNote: p.creatorNote ?? undefined,
+          requireResume: p.requireResume,
+          requireGithubLink: p.requireGithubLink,
+          requireLinkedinLink: p.requireLinkedinLink,
+          referralCode: p.referralCode ?? undefined,
+          logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
         }));
@@ -506,6 +577,10 @@ export class Storage {
     accountAge: string;
     publicRepoCount: number;
     message?: string;
+    githubUrl?: string;
+    linkedinUrl?: string;
+    resumeFileName?: string;
+    resumePath?: string;
   }): Promise<Applicant> {
     const id = `app_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
     const userId = String(applicant.userId);
@@ -522,6 +597,10 @@ export class Storage {
             accountAge: applicant.accountAge || 'Unknown',
             publicRepoCount: Number(applicant.publicRepoCount) || 0,
             message: applicant.message || null,
+            githubUrl: applicant.githubUrl || null,
+            linkedinUrl: applicant.linkedinUrl || null,
+            resumeFileName: applicant.resumeFileName || null,
+            resumePath: applicant.resumePath || null,
             status: 'pending',
             invitationSent: false,
           },
@@ -535,6 +614,10 @@ export class Storage {
           accountAge: created.accountAge,
           publicRepoCount: created.publicRepoCount,
           message: created.message ?? undefined,
+          githubUrl: created.githubUrl ?? undefined,
+          linkedinUrl: created.linkedinUrl ?? undefined,
+          resumeFileName: created.resumeFileName ?? undefined,
+          resumePath: created.resumePath ?? undefined,
           status: created.status as 'pending' | 'approved' | 'rejected',
           invitationSent: created.invitationSent,
           invitationDetails: created.invitationDetails,
@@ -557,6 +640,10 @@ export class Storage {
       accountAge: applicant.accountAge || 'Unknown',
       publicRepoCount: Number(applicant.publicRepoCount) || 0,
       message: applicant.message || '',
+      githubUrl: applicant.githubUrl || '',
+      linkedinUrl: applicant.linkedinUrl || '',
+      resumeFileName: applicant.resumeFileName || '',
+      resumePath: applicant.resumePath || '',
       status: 'pending',
       invitationSent: false,
       invitationDetails: null,
@@ -583,6 +670,10 @@ export class Storage {
           accountAge: a.accountAge,
           publicRepoCount: a.publicRepoCount,
           message: a.message ?? undefined,
+          githubUrl: a.githubUrl ?? undefined,
+          linkedinUrl: a.linkedinUrl ?? undefined,
+          resumeFileName: a.resumeFileName ?? undefined,
+          resumePath: a.resumePath ?? undefined,
           status: a.status as 'pending' | 'approved' | 'rejected',
           invitationSent: a.invitationSent,
           invitationDetails: a.invitationDetails,
@@ -615,6 +706,10 @@ export class Storage {
           accountAge: a.accountAge,
           publicRepoCount: a.publicRepoCount,
           message: a.message ?? undefined,
+          githubUrl: a.githubUrl ?? undefined,
+          linkedinUrl: a.linkedinUrl ?? undefined,
+          resumeFileName: a.resumeFileName ?? undefined,
+          resumePath: a.resumePath ?? undefined,
           status: a.status as 'pending' | 'approved' | 'rejected',
           invitationSent: a.invitationSent,
           invitationDetails: a.invitationDetails,
@@ -629,6 +724,44 @@ export class Storage {
 
     this.ensureLoaded();
     return this.data.applicants.filter((a) => a.projectId === projectId);
+  }
+
+  async getApplicantsByUser(userId: string | number): Promise<Applicant[]> {
+    const uId = String(userId);
+
+    if (this.isPrismaActive()) {
+      try {
+        const list = await prisma.applicant.findMany({
+          where: { userId: uId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return list.map((a) => ({
+          id: a.id,
+          projectId: a.projectId,
+          userId: a.userId,
+          userLogin: a.userLogin,
+          userAvatar: a.userAvatar ?? undefined,
+          accountAge: a.accountAge,
+          publicRepoCount: a.publicRepoCount,
+          message: a.message ?? undefined,
+          githubUrl: a.githubUrl ?? undefined,
+          linkedinUrl: a.linkedinUrl ?? undefined,
+          resumeFileName: a.resumeFileName ?? undefined,
+          resumePath: a.resumePath ?? undefined,
+          status: a.status as 'pending' | 'approved' | 'rejected',
+          invitationSent: a.invitationSent,
+          invitationDetails: a.invitationDetails,
+          createdAt: a.createdAt.toISOString(),
+          updatedAt: a.updatedAt.toISOString(),
+        }));
+      } catch (err) {
+        logger.error('Prisma getApplicantsByUser failed', err, { userId: uId });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    return this.data.applicants.filter((a) => a.userId === uId);
   }
 
   async findApplicant(projectId: string, userId: string | number): Promise<Applicant | null> {
@@ -649,6 +782,10 @@ export class Storage {
           accountAge: a.accountAge,
           publicRepoCount: a.publicRepoCount,
           message: a.message ?? undefined,
+          githubUrl: a.githubUrl ?? undefined,
+          linkedinUrl: a.linkedinUrl ?? undefined,
+          resumeFileName: a.resumeFileName ?? undefined,
+          resumePath: a.resumePath ?? undefined,
           status: a.status as 'pending' | 'approved' | 'rejected',
           invitationSent: a.invitationSent,
           invitationDetails: a.invitationDetails,
@@ -693,6 +830,10 @@ export class Storage {
           accountAge: updated.accountAge,
           publicRepoCount: updated.publicRepoCount,
           message: updated.message ?? undefined,
+          githubUrl: updated.githubUrl ?? undefined,
+          linkedinUrl: updated.linkedinUrl ?? undefined,
+          resumeFileName: updated.resumeFileName ?? undefined,
+          resumePath: updated.resumePath ?? undefined,
           status: updated.status as 'pending' | 'approved' | 'rejected',
           invitationSent: updated.invitationSent,
           invitationDetails: updated.invitationDetails,
@@ -953,5 +1094,10 @@ export class Storage {
   }
 }
 
-export const storage = new Storage();
+const globalForStorage = globalThis as unknown as {
+  crewlinkStorage?: Storage;
+};
+
+export const storage = globalForStorage.crewlinkStorage ?? new Storage();
+globalForStorage.crewlinkStorage = storage;
 export default storage;

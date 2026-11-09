@@ -38,7 +38,7 @@ Settings come from `.env` (copy `.env.example`). GitHub App / OAuth setup steps 
 
 ```text
 src/app/          Next.js App Router (pages and API route handlers)
-src/components/   reusable React UI components (ProjectCard, VisibilityBadge, Navbar, Footer, AdvisoryBanners)
+src/components/   reusable React UI components (AppShell, Topbar, Sidebar, MobileNav, CreateProjectForm, ProjectCard, VisibilityBadge, AdvisoryBanners)
 src/config/       typed settings from .env
 src/lib/          storage, validation, session auth helpers
 src/github/       everything that talks to GitHub, including the invitation and test mock
@@ -80,7 +80,7 @@ tests/            automated tests using node:test and tsx (fake GitHub)
 
 ## Status
 
-**Built:** Next.js App Router + TypeScript + Tailwind CSS migration complete. PostgreSQL (Supabase) integration with Prisma ORM, AES-256-GCM token encryption at rest, sliding-window rate limiting, GitHub webhook listener with HMAC-SHA256 signature verification, `/api/health` monitoring, structured JSON logging, GitHub Actions CI/CD workflow, create project from repo (with admin-access check), sign in with GitHub, join link and join page, request to join, owner dashboard with Approve and Reject plus the GitHub invitation call, lock and globe icons, share links for LinkedIn, X and WhatsApp, 51 automatic tests (fake GitHub).
+**Built:** Next.js App Router + TypeScript + Tailwind CSS migration complete. PostgreSQL (Supabase) integration with Prisma ORM, AES-256-GCM token encryption at rest, sliding-window rate limiting, GitHub webhook listener with HMAC-SHA256 signature verification, `/api/health` monitoring, structured JSON logging, GitHub Actions CI/CD workflow, create project from repo (with admin-access check) with optional logo upload or generated art, sign in with GitHub, join link and join page with project overview and creator card, request to join with optional GitHub/LinkedIn links and PDF resume (owner can mark each as required), referral invite codes embedded in join links with owner-only regeneration, owner dashboard with Approve and Reject plus the GitHub invitation call, "Projects you joined" section, Discover page for public projects, notification bell popover, lock and globe icons, share links for LinkedIn, X and WhatsApp, 90 automatic tests (fake GitHub).
 
 **Not built (do not touch making of agent):** testing against real GitHub, the posting agent (done by friend), Google AI drafting, platform connections, college spaces and verified clubs, the events list, people-to-people matching.
 

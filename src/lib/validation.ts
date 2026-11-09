@@ -38,6 +38,10 @@ export interface ProjectInput {
   title?: string;
   description?: string;
   isPrivate?: boolean;
+  creatorNote?: string;
+  requireResume?: boolean;
+  requireGithubLink?: boolean;
+  requireLinkedinLink?: boolean;
 }
 
 export function validateProjectInput(data: Partial<ProjectInput>) {
@@ -95,6 +99,11 @@ export function validateProjectInput(data: Partial<ProjectInput>) {
       ? data.screeningNote.trim().slice(0, 280)
       : '';
 
+  const creatorNote =
+    data.creatorNote && typeof data.creatorNote === 'string'
+      ? data.creatorNote.trim().slice(0, 600)
+      : '';
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -106,20 +115,75 @@ export function validateProjectInput(data: Partial<ProjectInput>) {
       title,
       description,
       isPrivate: Boolean(data.isPrivate),
+      creatorNote,
+      requireResume: Boolean(data.requireResume),
+      requireGithubLink: Boolean(data.requireGithubLink),
+      requireLinkedinLink: Boolean(data.requireLinkedinLink),
     },
   };
 }
 
 
-export function validateApplicantInput(data: { message?: string }) {
+export function normalizeProfileUrl(
+  raw: unknown,
+  kind: 'github' | 'linkedin'
+): { url: string; error?: string } {
+  const value = typeof raw === 'string' ? raw.trim() : '';
+  if (!value) return { url: '' };
+
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value.replace(/^\/+/, '')}`;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(withProtocol);
+  } catch {
+    return { url: '', error: kind === 'github' ? 'GitHub link must be a valid URL.' : 'LinkedIn link must be a valid URL.' };
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return { url: '', error: kind === 'github' ? 'GitHub link must be a valid URL.' : 'LinkedIn link must be a valid URL.' };
+  }
+
+  const host = parsed.hostname.toLowerCase();
+  const segments = parsed.pathname.split('/').filter(Boolean);
+
+  if (kind === 'github') {
+    if ((host !== 'github.com' && host !== 'www.github.com') || segments.length < 1) {
+      return { url: '', error: 'GitHub link must point to a github.com profile.' };
+    }
+    return { url: `https://github.com/${segments[0]}` };
+  }
+
+  if (host !== 'linkedin.com' && host !== 'www.linkedin.com') {
+    return { url: '', error: 'LinkedIn link must point to a linkedin.com profile.' };
+  }
+  if (segments.length < 2 || segments[0].toLowerCase() !== 'in') {
+    return { url: '', error: 'LinkedIn link must point to a linkedin.com/in/ profile.' };
+  }
+  return { url: `https://www.linkedin.com/${segments[0]}/${segments[1]}` };
+}
+
+export function validateApplicantInput(data: {
+  message?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+}) {
   const errors: string[] = [];
   const message = typeof data.message === 'string' ? data.message.trim().slice(0, 300) : '';
+
+  const github = normalizeProfileUrl(data.githubUrl, 'github');
+  if (github.error) errors.push(github.error);
+
+  const linkedin = normalizeProfileUrl(data.linkedinUrl, 'linkedin');
+  if (linkedin.error) errors.push(linkedin.error);
 
   return {
     isValid: errors.length === 0,
     errors,
     data: {
       message,
+      githubUrl: github.url,
+      linkedinUrl: linkedin.url,
     },
   };
 }

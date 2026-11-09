@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { generateShareLinks } from '@/projects/share';
+import { projectLogoUrl } from '@/projects/logo';
 import { DashboardClient } from './DashboardClient';
 
 export default async function DashboardPage() {
@@ -25,19 +26,47 @@ export default async function DashboardPage() {
         accountAge: applicant.accountAge,
         publicRepoCount: applicant.publicRepoCount,
         message: applicant.message,
+        githubUrl: applicant.githubUrl,
+        linkedinUrl: applicant.linkedinUrl,
+        resumeFileName: applicant.resumeFileName,
         status: applicant.status,
         invitationSent: applicant.invitationSent,
         createdAt: applicant.createdAt,
         updatedAt: applicant.updatedAt,
       }));
 
+      const { logoPath: _logoPath, ...publicProject } = project;
       return {
-        ...project,
+        ...publicProject,
+        logoUrl: projectLogoUrl(project),
         shareLinks: generateShareLinks(project),
         applicants,
       };
     })
   );
 
-  return <DashboardClient initialProjects={projects} />;
+  const applications = await storage.getApplicantsByUser(user.id);
+  const joinedProjects = [];
+  for (const application of applications) {
+    const project = await storage.getProjectById(application.projectId);
+    if (!project) continue;
+    joinedProjects.push({
+      id: project.id,
+      slug: project.slug,
+      title: project.title,
+      description: project.description,
+      logoUrl: projectLogoUrl(project),
+      ownerLogin: project.ownerLogin,
+      status: application.status,
+      invitationSent: application.invitationSent,
+    });
+  }
+
+  return (
+    <DashboardClient
+      initialProjects={projects}
+      joinedProjects={joinedProjects}
+      user={{ login: user.login, name: user.name, avatarUrl: user.avatarUrl }}
+    />
+  );
 }

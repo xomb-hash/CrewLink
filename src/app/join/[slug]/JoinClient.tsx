@@ -1,47 +1,121 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ExternalLink, CheckCircle2, Clock, XCircle, ArrowRight } from 'lucide-react';
+import { ExternalLink, CheckCircle2, Clock, XCircle, ArrowRight, Code2, Briefcase, Upload, KeyRound } from 'lucide-react';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import type { Project, User, Applicant } from '@/types/index';
+import { ProjectLogo } from '@/components/ProjectLogo';
+import type { Project, Applicant } from '@/types/index';
+
+type JoinProject = Omit<Project, 'referralCode' | 'logoPath'> & {
+  githubUrl: string | null;
+  logoUrl: string | null;
+  requiresReferralCode: boolean;
+};
+
+interface JoinCreator {
+  login: string;
+  name?: string;
+  avatarUrl?: string;
+  accountAge: string;
+  publicRepos: number;
+  note?: string;
+}
 
 interface JoinClientProps {
-  project: Project & { githubUrl: string | null };
-  currentUser: User | null;
+  project: JoinProject;
+  creator: JoinCreator;
+  currentUser: { id: string | number; login: string; name?: string; avatarUrl?: string } | null;
   isOwner: boolean;
   existingApplication: Pick<Applicant, 'id' | 'status' | 'createdAt' | 'invitationSent'> | null;
+  initialReferralCode: string;
+  referralCodeInvalid: boolean;
 }
+
+const MAX_RESUME_MB = 5;
 
 export function JoinClient({
   project,
+  creator,
   currentUser,
   isOwner,
   existingApplication: initialExisting,
+  initialReferralCode,
+  referralCodeInvalid,
 }: JoinClientProps) {
   const [existingApplication, setExistingApplication] = useState(initialExisting);
+  const [referralCode, setReferralCode] = useState(initialReferralCode);
+  const [codeInvalid, setCodeInvalid] = useState(referralCodeInvalid);
   const [message, setMessage] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) {
+      setResumeFile(null);
+      return;
+    }
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setError('Resume must be a PDF file.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_RESUME_MB * 1024 * 1024) {
+      setError(`Resume must be ${MAX_RESUME_MB} MB or smaller.`);
+      e.target.value = '';
+      return;
+    }
+    setError(null);
+    setResumeFile(file);
+  };
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
 
+    if (project.requiresReferralCode && !referralCode.trim()) {
+      setError('Enter the referral code from the creator’s link.');
+      setSubmitting(false);
+      return;
+    }
+    if (project.requireGithubLink && !githubUrl.trim()) {
+      setError('This project requires a GitHub profile link.');
+      setSubmitting(false);
+      return;
+    }
+    if (project.requireLinkedinLink && !linkedinUrl.trim()) {
+      setError('This project requires a LinkedIn profile link.');
+      setSubmitting(false);
+      return;
+    }
+    if (project.requireResume && !resumeFile) {
+      setError('This project requires a PDF resume.');
+      setSubmitting(false);
+      return;
+    }
+
     try {
+      const formData = new FormData();
+      formData.append('message', message);
+      formData.append('githubUrl', githubUrl.trim());
+      formData.append('linkedinUrl', linkedinUrl.trim());
+      formData.append('referralCode', referralCode.trim());
+      if (resumeFile) formData.append('resume', resumeFile);
+
       const res = await fetch(`/api/join/${project.slug}/apply`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: formData,
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit application');
+        throw new Error(
+          data.error || (Array.isArray(data.errors) ? data.errors.join(' ') : 'Failed to submit application')
+        );
       }
 
       setExistingApplication(data.applicant);
@@ -53,118 +127,164 @@ export function JoinClient({
   };
 
   return (
-    <div className="max-w-xl mx-auto px-4">
-      <Card className="bg-[#161b22] border-[#30363d] p-0 overflow-hidden shadow-sm gap-0">
-        {/* Project Header */}
-        <div className="p-6 border-b border-[#30363d]">
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <Badge
-              variant="outline"
-              className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+    <div className="mx-auto max-w-xl px-4 py-8">
+      <div className="cl-rise overflow-hidden rounded-[10px] border border-line bg-panel">
+        {/* Project header */}
+        <div className="border-b border-line p-6">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-[0.06em] ${
                 project.joinMode === 'screening'
-                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                  ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
+                  : 'border-blue-500/30 bg-blue-500/10 text-blue-300'
               }`}
             >
-              {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
-            </Badge>
+              {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
+            </span>
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>
 
-          <h1 className="text-2xl font-bold text-white mb-2">{project.title}</h1>
-
-          <div className="mb-3">
-            {!project.isPrivate && project.githubUrl ? (
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-mono text-blue-400 hover:underline"
-                title="Open code on GitHub"
-              >
-                <span>{project.repoFullName}</span>
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            ) : (
-              <span className="text-sm font-mono text-gray-400">{project.repoFullName}</span>
-            )}
+          <div className="mb-3 flex items-start gap-3">
+            <ProjectLogo
+              title={project.title}
+              logoUrl={project.logoUrl}
+              className="h-12 w-12"
+              textClassName="text-[17px]"
+            />
+            <div className="min-w-0">
+              <h1 className="mb-1.5 text-xl font-light tracking-tight text-ink">{project.title}</h1>
+              {!project.isPrivate && project.githubUrl ? (
+                <a
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 font-mono text-[12px] text-[#bbb] transition-colors hover:text-ink"
+                  title="Open code on GitHub"
+                >
+                  <span>{project.repoFullName}</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : (
+                <span className="font-mono text-[12px] text-[#888]">{project.repoFullName}</span>
+              )}
+            </div>
           </div>
 
-          <p className="text-sm text-gray-300 leading-relaxed">
+          <p className="text-[13px] leading-relaxed text-[#999]">
             {project.description || 'No description provided.'}
           </p>
 
-          <div className="flex items-center gap-2 mt-5 text-xs text-gray-400">
-            <span>Administered by</span>
-            <img
-              src={project.ownerAvatar || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'}
-              alt={project.ownerLogin}
-              className="w-5 h-5 rounded-full border border-[#30363d]"
-            />
-            <a
-              href={`https://github.com/${project.ownerLogin}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-300 hover:text-white font-medium"
-            >
-              @{project.ownerLogin}
-            </a>
+          {project.roles && project.roles.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {project.roles.map((role) => (
+                <span key={role} className="rounded-full border border-[#222] px-2.5 py-0.5 text-[11px] text-[#888]">
+                  {role}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Creator */}
+        <div className="border-b border-line p-6">
+          <h2 className="mb-3 text-[10px] uppercase tracking-[0.1em] text-[#555]">About the creator</h2>
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 flex-none place-items-center overflow-hidden rounded-full border border-[#333] text-[12px] text-[#999]">
+              {creator.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={creator.avatarUrl} alt={creator.login} className="h-full w-full object-cover" />
+              ) : (
+                creator.login.charAt(0).toUpperCase()
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="text-[14px] text-ink">{creator.name || creator.login}</span>
+                <a
+                  href={`https://github.com/${creator.login}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-[#888] transition-colors hover:text-ink"
+                >
+                  @{creator.login}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+
+              {creator.accountAge && (
+                <div className="mt-1 text-[11px] text-[#666]">
+                  GitHub account: <strong className="font-normal text-[#999]">{creator.accountAge}</strong>
+                  <span className="mx-1.5">&middot;</span>
+                  <strong className="font-normal text-[#999]">{creator.publicRepos}</strong> public repositories
+                </div>
+              )}
+
+              {creator.note && (
+                <p className="mt-3 whitespace-pre-line border-l border-[#2a2a2a] pl-3 text-[12px] leading-relaxed text-[#999]">
+                  {creator.note}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Screening Section if applicable */}
+        {/* Screening step */}
         {project.joinMode === 'screening' && project.screeningUrl && (
-          <div className="p-5 bg-purple-500/5 border-b border-[#30363d] space-y-2">
-            <h3 className="text-sm font-bold text-purple-300">
-              Step 1: Complete Screening Task
-            </h3>
-            <p className="text-xs text-gray-300 leading-relaxed">
-              The project owner requires applicants to review or complete their screening task before requesting access.
+          <div className="space-y-2 border-b border-line bg-purple-500/[0.04] p-5">
+            <h3 className="text-[13px] font-normal text-purple-300">Step 1: Complete the screening task</h3>
+            <p className="text-[12px] leading-relaxed text-[#999]">
+              The project owner requires applicants to review or complete their screening task before requesting
+              access.
             </p>
             <div className="pt-1">
               <a
                 href={project.screeningUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded bg-[#21262d] text-purple-300 border border-purple-500/30 hover:bg-[#30363d] transition"
+                className="inline-flex items-center gap-1.5 rounded-md border border-purple-500/30 px-3 py-1.5 text-[11px] text-purple-300 transition-colors hover:border-purple-400 hover:text-purple-200"
               >
-                <span>Open Screening Task</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open screening task</span>
+                <ExternalLink className="h-3 w-3" />
               </a>
             </div>
-            <p className="text-xs text-gray-500 italic pt-1">
-              Note: Screening is based on the honour system. Confirm you have completed it before requesting approval below.
+            <p className="pt-1 text-[11px] italic text-[#666]">
+              Note: Screening is based on the honour system. Confirm you have completed it before requesting
+              approval below.
             </p>
           </div>
         )}
 
-        {/* Application Section */}
+        {/* Application */}
         <div className="p-6">
           {isOwner ? (
-            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs leading-relaxed text-center">
-              You are the owner of this repository. Share this join link with potential collaborators to receive requests!
+            <div className="rounded-lg border border-blue-500/25 bg-blue-500/[0.05] p-4 text-center text-[12px] leading-relaxed text-blue-200/90">
+              You are the owner of this repository. Share this join link with potential collaborators to receive
+              requests.
             </div>
           ) : existingApplication ? (
-            <div className="text-center py-6 px-4">
-              <div className="inline-flex p-3 rounded-full mb-3 bg-[#0d1117] border border-[#30363d]">
+            <div className="px-4 py-6 text-center">
+              <div className="mb-3 inline-grid place-items-center rounded-full border border-line-soft bg-black p-3">
                 {existingApplication.status === 'approved' ? (
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                  <CheckCircle2 className="h-7 w-7 text-emerald-400" />
                 ) : existingApplication.status === 'rejected' ? (
-                  <XCircle className="w-8 h-8 text-red-400" />
+                  <XCircle className="h-7 w-7 text-red-400" />
                 ) : (
-                  <Clock className="w-8 h-8 text-amber-400" />
+                  <Clock className="h-7 w-7 text-amber-400" />
                 )}
               </div>
 
-              <h3 className="text-base font-bold text-white capitalize mb-1">
+              <h3 className="mb-1 text-sm font-normal capitalize text-ink">
                 Application {existingApplication.status}
               </h3>
 
-              <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+              <p className="mx-auto max-w-sm text-[12px] leading-relaxed text-[#888]">
                 {existingApplication.status === 'approved' ? (
                   <>
-                    <strong className="text-emerald-400">You have been approved!</strong><br />
-                    A real GitHub collaborator invitation has been dispatched. Please check your GitHub email or repository page to accept the invitation and access the code.
+                    <strong className="font-normal text-emerald-400">You have been approved!</strong>
+                    <br />
+                    A real GitHub collaborator invitation has been dispatched. Please check your GitHub email or
+                    repository page to accept the invitation and access the code.
                   </>
                 ) : existingApplication.status === 'rejected' ? (
                   'The project owner has reviewed and declined this request.'
@@ -174,61 +294,169 @@ export function JoinClient({
               </p>
             </div>
           ) : !currentUser ? (
-            <div className="text-center py-6 px-4 space-y-4">
-              <p className="text-sm text-gray-300">
+            <div className="space-y-4 px-4 py-6 text-center">
+              <p className="text-[13px] text-[#aaa]">
                 Sign in with your GitHub account to request to join this project.
               </p>
+              {project.requiresReferralCode && (
+                <p className="mx-auto max-w-sm text-[11px] leading-relaxed text-[#666]">
+                  You will need the referral code from the creator’s link.
+                </p>
+              )}
               <a
-                href={`/auth/github?redirect_to=${encodeURIComponent(`/join/${project.slug}`)}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition shadow"
+                href={`/auth/github?redirect_to=${encodeURIComponent(
+                  `/join/${project.slug}${
+                    initialReferralCode ? `?ref=${encodeURIComponent(initialReferralCode)}` : ''
+                  }`
+                )}`}
+                className="inline-flex h-9 items-center gap-2 rounded-md border border-ink px-5 text-[12px] text-ink transition-colors hover:bg-ink hover:text-black"
               >
-                <span>Sign in with GitHub to Apply</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Sign in with GitHub to apply</span>
+                <ArrowRight className="h-4 w-4" />
               </a>
             </div>
           ) : (
             <form onSubmit={handleApply} className="space-y-4">
-              <div className="text-xs text-gray-400">
-                Applying as <strong className="text-white">@{currentUser.login}</strong>
+              <div className="text-[11px] text-[#666]">
+                Applying as <strong className="font-normal text-ink">@{currentUser.login}</strong>
               </div>
 
+              {project.requiresReferralCode && (
+                <div>
+                  <label htmlFor="apply-code" className="mb-1.5 block text-[11px] tracking-[0.03em] text-[#888]">
+                    Referral code <span className="text-ink">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 flex-none text-[#666]" />
+                    <input
+                      id="apply-code"
+                      type="text"
+                      value={referralCode}
+                      onChange={(e) => {
+                        setReferralCode(e.target.value.toUpperCase());
+                        setCodeInvalid(false);
+                      }}
+                      placeholder="e.g. ABCD2345"
+                      required
+                      maxLength={32}
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      spellCheck={false}
+                      className="w-full rounded-md border border-[#262626] bg-black px-3 py-2 font-mono text-[13px] uppercase tracking-[0.08em] text-ink outline-none transition-colors focus:border-ink"
+                    />
+                  </div>
+                  <span className={`mt-1 block text-[11px] ${codeInvalid ? 'text-amber-300' : 'text-[#555]'}`}>
+                    {codeInvalid
+                      ? 'This code does not match the project. Check the link or enter the code the creator shared.'
+                      : 'Pre-filled when you open the creator’s referral link.'}
+                  </span>
+                </div>
+              )}
+
               {error && (
-                <div className="p-3 text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-md">
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-300">
                   {error}
                 </div>
               )}
 
               <div>
-                <label htmlFor="intro" className="block text-xs font-semibold text-gray-200 uppercase tracking-wider mb-2">
+                <label htmlFor="intro" className="mb-1.5 block text-[11px] tracking-[0.03em] text-[#888]">
                   Introduce yourself or share relevant experience (optional)
                 </label>
-                <Textarea
+                <textarea
                   id="intro"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="What parts of this project interest you?"
                   maxLength={300}
                   rows={3}
-                  className="bg-[#0d1117] border-[#30363d] text-white focus-visible:border-blue-500"
+                  className="w-full resize-y rounded-md border border-[#262626] bg-black px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-ink"
                 />
-                <span className="block text-xs text-gray-500 mt-1">
-                  The owner will see your note along with your account age and public repository count.
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="apply-github" className="mb-1.5 block text-[11px] tracking-[0.03em] text-[#888]">
+                    GitHub profile{project.requireGithubLink ? <span className="text-ink"> *</span> : ' (optional)'}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-4 w-4 flex-none text-[#666]" />
+                    <input
+                      id="apply-github"
+                      type="url"
+                      value={githubUrl}
+                      onChange={(e) => setGithubUrl(e.target.value)}
+                      placeholder="https://github.com/username"
+                      required={project.requireGithubLink}
+                      className="w-full rounded-md border border-[#262626] bg-black px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-ink"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="apply-linkedin" className="mb-1.5 block text-[11px] tracking-[0.03em] text-[#888]">
+                    LinkedIn profile{project.requireLinkedinLink ? <span className="text-ink"> *</span> : ' (optional)'}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 flex-none text-[#666]" />
+                    <input
+                      id="apply-linkedin"
+                      type="url"
+                      value={linkedinUrl}
+                      onChange={(e) => setLinkedinUrl(e.target.value)}
+                      placeholder="https://www.linkedin.com/in/username"
+                      required={project.requireLinkedinLink}
+                      className="w-full rounded-md border border-[#262626] bg-black px-3 py-2 text-[13px] text-ink outline-none transition-colors focus:border-ink"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="apply-resume" className="mb-1.5 block text-[11px] tracking-[0.03em] text-[#888]">
+                  Resume{project.requireResume ? <span className="text-ink"> *</span> : ' (optional)'}
+                </label>
+                <label
+                  htmlFor="apply-resume"
+                  className="flex cursor-pointer items-center gap-2.5 rounded-md border border-dashed border-[#333] bg-black px-3 py-2.5 text-[12px] text-[#888] transition-colors hover:border-[#555] hover:text-[#ccc]"
+                >
+                  <Upload className="h-4 w-4 flex-none" />
+                  <span className="truncate">
+                    {resumeFile
+                      ? `${resumeFile.name} (${(resumeFile.size / (1024 * 1024)).toFixed(1)} MB)`
+                      : `Choose a PDF (max ${MAX_RESUME_MB} MB)`}
+                  </span>
+                </label>
+                <input
+                  id="apply-resume"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handleResumeChange}
+                  className="sr-only"
+                />
+                <span className="mt-1 block text-[11px] text-[#555]">
+                  Only the project owner can open your resume.
                 </span>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <Button
+              <span className="block text-[11px] text-[#555]">
+                The owner will see your note, links, and resume along with your GitHub account age and public
+                repository count.
+              </span>
+
+              <div className="flex justify-end pt-1">
+                <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-emerald-600 text-white hover:bg-emerald-500 border-0"
+                  className="h-9 rounded-md border border-ink px-5 text-[13px] text-ink transition-colors hover:bg-ink hover:text-black disabled:opacity-40"
                 >
-                  {submitting ? 'Submitting request...' : 'Request to Join Project'}
-                </Button>
+                  {submitting ? 'Submitting request…' : 'Request to join project'}
+                </button>
               </div>
             </form>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

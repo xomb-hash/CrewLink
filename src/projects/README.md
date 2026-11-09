@@ -1,13 +1,12 @@
 # Projects Module
 
-Handles repository connection, project creation, join link generation, and owner dashboard data.
+Handles repository connection, project creation, join link generation, invite codes, and generated art.
 
-- `handleGetAdminRepos`: Returns repositories where the logged-in user has admin permissions.
-- `handleCreateProject`: Validates project parameters, verifies admin access, saves project, and creates join links.
-- `handleGetOwnerProjects`: Serves the list of projects owned by the user, alongside applicant summaries and share links.
-- `generateShareLinks`: Creates ready-to-share URLs for LinkedIn, X (Twitter), and WhatsApp.
+- `share.ts`: `generateShareLinks` builds the join URL (including `?ref=<code>` for referral projects) plus LinkedIn, X (Twitter), and WhatsApp share links.
+- `referral.ts`: `generateReferralCode` (8 characters, unambiguous alphabet), `normalizeReferralCode`, and `referralCodeMatches` (case-insensitive).
+- `logo.ts`: `projectLogoUrl` resolves an uploaded logo to `/api/projects/<id>/logo`, or `null` so the UI falls back to generated art.
 
-## Security & Rules
-- Verifies admin rights on GitHub before creating a project.
-- Only displays applicant account age and public repository count to owners (strictly enforced).
-- Surfaces mandatory advisory notices about personal repo write permissions and honour-system screening.
+## Rules
+- Referral projects always have one active invite code; regenerating it replaces the old one and invalidates previously shared links.
+- Invite codes are never returned by public join endpoints — only the owner sees them.
+- Logo files are validated by type, size, and magic bytes before being stored under `data/uploads/`.

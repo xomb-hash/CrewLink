@@ -1,33 +1,62 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ExternalLink, Copy, Check, CheckCircle2, XCircle, Share2 } from 'lucide-react';
+import {
+  ExternalLink,
+  Copy,
+  Check,
+  CheckCircle2,
+  XCircle,
+  Code2,
+  Briefcase,
+  FileText,
+  KeyRound,
+  RefreshCw,
+} from 'lucide-react';
 import { VisibilityBadge } from './VisibilityBadge';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { ProjectLogo } from './ProjectLogo';
 import type { Project, Applicant, ShareLinks } from '../types/index';
 
 interface ProjectCardProps {
   project: Project & {
     shareLinks: ShareLinks;
     applicants: Applicant[];
+    logoUrl: string | null;
   };
   onApprove: (projectId: string, applicantId: string, login: string) => Promise<void>;
   onReject: (projectId: string, applicantId: string, login: string) => Promise<void>;
+  onGenerateCode: (projectId: string) => Promise<void>;
 }
 
-export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) {
+function statusFor(applicant: Applicant, joinMode: Project['joinMode']): string {
+  if (applicant.status === 'approved') return 'Approved';
+  if (applicant.status === 'rejected') return 'Rejected';
+  return joinMode === 'screening' ? 'Screening' : 'Applied';
+}
+
+export function ProjectCard({ project, onApprove, onReject, onGenerateCode }: ProjectCardProps) {
   const [copied, setCopied] = useState(false);
+  const [generatingCode, setGeneratingCode] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState<Applicant | null>(null);
   const [confirmReject, setConfirmReject] = useState<Applicant | null>(null);
   const [loadingAction, setLoadingAction] = useState(false);
+
+  const applicants = project.applicants ?? [];
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(project.shareLinks.joinUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleGenerateCode = async () => {
+    setGeneratingCode(true);
+    try {
+      await onGenerateCode(project.id);
+    } finally {
+      setGeneratingCode(false);
+    }
   };
 
   const handleConfirmApprove = async () => {
@@ -53,22 +82,27 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
   };
 
   return (
-    <Card className="bg-[#161b22] border-[#30363d] p-0 overflow-hidden shadow-sm mb-6 gap-0">
+    <div className="overflow-hidden rounded-[10px] border border-line bg-panel">
       {/* Header */}
-      <div className="p-5 border-b border-[#30363d]">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-lg font-bold text-white">{project.title}</h2>
-            <Badge
-              variant="outline"
-              className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+      <div className="border-b border-line p-5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <ProjectLogo
+              title={project.title}
+              logoUrl={project.logoUrl}
+              className="h-9 w-9"
+              textClassName="text-[13px]"
+            />
+            <h2 className="text-[15px] font-normal text-ink">{project.title}</h2>
+            <span
+              className={`rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-[0.06em] ${
                 project.joinMode === 'screening'
-                  ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
-                  : 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                  ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
+                  : 'border-blue-500/30 bg-blue-500/10 text-blue-300'
               }`}
             >
-              {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
-            </Badge>
+              {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
+            </span>
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>
 
@@ -78,65 +112,57 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
                 href={`https://github.com/${project.repoFullName}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs font-mono text-gray-400 hover:text-blue-400 transition"
+                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[#888] transition-colors hover:text-ink"
                 title="Open code on GitHub"
               >
                 <span>{project.repoFullName}</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
-              <span className="text-xs font-mono text-gray-400">{project.repoFullName}</span>
+              <span className="font-mono text-[11px] text-[#888]">{project.repoFullName}</span>
             )}
           </div>
         </div>
 
         {project.description && (
-          <p className="text-sm text-gray-400 mt-1 leading-relaxed">{project.description}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#999]">{project.description}</p>
         )}
 
         {project.roles && project.roles.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap mt-2.5">
-            <span className="text-xs text-gray-500">Roles wanted:</span>
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-[#666]">Roles wanted:</span>
             {project.roles.map((role) => (
-              <Badge
-                key={role}
-                variant="outline"
-                className="text-xs px-2 py-0.5 rounded bg-[#21262d] text-emerald-400/90 border-emerald-500/20"
-              >
+              <span key={role} className="rounded-full border border-[#222] px-2.5 py-0.5 text-[11px] text-[#888]">
                 {role}
-              </Badge>
+              </span>
             ))}
           </div>
         )}
       </div>
 
-      {/* Toolbar: Join link + Share buttons */}
-      <div className="px-5 py-3 bg-[#0d1117] border-b border-[#30363d] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 bg-[#161b22] border border-[#30363d] rounded-md px-3 py-1.5 max-w-md w-full">
-          <span className="text-xs font-mono text-gray-300 truncate flex-1 select-all">
+      {/* Join link + share */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-[#050505] px-5 py-3">
+        <div className="flex w-full max-w-md items-center gap-2 rounded-md border border-line-soft bg-black px-3 py-1.5">
+          <span className="flex-1 select-all truncate font-mono text-[11px] text-[#999]">
             {project.shareLinks.joinUrl}
           </span>
-          <Button
+          <button
             type="button"
-            size="xs"
-            variant="outline"
             onClick={handleCopyLink}
-            className="gap-1 text-xs text-gray-300 hover:text-white bg-[#21262d] border-[#30363d] hover:bg-[#30363d]"
+            className="inline-flex flex-none items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#bbb] transition-colors hover:border-[#f0f0f0] hover:text-ink"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </Button>
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
         </div>
 
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-gray-500 flex items-center gap-1">
-            <Share2 className="w-3.5 h-3.5" /> Share:
-          </span>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-[#666]">Share:</span>
           <a
             href={project.shareLinks.linkedIn}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded bg-[#21262d] text-gray-300 hover:text-white border border-[#30363d] transition"
+            className="rounded border border-line-soft px-2.5 py-1 text-[#aaa] transition-colors hover:border-[#f0f0f0] hover:text-ink"
           >
             LinkedIn
           </a>
@@ -144,7 +170,7 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
             href={project.shareLinks.x}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded bg-[#21262d] text-gray-300 hover:text-white border border-[#30363d] transition"
+            className="rounded border border-line-soft px-2.5 py-1 text-[#aaa] transition-colors hover:border-[#f0f0f0] hover:text-ink"
           >
             X
           </a>
@@ -152,184 +178,248 @@ export function ProjectCard({ project, onApprove, onReject }: ProjectCardProps) 
             href={project.shareLinks.whatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-2.5 py-1 rounded bg-[#21262d] text-gray-300 hover:text-white border border-[#30363d] transition"
+            className="rounded border border-line-soft px-2.5 py-1 text-[#aaa] transition-colors hover:border-[#f0f0f0] hover:text-ink"
           >
             WhatsApp
           </a>
         </div>
       </div>
 
-      {/* Applicants Section */}
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-200">
-            Applicants ({project.applicants?.length || 0})
-          </h3>
+      {/* Referral code */}
+      {project.joinMode === 'referral' && (
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-line bg-[#050505] px-5 py-2.5 text-[11px]">
+          <span className="inline-flex items-center gap-1.5 text-[#666]">
+            <KeyRound className="h-3.5 w-3.5" />
+            Invite code
+          </span>
+          {project.referralCode ? (
+            <code className="rounded border border-line-soft bg-black px-2 py-0.5 font-mono text-[11px] tracking-[0.12em] text-ink">
+              {project.referralCode}
+            </code>
+          ) : (
+            <span className="text-[#777]">Not generated</span>
+          )}
+          <button
+            type="button"
+            onClick={handleGenerateCode}
+            disabled={generatingCode}
+            title="Generating a new code invalidates links shared with the old one."
+            className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#bbb] transition-colors hover:border-ink hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+          >
+            <RefreshCw className={`h-3 w-3 ${generatingCode ? 'animate-spin' : ''}`} />
+            {generatingCode ? 'Generating…' : project.referralCode ? 'Generate new code' : 'Generate code'}
+          </button>
+          <span className="text-[#555]">Regenerating invalidates previously shared links.</span>
         </div>
+      )}
 
-        {project.applicants?.length === 0 ? (
-          <div className="text-center py-8 px-4 border border-dashed border-[#30363d] rounded-lg text-sm text-gray-500">
-            No applicants yet. Share your join link on LinkedIn, X, or WhatsApp to connect with builders!
+      {/* Applicants */}
+      <div className="p-5">
+        <h3 className="mb-2 text-[10px] uppercase tracking-[0.1em] text-[#555]">
+          Applicants ({applicants.length})
+        </h3>
+
+        {applicants.length === 0 ? (
+          <div className="px-4 py-8 text-center text-[12px] text-[#555]">
+            No applicants yet. Share your join link on LinkedIn, X, or WhatsApp.
           </div>
         ) : (
-          <div className="space-y-3">
-            {project.applicants.map((applicant) => (
-              <div
-                key={applicant.id}
-                className="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 flex flex-wrap items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-3">
-                  <img
-                    src={applicant.userAvatar || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'}
-                    alt={applicant.userLogin}
-                    className="w-10 h-10 rounded-full border border-[#30363d] shrink-0"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={`https://github.com/${applicant.userLogin}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-sm text-white hover:underline"
-                      >
-                        @{applicant.userLogin}
-                      </a>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${
-                          applicant.status === 'approved'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                            : applicant.status === 'rejected'
-                            ? 'bg-red-500/10 text-red-400 border-red-500/30'
-                            : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                        }`}
-                      >
-                        {applicant.status}
-                      </Badge>
+          <div>
+            {applicants.map((applicant) => {
+              const label = statusFor(applicant, project.joinMode);
+              const statusClass =
+                applicant.status === 'approved'
+                  ? 'border-ink text-ink'
+                  : applicant.status === 'rejected'
+                  ? 'border-[#222] text-[#555] line-through'
+                  : 'border-[#444] text-[#ccc]';
+
+              return (
+                <div
+                  key={applicant.id}
+                  className="flex flex-wrap items-center justify-between gap-4 border-b border-[#161616] py-3.5 last:border-0"
+                >
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-[#333] text-[11px] text-[#888]">
+                      {applicant.userAvatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={applicant.userAvatar}
+                          alt={applicant.userLogin}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        applicant.userLogin.charAt(0).toUpperCase()
+                      )}
                     </div>
 
-                    {/* Restricted to Account Age and Public Repo count only */}
-                    <div className="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                      <span>Account age: <strong>{applicant.accountAge}</strong></span>
-                      <span>&bull;</span>
-                      <span>Public repositories: <strong>{applicant.publicRepoCount}</strong></span>
-                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <a
+                          href={`https://github.com/${applicant.userLogin}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[13px] font-normal text-[#ddd] hover:text-ink hover:underline"
+                        >
+                          @{applicant.userLogin}
+                        </a>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.05em] ${statusClass}`}
+                        >
+                          {label}
+                        </span>
+                      </div>
 
-                    {applicant.message && (
-                      <p className="mt-2 text-xs text-gray-300 bg-[#161b22] px-2.5 py-1.5 rounded border-l-2 border-[#30363d]">
-                        &ldquo;{applicant.message}&rdquo;
-                      </p>
+                      <div className="mt-1 text-[11px] text-[#666]">
+                        Account age: <strong className="font-normal text-[#999]">{applicant.accountAge}</strong>
+                        <span className="mx-1.5">&middot;</span>
+                        Public repositories:{' '}
+                        <strong className="font-normal text-[#999]">{applicant.publicRepoCount}</strong>
+                      </div>
+
+                      {applicant.message && (
+                        <p className="mt-2 border-l border-[#333] pl-2.5 text-[11px] leading-relaxed text-[#999]">
+                          &ldquo;{applicant.message}&rdquo;
+                        </p>
+                      )}
+
+                      {(applicant.githubUrl || applicant.linkedinUrl || applicant.resumeFileName) && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {applicant.githubUrl && (
+                            <a
+                              href={applicant.githubUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#aaa] transition-colors hover:border-ink hover:text-ink"
+                            >
+                              <Code2 className="h-3 w-3" />
+                              GitHub
+                            </a>
+                          )}
+                          {applicant.linkedinUrl && (
+                            <a
+                              href={applicant.linkedinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#aaa] transition-colors hover:border-ink hover:text-ink"
+                            >
+                              <Briefcase className="h-3 w-3" />
+                              LinkedIn
+                            </a>
+                          )}
+                          {applicant.resumeFileName && (
+                            <a
+                              href={`/api/resume/${applicant.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={applicant.resumeFileName}
+                              className="inline-flex max-w-[180px] items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#aaa] transition-colors hover:border-ink hover:text-ink"
+                            >
+                              <FileText className="h-3 w-3 flex-none" />
+                              <span className="truncate">Resume</span>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-none items-center gap-2">
+                    {applicant.status === 'pending' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmApprove(applicant)}
+                          className="h-7 rounded-md border border-ink px-3 text-[12px] text-ink transition-colors hover:bg-ink hover:text-black"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmReject(applicant)}
+                          className="h-7 rounded-md border border-[#333] px-3 text-[12px] text-[#aaa] transition-colors hover:border-ink hover:text-ink"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    ) : applicant.status === 'approved' ? (
+                      <span className="flex items-center gap-1 text-[11px] text-[#ccc]">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Invitation sent
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-[11px] text-[#555]">
+                        <XCircle className="h-3.5 w-3.5" /> Declined
+                      </span>
                     )}
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {applicant.status === 'pending' ? (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => setConfirmApprove(applicant)}
-                        className="bg-emerald-600 text-white hover:bg-emerald-500 border-0 h-8"
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => setConfirmReject(applicant)}
-                        className="bg-red-600/80 hover:bg-red-600 h-8"
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  ) : applicant.status === 'approved' ? (
-                    <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Invitation sent
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <XCircle className="w-3.5 h-3.5" /> Declined
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Confirmation Modal: Approve */}
+      {/* Confirm: approve */}
       {confirmApprove && (
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-2">
-              Approve @{confirmApprove.userLogin}?
-            </h3>
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
-              Approving will send a <strong>real GitHub collaborator invitation</strong> for repository <code>{project.repoFullName}</code>. The user must accept the invitation on GitHub to get access.
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-[#222] bg-panel p-6 shadow-2xl">
+            <h3 className="mb-2 text-base font-normal text-ink">Approve @{confirmApprove.userLogin}?</h3>
+            <p className="mb-5 text-[12px] leading-relaxed text-[#999]">
+              Approving will send a <strong className="font-normal text-ink">real GitHub collaborator invitation</strong>{' '}
+              for repository <code className="font-mono text-[11px] text-[#ccc]">{project.repoFullName}</code>. The
+              user must accept the invitation on GitHub to get access.
             </p>
-            <div className="flex justify-end gap-3">
-              <Button
+            <div className="flex justify-end gap-2">
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 disabled={loadingAction}
                 onClick={() => setConfirmApprove(null)}
-                className="bg-[#21262d] text-gray-300 border-[#30363d] hover:bg-[#30363d]"
+                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#888] transition-colors hover:border-[#555] hover:text-[#ccc] disabled:opacity-40"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                size="sm"
                 disabled={loadingAction}
                 onClick={handleConfirmApprove}
-                className="bg-emerald-600 text-white hover:bg-emerald-500 border-0"
+                className="h-9 rounded-md border border-ink px-4 text-[12px] text-ink transition-colors hover:bg-ink hover:text-black disabled:opacity-40"
               >
-                {loadingAction ? 'Sending Invite...' : 'Confirm & Send Invitation'}
-              </Button>
+                {loadingAction ? 'Sending invite…' : 'Confirm & send invitation'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Confirmation Modal: Reject */}
+      {/* Confirm: reject */}
       {confirmReject && (
-        <div className="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-xl max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-2">
-              Reject @{confirmReject.userLogin}?
-            </h3>
-            <p className="text-sm text-gray-300 leading-relaxed mb-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-[#222] bg-panel p-6 shadow-2xl">
+            <h3 className="mb-2 text-base font-normal text-ink">Reject @{confirmReject.userLogin}?</h3>
+            <p className="mb-5 text-[12px] leading-relaxed text-[#999]">
               Are you sure you want to decline this applicant&apos;s request to join?
             </p>
-            <div className="flex justify-end gap-3">
-              <Button
+            <div className="flex justify-end gap-2">
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 disabled={loadingAction}
                 onClick={() => setConfirmReject(null)}
-                className="bg-[#21262d] text-gray-300 border-[#30363d] hover:bg-[#30363d]"
+                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#888] transition-colors hover:border-[#555] hover:text-[#ccc] disabled:opacity-40"
               >
                 Cancel
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                size="sm"
-                variant="destructive"
                 disabled={loadingAction}
                 onClick={handleConfirmReject}
-                className="bg-red-600 text-white hover:bg-red-500"
+                className="h-9 rounded-md border border-red-500/60 px-4 text-[12px] text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-40"
               >
-                {loadingAction ? 'Rejecting...' : 'Reject Applicant'}
-              </Button>
+                {loadingAction ? 'Rejecting…' : 'Reject applicant'}
+              </button>
             </div>
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

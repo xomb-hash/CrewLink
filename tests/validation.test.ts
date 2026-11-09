@@ -83,6 +83,39 @@ test('Validation functions (TypeScript)', async (t) => {
     assert.equal(result.data.message.length, 300);
   });
 
+  await t.test('normalizes GitHub and LinkedIn profile links', () => {
+    const valid = validateApplicantInput({
+      githubUrl: 'github.com/bob-builder',
+      linkedinUrl: 'https://www.linkedin.com/in/bob-builder/?trk=profile',
+    });
+    assert.equal(valid.isValid, true);
+    assert.equal(valid.data.githubUrl, 'https://github.com/bob-builder');
+    assert.equal(valid.data.linkedinUrl, 'https://www.linkedin.com/in/bob-builder');
+
+    const wrongGithub = validateApplicantInput({ githubUrl: 'https://gitlab.com/bob' });
+    assert.equal(wrongGithub.isValid, false);
+    assert.ok(wrongGithub.errors.some((e) => e.includes('github.com')));
+
+    const wrongLinkedin = validateApplicantInput({ linkedinUrl: 'https://linkedin.com/company/acme' });
+    assert.equal(wrongLinkedin.isValid, false);
+    assert.ok(wrongLinkedin.errors.some((e) => e.includes('linkedin.com/in')));
+  });
+
+  await t.test('carries creator note and required credential flags', () => {
+    const result = validateProjectInput({
+      repoFullName: 'owner/project',
+      creatorNote: '  I build small tools and need a designer.  ',
+      requireResume: true,
+      requireGithubLink: true,
+      requireLinkedinLink: false,
+    });
+    assert.equal(result.isValid, true);
+    assert.equal(result.data.creatorNote, 'I build small tools and need a designer.');
+    assert.equal(result.data.requireResume, true);
+    assert.equal(result.data.requireGithubLink, true);
+    assert.equal(result.data.requireLinkedinLink, false);
+  });
+
   await t.test('escapes HTML entities safely', () => {
     const dangerous = '<script>alert("xss")</script>&"\'';
     const escaped = escapeHtml(dangerous);

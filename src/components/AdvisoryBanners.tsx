@@ -3,18 +3,22 @@ import { AlertTriangle, Info } from 'lucide-react';
 
 export function AdvisoryBanners() {
   return (
-    <div className="space-y-3 mb-6">
-      <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm leading-relaxed">
-        <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+    <div className="mb-6 space-y-2.5">
+      <div className="flex items-start gap-3 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] p-3.5 text-[12px] leading-relaxed text-amber-200/90">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" strokeWidth={1.5} />
         <div>
-          <strong className="font-semibold text-amber-200">GitHub Access Level Notice:</strong> Read-only invitations only apply on organisation repositories. On personal repositories, GitHub grants write access to every collaborator.
+          <strong className="font-normal text-amber-200">GitHub access level notice:</strong> Read-only
+          invitations only apply on organisation repositories. On personal repositories, GitHub grants write
+          access to every collaborator.
         </div>
       </div>
 
-      <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 text-sm leading-relaxed">
-        <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 rounded-lg border border-blue-500/20 bg-blue-500/[0.05] p-3.5 text-[12px] leading-relaxed text-blue-200/90">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-400" strokeWidth={1.5} />
         <div>
-          <strong className="font-semibold text-blue-200">Screening Policy:</strong> Screening is on the honour system. Crewlink cannot verify that an applicant completed a third-party test. Never treat screening as automatically verified.
+          <strong className="font-normal text-blue-200">Screening policy:</strong> Screening is on the honour
+          system. Crewlink cannot verify that an applicant completed a third-party test. Never treat screening
+          as automatically verified.
         </div>
       </div>
     </div>

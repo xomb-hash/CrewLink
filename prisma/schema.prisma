@@ -49,6 +49,12 @@ model Project {
   roles        String[]    @default([])
   title        String
   description  String?
+  creatorNote  String?
+  requireResume       Boolean @default(false)
+  requireGithubLink   Boolean @default(false)
+  requireLinkedinLink Boolean @default(false)
+  referralCode String?
+  logoPath     String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -88,6 +94,10 @@ model Applicant {
   accountAge        String
   publicRepoCount   Int      @default(0)
   message           String?
+  githubUrl         String?
+  linkedinUrl       String?
+  resumeFileName    String?
+  resumePath        String?
   status            String   @default("pending")
   invitationSent    Boolean  @default(false)
   invitationDetails Json?

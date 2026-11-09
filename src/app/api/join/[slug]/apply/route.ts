@@ -4,6 +4,8 @@ import { storage } from '@/lib/storage';
 import { rateLimiter } from '@/lib/rateLimit';
 import { notifyOwnerNewApplication } from '@/lib/notifications';
 import { formatAccountAge, validateApplicantInput } from '@/lib/validation';
+import { deleteResume, ResumeUploadError, saveResume } from '@/lib/uploads';
+import { referralCodeMatches } from '@/projects/referral';
 
 export async function POST(
   request: NextRequest,
@@ -47,42 +49,107 @@ export async function POST(
     );
   }
 
-  let body: unknown = {};
+  let rawMessage = '';
+  let rawGithubUrl = '';
+  let rawLinkedinUrl = '';
+  let rawReferralCode = '';
+  let resumeFile: File | null = null;
+
+  const contentType = request.headers.get('content-type') || '';
   try {
-    body = await request.json();
+    if (contentType.includes('multipart/form-data')) {
+      const form = await request.formData();
+      rawMessage = typeof form.get('message') === 'string' ? String(form.get('message')) : '';
+      rawGithubUrl = typeof form.get('githubUrl') === 'string' ? String(form.get('githubUrl')) : '';
+      rawLinkedinUrl = typeof form.get('linkedinUrl') === 'string' ? String(form.get('linkedinUrl')) : '';
+      rawReferralCode = typeof form.get('referralCode') === 'string' ? String(form.get('referralCode')) : '';
+      const candidate = form.get('resume');
+      if (candidate && typeof candidate === 'object' && 'arrayBuffer' in candidate) {
+        resumeFile = candidate as File;
+      }
+    } else {
+      const body = (await request.json()) as Record<string, unknown>;
+      rawMessage = typeof body.message === 'string' ? body.message : '';
+      rawGithubUrl = typeof body.githubUrl === 'string' ? body.githubUrl : '';
+      rawLinkedinUrl = typeof body.linkedinUrl === 'string' ? body.linkedinUrl : '';
+      rawReferralCode = typeof body.referralCode === 'string' ? body.referralCode : '';
+    }
   } catch {
-    // optional body
+    // Empty or non-JSON body: treat as no optional fields.
   }
 
-  const validation = validateApplicantInput(body as Parameters<typeof validateApplicantInput>[0]);
-  if (!validation.isValid) {
-    return NextResponse.json({ errors: validation.errors }, { status: 400 });
+  const validation = validateApplicantInput({
+    message: rawMessage,
+    githubUrl: rawGithubUrl,
+    linkedinUrl: rawLinkedinUrl,
+  });
+
+  const errors = [...validation.errors];
+  if (
+    project.joinMode === 'referral' &&
+    project.referralCode &&
+    !referralCodeMatches(project.referralCode, rawReferralCode)
+  ) {
+    errors.push('This project requires a valid referral code.');
+  }
+  if (project.requireGithubLink && !validation.data.githubUrl) {
+    errors.push('This project requires a GitHub profile link.');
+  }
+  if (project.requireLinkedinLink && !validation.data.linkedinUrl) {
+    errors.push('This project requires a LinkedIn profile link.');
+  }
+  if (project.requireResume && !resumeFile) {
+    errors.push('This project requires a PDF resume.');
+  }
+
+  if (errors.length > 0) {
+    return NextResponse.json({ errors }, { status: 400 });
+  }
+
+  let savedResume: { storedName: string; fileName: string } | null = null;
+  if (resumeFile) {
+    try {
+      savedResume = await saveResume(resumeFile);
+    } catch (err: unknown) {
+      if (err instanceof ResumeUploadError) {
+        return NextResponse.json({ errors: [err.message] }, { status: 400 });
+      }
+      throw err;
+    }
   }
 
   const accountAge = formatAccountAge(currentUser.createdAt);
 
-  const applicant = await storage.createApplicant({
-    projectId: project.id,
-    userId: currentUser.id,
-    userLogin: currentUser.login,
-    userAvatar: currentUser.avatarUrl,
-    accountAge,
-    publicRepoCount: currentUser.publicRepos || 0,
-    message: validation.data.message,
-  });
+  try {
+    const applicant = await storage.createApplicant({
+      projectId: project.id,
+      userId: currentUser.id,
+      userLogin: currentUser.login,
+      userAvatar: currentUser.avatarUrl,
+      accountAge,
+      publicRepoCount: currentUser.publicRepos || 0,
+      message: validation.data.message,
+      githubUrl: validation.data.githubUrl,
+      linkedinUrl: validation.data.linkedinUrl,
+      resumeFileName: savedResume?.fileName,
+      resumePath: savedResume?.storedName,
+    });
 
-  // Non-blocking notification dispatch
-  notifyOwnerNewApplication(project, applicant).catch(() => {});
+    // Non-blocking notification dispatch
+    notifyOwnerNewApplication(project, applicant).catch(() => {});
 
-  return NextResponse.json(
-    {
-      applicant: {
-        id: applicant.id,
-        status: applicant.status,
-        createdAt: applicant.createdAt,
+    return NextResponse.json(
+      {
+        applicant: {
+          id: applicant.id,
+          status: applicant.status,
+          createdAt: applicant.createdAt,
+        },
       },
-    },
-    { status: 201 }
-  );
+      { status: 201 }
+    );
+  } catch (err) {
+    if (savedResume) await deleteResume(savedResume.storedName);
+    throw err;
+  }
 }
-

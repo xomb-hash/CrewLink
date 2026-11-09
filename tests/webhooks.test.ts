@@ -7,6 +7,9 @@ import { storage } from '../src/lib/storage';
 import { POST as webhookHandler } from '../src/app/api/webhooks/github/route';
 
 test('GitHub webhook: handles ping event', async () => {
+  // Prisma loads .env on import, so clear any configured secret for this unsigned ping test.
+  delete process.env.GITHUB_WEBHOOK_SECRET;
+
   const payload = JSON.stringify({ zen: 'Keep it logically awesome.' });
   const req = new NextRequest('http://localhost:3000/api/webhooks/github', {
     method: 'POST',

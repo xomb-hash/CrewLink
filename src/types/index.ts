@@ -36,6 +36,12 @@ export interface Project {
   roles?: string[];
   title: string;
   description?: string;
+  creatorNote?: string;
+  requireResume?: boolean;
+  requireGithubLink?: boolean;
+  requireLinkedinLink?: boolean;
+  referralCode?: string;
+  logoPath?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,6 +55,10 @@ export interface Applicant {
   accountAge: string;
   publicRepoCount: number;
   message?: string;
+  githubUrl?: string;
+  linkedinUrl?: string;
+  resumeFileName?: string;
+  resumePath?: string;
   status: ApplicantStatus;
   invitationSent: boolean;
   invitationDetails?: unknown;

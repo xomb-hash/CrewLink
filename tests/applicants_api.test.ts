@@ -8,7 +8,10 @@ import { FakeGitHubApi } from '../src/github/fake';
 import { GET as getJoinData } from '../src/app/api/join/[slug]/route';
 import { POST as applyToProject } from '../src/app/api/join/[slug]/apply/route';
 import { POST as approveApplicant } from '../src/app/api/projects/[id]/applicants/[applicantId]/approve/route';
+import { GET as getProjects } from '../src/app/api/projects/route';
+import { GET as getResume } from '../src/app/api/resume/[applicantId]/route';
 import { signValue } from '../src/lib/auth';
+import { deleteResume } from '../src/lib/uploads';
 
 test('Applicants API route handlers (TypeScript)', async (t) => {
   const fakeGitHub = new FakeGitHubApi();
@@ -60,6 +63,8 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     const data = await res.json();
     assert.equal(data.project.title, 'Rocket Ship');
     assert.equal(data.project.githubUrl, 'https://github.com/alice-owner/rocket-ship');
+    assert.equal(data.project.requiresReferralCode, true);
+    assert.equal('referralCode' in data.project, false);
   });
 
   await t.test('applicant submits join request', async () => {
@@ -69,7 +74,10 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
         'Content-Type': 'application/json',
         cookie: applicantCookie,
       },
-      body: JSON.stringify({ message: 'I have experience in propulsion systems.' }),
+      body: JSON.stringify({
+        message: 'I have experience in propulsion systems.',
+        referralCode: project.referralCode,
+      }),
     });
 
     const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
@@ -123,5 +131,128 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
 
     assert.equal(fakeGitHub.invitations.length, 1);
     assert.equal(fakeGitHub.invitations[0].username, 'bob-builder');
+  });
+
+  await t.test('enforces required credentials and serves resumes to the right people', async () => {
+    const strictProject = await storage.createProject({
+      ownerLogin: owner.login,
+      ownerId: owner.id,
+      repoFullName: 'alice-owner/strict-ship',
+      repoName: 'strict-ship',
+      repoOwner: 'alice-owner',
+      isPrivate: false,
+      joinMode: 'referral',
+      title: 'Strict Ship',
+      creatorNote: 'Tell me why you care about orbital mechanics.',
+      requireResume: true,
+      requireGithubLink: true,
+      requireLinkedinLink: false,
+    });
+
+    const joinReq = new NextRequest(`http://localhost:3000/api/join/${strictProject.slug}`);
+    const joinRes = await getJoinData(joinReq, {
+      params: Promise.resolve({ slug: strictProject.slug }),
+    });
+    const joinData = await joinRes.json();
+    assert.equal(joinData.project.creatorNote, 'Tell me why you care about orbital mechanics.');
+    assert.equal(joinData.project.requireResume, true);
+    assert.equal(joinData.project.requireGithubLink, true);
+    assert.equal(joinData.project.requireLinkedinLink, false);
+
+    const carol = await storage.saveUser({
+      id: 303,
+      login: 'carol-candidate',
+      name: 'Carol',
+      createdAt: '2024-01-01T00:00:00Z',
+      publicRepos: 5,
+      accessToken: 'fake-token-carol',
+    });
+    const carolSession = await storage.createSession(carol.id);
+    const carolCookie = `crewlink_session=${encodeURIComponent(signValue(carolSession))}`;
+
+    const missingReq = new NextRequest(
+      `http://localhost:3000/api/join/${strictProject.slug}/apply`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie: carolCookie },
+        body: JSON.stringify({ message: 'Please let me aboard.', referralCode: 'WRONGCODE' }),
+      }
+    );
+    const missingRes = await applyToProject(missingReq, {
+      params: Promise.resolve({ slug: strictProject.slug }),
+    });
+    assert.equal(missingRes.status, 400);
+    const missingData = await missingRes.json();
+    assert.ok(missingData.errors.some((e: string) => e.includes('referral code')));
+    assert.ok(missingData.errors.some((e: string) => e.includes('GitHub profile link')));
+    assert.ok(missingData.errors.some((e: string) => e.includes('PDF resume')));
+
+    const form = new FormData();
+    form.set('message', 'I have docked three capsules.');
+    form.set('githubUrl', 'github.com/carol-candidate');
+    form.set('referralCode', String(strictProject.referralCode).toLowerCase());
+    form.set(
+      'resume',
+      new File([Buffer.from('%PDF-1.4\nresume body\n')], 'carol-resume.pdf', {
+        type: 'application/pdf',
+      })
+    );
+
+    const uploadReq = new NextRequest(
+      `http://localhost:3000/api/join/${strictProject.slug}/apply`,
+      { method: 'POST', headers: { cookie: carolCookie }, body: form }
+    );
+    const uploadRes = await applyToProject(uploadReq, {
+      params: Promise.resolve({ slug: strictProject.slug }),
+    });
+    assert.equal(uploadRes.status, 201);
+    const uploaded = await uploadRes.json();
+
+    const stored = await storage.getApplicantById(uploaded.applicant.id);
+    assert.equal(stored?.githubUrl, 'https://github.com/carol-candidate');
+    assert.equal(stored?.linkedinUrl, '');
+    assert.equal(stored?.resumeFileName, 'carol-resume.pdf');
+    assert.ok(stored?.resumePath);
+
+    const ownerResumeReq = new NextRequest(
+      `http://localhost:3000/api/resume/${uploaded.applicant.id}`,
+      { headers: { cookie: ownerCookie } }
+    );
+    const ownerResumeRes = await getResume(ownerResumeReq, {
+      params: Promise.resolve({ applicantId: uploaded.applicant.id }),
+    });
+    assert.equal(ownerResumeRes.status, 200);
+    assert.equal(ownerResumeRes.headers.get('content-type'), 'application/pdf');
+    assert.equal(ownerResumeRes.headers.get('x-content-type-options'), 'nosniff');
+
+    const stranger = await storage.saveUser({
+      id: 404,
+      login: 'dave-stranger',
+      name: 'Dave',
+      createdAt: '2024-02-01T00:00:00Z',
+      publicRepos: 1,
+    });
+    const strangerSession = await storage.createSession(stranger.id);
+    const strangerCookie = `crewlink_session=${encodeURIComponent(signValue(strangerSession))}`;
+
+    const strangerResumeReq = new NextRequest(
+      `http://localhost:3000/api/resume/${uploaded.applicant.id}`,
+      { headers: { cookie: strangerCookie } }
+    );
+    const strangerResumeRes = await getResume(strangerResumeReq, {
+      params: Promise.resolve({ applicantId: uploaded.applicant.id }),
+    });
+    assert.equal(strangerResumeRes.status, 403);
+
+    const projectsReq = new NextRequest('http://localhost:3000/api/projects', {
+      headers: { cookie: ownerCookie },
+    });
+    const projectsRes = await getProjects(projectsReq);
+    const projectsData = await projectsRes.json();
+    const serialized = JSON.stringify(projectsData);
+    assert.equal(serialized.includes('resumePath'), false);
+    assert.equal(serialized.includes(stored?.resumePath), false);
+
+    await deleteResume(stored?.resumePath);
   });
 });

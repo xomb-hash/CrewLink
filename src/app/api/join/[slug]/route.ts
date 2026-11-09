@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
+import { projectLogoUrl } from '@/projects/logo';
 
 export async function GET(
   request: NextRequest,
@@ -43,6 +44,13 @@ export async function GET(
       screeningUrl: project.screeningUrl,
       ownerLogin: project.ownerLogin,
       ownerAvatar: project.ownerAvatar,
+      roles: project.roles,
+      creatorNote: project.creatorNote,
+      requireResume: Boolean(project.requireResume),
+      requireGithubLink: Boolean(project.requireGithubLink),
+      requireLinkedinLink: Boolean(project.requireLinkedinLink),
+      requiresReferralCode: project.joinMode === 'referral' && Boolean(project.referralCode),
+      logoUrl: projectLogoUrl(project),
       githubUrl: project.isPrivate ? null : `https://github.com/${project.repoFullName}`,
     },
     currentUser: currentUser

@@ -19,7 +19,8 @@ npm test
 - `notifications.test.ts`: Transactional notification event dispatching.
 - `projects_share.test.ts`: LinkedIn, X, and WhatsApp share URL generation.
 - `projects_api.test.ts`: Next.js API route handlers for project creation and retrieval with admin permission check.
-- `applicants_api.test.ts`: Join page data, join request submissions, account age / public repo reporting, duplicate application prevention, and approval with GitHub collaborator invitation.
+- `applicants_api.test.ts`: Join page data, join request submissions, referral code enforcement, account age / public repo reporting, duplicate application prevention, required credentials, resume access rules, and approval with GitHub collaborator invitation.
+- `referral_logo.test.ts`: Invite code generation/normalization, owner-only regeneration, old-link invalidation, notification feed contents, and project logo validation, upload, serving, and path privacy.
 - `security_checks.test.ts`: Server-side authorization checks ensuring only repository owners can approve, reject, or inspect applicant details.
 - `posting.test.ts`: Post draft creation, character and grapheme cluster limits, secret detection, duplicate warnings, and zero-network-call guarantees.
 
