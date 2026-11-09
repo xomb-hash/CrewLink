@@ -7,21 +7,30 @@ import { storage } from '../src/lib/storage';
 import { POST as webhookHandler } from '../src/app/api/webhooks/github/route';
 
 test('GitHub webhook: handles ping event', async () => {
-  const payload = JSON.stringify({ zen: 'Keep it logically awesome.' });
-  const req = new NextRequest('http://localhost:3000/api/webhooks/github', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-github-event': 'ping',
-    },
-    body: payload,
-  });
+  const originalSecret = process.env.GITHUB_WEBHOOK_SECRET;
+  delete process.env.GITHUB_WEBHOOK_SECRET;
 
-  const res = await webhookHandler(req);
-  assert.equal(res.status, 200);
-  const data = await res.json();
-  assert.equal(data.message, 'pong');
-  assert.equal(data.zen, 'Keep it logically awesome.');
+  try {
+    const payload = JSON.stringify({ zen: 'Keep it logically awesome.' });
+    const req = new NextRequest('http://localhost:3000/api/webhooks/github', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-github-event': 'ping',
+      },
+      body: payload,
+    });
+
+    const res = await webhookHandler(req);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.message, 'pong');
+    assert.equal(data.zen, 'Keep it logically awesome.');
+  } finally {
+    if (originalSecret !== undefined) {
+      process.env.GITHUB_WEBHOOK_SECRET = originalSecret;
+    }
+  }
 });
 
 test('GitHub webhook: validates HMAC-SHA256 signature', async () => {
