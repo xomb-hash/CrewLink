@@ -76,7 +76,7 @@ export default async function HomePage({
       joinMode: project.joinMode,
       roles: project.roles || [],
       logoUrl: projectLogoUrl(project),
-      requiresCode: project.joinMode === 'referral' && Boolean(project.referralCode),
+      requiresCode: project.joinMode === 'referral',
     }));
 
   return (
@@ -91,15 +91,15 @@ export default async function HomePage({
 function Landing() {
   return (
     <div className="mx-auto max-w-4xl px-6 py-16 text-center">
-      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-line-soft px-3 py-1 text-[10px] uppercase tracking-[0.1em] text-[#b3b3b3]">
+      <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-line-soft px-3 py-1 text-[10px] uppercase tracking-[0.1em] text-[#8b949e]">
         Crewlink for GitHub
       </div>
 
-      <h1 className="mx-auto mb-6 max-w-3xl text-4xl font-light leading-[1.1] tracking-[-0.03em] text-ink sm:text-5xl">
+      <h1 className="mx-auto mb-6 max-w-3xl text-4xl font-semibold leading-[1.1] tracking-[-0.03em] text-ink sm:text-5xl">
         Where builders find each other and start creating together.
       </h1>
 
-      <p className="mx-auto mb-10 max-w-2xl text-[15px] leading-relaxed text-[#c2c2c2]">
+      <p className="mx-auto mb-10 max-w-2xl text-[15px] leading-relaxed text-[#c9d1d9]">
         Connect a GitHub repository, share one join link, and decide who comes aboard. Once approved,
         Crewlink sends real GitHub collaborator invitations.
       </p>
@@ -107,50 +107,50 @@ function Landing() {
       <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
         <a
           href="/auth/github?redirect_to=%2Fdashboard"
-          className="inline-flex h-10 items-center gap-2 rounded-md border border-ink bg-ink px-6 text-[13px] text-black transition-colors hover:border-[#d6d6d6] hover:bg-[#d6d6d6]"
+          className="inline-flex h-10 items-center gap-2 rounded-md border border-success bg-success px-6 text-[13px] font-semibold text-white transition-colors hover:border-success-emphasis hover:bg-success-emphasis"
         >
           Sign in with GitHub
           <ArrowRight className="h-4 w-4" />
         </a>
         <a
           href="#how-it-works"
-          className="inline-flex h-10 items-center rounded-md border border-line-soft px-6 text-[13px] text-[#c9c9c9] transition-colors hover:border-[#808080] hover:text-[#dedede]"
+          className="inline-flex h-10 items-center rounded-md border border-line-soft px-6 text-[13px] text-[#c9d1d9] transition-colors hover:border-[#6e7681] hover:text-[#e6edf3]"
         >
           How it works
         </a>
       </div>
 
       <section id="how-it-works" className="border-t border-line pt-10 text-left">
-        <h2 className="mb-7 text-center text-lg font-light tracking-tight text-ink">How Crewlink works</h2>
+        <h2 className="mb-7 text-center text-lg font-semibold tracking-tight text-ink">How Crewlink works</h2>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-[10px] border border-line bg-panel p-6">
-            <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9c9c9]">
+            <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9d1d9]">
               <GitBranch className="h-4 w-4" strokeWidth={1.5} />
             </div>
             <h3 className="mb-1.5 text-[13px] font-normal text-ink">1. Connect your repo</h3>
-            <p className="text-[12px] leading-relaxed text-[#b3b3b3]">
+            <p className="text-[12px] leading-relaxed text-[#8b949e]">
               Sign in with GitHub and select a repository where you have administrative access.
             </p>
           </div>
 
           <div className="rounded-[10px] border border-line bg-panel p-6">
-            <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9c9c9]">
+            <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9d1d9]">
               <ShieldCheck className="h-4 w-4" strokeWidth={1.5} />
             </div>
             <h3 className="mb-1.5 text-[13px] font-normal text-ink">2. Choose join mode</h3>
-            <p className="text-[12px] leading-relaxed text-[#b3b3b3]">
-              Pick <strong className="font-normal text-[#d6d6d6]">Referral link</strong> for standard review or{' '}
-              <strong className="font-normal text-[#d6d6d6]">Screening first</strong> to require an interview or test link.
+            <p className="text-[12px] leading-relaxed text-[#8b949e]">
+              Pick <strong className="font-normal text-[#e6edf3]">Referral link</strong> for standard review or{' '}
+              <strong className="font-normal text-[#e6edf3]">Screening first</strong> to require an interview or test link.
             </p>
           </div>
 
           <div className="rounded-[10px] border border-line bg-panel p-6">
-            <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9c9c9]">
+            <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9d1d9]">
               <UserCheck className="h-4 w-4" strokeWidth={1.5} />
             </div>
             <h3 className="mb-1.5 text-[13px] font-normal text-ink">3. Review &amp; invite</h3>
-            <p className="text-[12px] leading-relaxed text-[#b3b3b3]">
+            <p className="text-[12px] leading-relaxed text-[#8b949e]">
               Review applicants by account age and public repo count. Approving dispatches a real GitHub
               collaborator invitation.
             </p>
@@ -160,7 +160,7 @@ function Landing() {
 
       <section className="mt-8 rounded-[10px] border border-line bg-panel p-6 text-left">
         <h3 className="mb-1.5 text-[13px] font-normal text-ink">Purpose-built for connecting builders</h3>
-        <p className="text-[12px] leading-relaxed text-[#b3b3b3]">
+        <p className="text-[12px] leading-relaxed text-[#8b949e]">
           Crewlink only connects people. It is not a chat app and does not track post-approval team
           performance. Once approved on GitHub, teams continue collaborating on GitHub, Discord, or WhatsApp.
         </p>

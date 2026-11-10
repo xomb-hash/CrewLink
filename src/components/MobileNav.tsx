@@ -15,14 +15,14 @@ export function MobileNav({ user, pathname }: MobileNavProps) {
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
 
   const itemClass = (active: boolean) =>
-    `flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] font-light tracking-[0.04em] ${
-      active ? 'text-ink' : 'text-[#9c9c9c]'
+    `flex flex-1 flex-col items-center gap-0.5 py-1.5 text-[10px] font-normal tracking-[0.04em] ${
+      active ? 'text-ink' : 'text-[#8b949e]'
     }`;
 
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-[90] flex border-t border-line bg-black pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-[90] flex border-t border-line bg-canvas-inset pb-[env(safe-area-inset-bottom,0px)] md:hidden"
     >
       <Link href="/" prefetch={false} aria-current={isActive('/') ? 'page' : undefined} className={itemClass(isActive('/'))}>
         <Home className="h-[18px] w-[18px]" strokeWidth={1.4} />
@@ -44,7 +44,7 @@ export function MobileNav({ user, pathname }: MobileNavProps) {
         className={itemClass(isActive('/applications'))}
       >
         <Send className="h-[18px] w-[18px]" strokeWidth={1.4} />
-        Apps
+        Applications
       </Link>
       <Link
         href="/dashboard"

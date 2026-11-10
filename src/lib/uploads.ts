@@ -1,6 +1,9 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Storage, type StorageOptions } from '@google-cloud/storage';
+import { config } from '@/config/index';
+import { logger } from '@/lib/logger';
 
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
 export const MAX_LOGO_BYTES = 2 * 1024 * 1024;
@@ -14,6 +17,33 @@ export class LogoUploadError extends Error {}
 
 function uploadsDir(): string {
   return path.resolve(process.cwd(), 'data', 'uploads');
+}
+
+type GcsBucket = ReturnType<Storage['bucket']>;
+
+let gcsBucket: GcsBucket | null = null;
+
+function getGcsBucket(): GcsBucket | null {
+  if (!config.gcsBucketName) return null;
+  if (gcsBucket) return gcsBucket;
+
+  const options: StorageOptions = {};
+  if (config.gcpProjectId) options.projectId = config.gcpProjectId;
+  if (config.gcsCredentialsJson) {
+    try {
+      options.credentials = JSON.parse(config.gcsCredentialsJson);
+    } catch (err) {
+      logger.error('Invalid GCS_CREDENTIALS_JSON', err);
+      throw new Error('Invalid GCS_CREDENTIALS_JSON: expected a service account key JSON.');
+    }
+  }
+
+  gcsBucket = new Storage(options).bucket(config.gcsBucketName);
+  return gcsBucket;
+}
+
+export function resumeStorageMode(): 'google-cloud-storage' | 'local-disk' {
+  return config.gcsBucketName ? 'google-cloud-storage' : 'local-disk';
 }
 
 export function validateResumeFile(file: { size: number; type: string; name: string }): string | null {
@@ -42,19 +72,58 @@ export async function saveResume(file: File): Promise<{ storedName: string; file
   }
 
   const storedName = `${crypto.randomUUID()}.pdf`;
-  await fs.mkdir(uploadsDir(), { recursive: true });
-  await fs.writeFile(path.join(uploadsDir(), storedName), buffer);
+  const bucket = getGcsBucket();
+
+  if (bucket) {
+    try {
+      await bucket.file(storedName).save(buffer, {
+        contentType: 'application/pdf',
+        resumable: false,
+        metadata: { cacheControl: 'private, no-store' },
+      });
+    } catch (err) {
+      logger.error('GCS resume upload failed', err, { storedName });
+      throw err;
+    }
+  } else {
+    await fs.mkdir(uploadsDir(), { recursive: true });
+    await fs.writeFile(path.join(uploadsDir(), storedName), buffer);
+  }
 
   return { storedName, fileName: resumeDownloadName(file.name) };
 }
 
 export async function deleteResume(storedName?: string): Promise<void> {
   if (!storedName || !STORED_NAME_PATTERN.test(storedName)) return;
+
+  const bucket = getGcsBucket();
+  if (bucket) {
+    try {
+      await bucket.file(storedName).delete({ ignoreNotFound: true });
+    } catch (err) {
+      logger.error('GCS resume delete failed', err, { storedName });
+    }
+    return;
+  }
+
   await fs.rm(path.join(uploadsDir(), storedName), { force: true });
 }
 
 export async function readResume(storedName?: string): Promise<Buffer | null> {
   if (!storedName || !STORED_NAME_PATTERN.test(storedName)) return null;
+
+  const bucket = getGcsBucket();
+  if (bucket) {
+    try {
+      const [contents] = await bucket.file(storedName).download();
+      return contents;
+    } catch (err) {
+      if ((err as { code?: number }).code === 404) return null;
+      logger.error('GCS resume download failed', err, { storedName });
+      throw err;
+    }
+  }
+
   try {
     return await fs.readFile(path.join(uploadsDir(), storedName));
   } catch {

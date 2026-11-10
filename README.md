@@ -83,6 +83,21 @@ Never share or commit `.env` or the `.pem` file.
 
 ---
 
+## Resume Storage (Google Cloud Storage)
+
+Applicant PDF resumes are stored in **Google Cloud Storage** when `GCS_BUCKET_NAME` is set:
+
+1. Create a bucket (for example `crewlink-resumes`) and keep it private.
+2. Create a service account with the **Storage Object Admin** role on that bucket.
+3. In `.env`, set `GCS_BUCKET_NAME`, `GCP_PROJECT_ID`, and either:
+   - `GCS_CREDENTIALS_JSON` (the service-account key JSON pasted as one line), or
+   - `GOOGLE_APPLICATION_CREDENTIALS` (path to the key file) / Application Default Credentials.
+
+Each resume is saved as `<uuid>.pdf`; the original filename is kept in the database. Downloads still go through the owner/applicant-only route (`/api/resume/[applicantId]`), so the bucket needs no public access and no signed URLs are exposed.
+If `GCS_BUCKET_NAME` is empty, resumes fall back to `data/uploads/` on local disk for development and tests. Project logos remain on local disk.
+
+---
+
 ## Testing Policy
 
 Automated tests in `tests/` use an isolated **fake GitHub** client (`src/github/fake.ts`). They will never make outbound requests to real GitHub.

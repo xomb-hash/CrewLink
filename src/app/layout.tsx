@@ -10,8 +10,10 @@ export const metadata = {
 
 export default async function RootLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
   const user = await getCurrentUser();
 
@@ -29,6 +31,7 @@ export default async function RootLayout({
     <html lang="en" className="dark">
       <body>
         <AppShell user={shellUser}>{children}</AppShell>
+        {modal}
       </body>
     </html>
   );

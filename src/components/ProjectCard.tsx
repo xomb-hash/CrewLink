@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { VisibilityBadge } from './VisibilityBadge';
 import { ProjectLogo } from './ProjectLogo';
+import { referralCodeExpiresAt, referralCodeState } from '@/projects/referralState';
 import type { Project, Applicant, ShareLinks } from '../types/index';
 
 interface ProjectCardProps {
@@ -45,6 +46,21 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
   const [loadingAction, setLoadingAction] = useState(false);
 
   const applicants = project.applicants ?? [];
+  const codeState = project.joinMode === 'referral' ? referralCodeState(project) : 'active';
+  const expiresAt = project.joinMode === 'referral' ? referralCodeExpiresAt(project) : null;
+  const daysLeft = expiresAt
+    ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+    : 0;
+  const codeStatusLabel =
+    codeState === 'active'
+      ? daysLeft === 0
+        ? 'Expires today'
+        : `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+      : codeState === 'used'
+      ? 'Used — one person per code'
+      : codeState === 'expired'
+      ? 'Expired'
+      : 'Not generated';
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(project.shareLinks.joinUrl).then(() => {
@@ -106,12 +122,12 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
               className="h-9 w-9"
               textClassName="text-[13px]"
             />
-            <h2 className="text-[15px] font-normal text-ink">{project.title}</h2>
+            <h2 className="text-[15px] font-semibold text-ink">{project.title}</h2>
             <span
               className={`rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-[0.06em] ${
                 project.joinMode === 'screening'
-                  ? 'border-white/70 bg-white/10 text-white'
-                  : 'border-line-soft bg-white/[0.03] text-[#dedede]'
+                  ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
+                  : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
               }`}
             >
               {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
@@ -125,19 +141,19 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 href={`https://github.com/${project.repoFullName}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[#b3b3b3] transition-colors hover:text-ink"
+                className="inline-flex items-center gap-1.5 font-mono text-[11px] text-link transition-colors hover:underline"
                 title="Open code on GitHub"
               >
                 <span>{project.repoFullName}</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
-              <span className="font-mono text-[11px] text-[#b3b3b3]">{project.repoFullName}</span>
+              <span className="font-mono text-[11px] text-[#8b949e]">{project.repoFullName}</span>
             )}
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#b3b3b3] transition-colors hover:border-red-500/60 hover:text-red-300"
+              className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#8b949e] transition-colors hover:border-[#f85149]/60 hover:text-[#f85149]"
               title="Delete this project"
             >
               <Trash2 className="h-3 w-3" />
@@ -147,14 +163,14 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
         </div>
 
         {project.description && (
-          <p className="mt-1 text-[12px] leading-relaxed text-[#c2c2c2]">{project.description}</p>
+          <p className="mt-1 text-[12px] leading-relaxed text-[#c9d1d9]">{project.description}</p>
         )}
 
         {project.roles && project.roles.length > 0 && (
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] text-[#9c9c9c]">Roles wanted:</span>
+            <span className="text-[11px] text-[#8b949e]">Roles wanted:</span>
             {project.roles.map((role) => (
-              <span key={role} className="rounded-full border border-[#333333] px-2.5 py-0.5 text-[11px] text-[#b3b3b3]">
+              <span key={role} className="rounded-full border border-[#30363d] px-2.5 py-0.5 text-[11px] text-[#8b949e]">
                 {role}
               </span>
             ))}
@@ -163,15 +179,15 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
       </div>
 
       {/* Join link + share */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-[#080808] px-5 py-3">
-        <div className="flex w-full max-w-md items-center gap-2 rounded-md border border-line-soft bg-black px-3 py-1.5">
-          <span className="flex-1 select-all truncate font-mono text-[11px] text-[#c2c2c2]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-[#161b22] px-5 py-3">
+        <div className="flex w-full max-w-md items-center gap-2 rounded-md border border-line-soft bg-background px-3 py-1.5">
+          <span className="flex-1 select-all truncate font-mono text-[11px] text-[#c9d1d9]">
             {project.shareLinks.joinUrl}
           </span>
           <button
             type="button"
             onClick={handleCopyLink}
-            className="inline-flex flex-none items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#d6d6d6] transition-colors hover:border-[#ffffff] hover:text-ink"
+            className="inline-flex flex-none items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#e6edf3] transition-colors hover:border-[#8b949e] hover:text-ink"
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             {copied ? 'Copied' : 'Copy'}
@@ -179,12 +195,12 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
         </div>
 
         <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="text-[#9c9c9c]">Share:</span>
+          <span className="text-[#8b949e]">Share:</span>
           <a
             href={project.shareLinks.linkedIn}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border border-line-soft px-2.5 py-1 text-[#c9c9c9] transition-colors hover:border-[#ffffff] hover:text-ink"
+            className="rounded border border-line-soft px-2.5 py-1 text-[#c9d1d9] transition-colors hover:border-[#8b949e] hover:text-ink"
           >
             LinkedIn
           </a>
@@ -192,7 +208,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
             href={project.shareLinks.x}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border border-line-soft px-2.5 py-1 text-[#c9c9c9] transition-colors hover:border-[#ffffff] hover:text-ink"
+            className="rounded border border-line-soft px-2.5 py-1 text-[#c9d1d9] transition-colors hover:border-[#8b949e] hover:text-ink"
           >
             X
           </a>
@@ -200,7 +216,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
             href={project.shareLinks.whatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border border-line-soft px-2.5 py-1 text-[#c9c9c9] transition-colors hover:border-[#ffffff] hover:text-ink"
+            className="rounded border border-line-soft px-2.5 py-1 text-[#c9d1d9] transition-colors hover:border-[#8b949e] hover:text-ink"
           >
             WhatsApp
           </a>
@@ -209,40 +225,53 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
 
       {/* Referral code */}
       {project.joinMode === 'referral' && (
-        <div className="flex flex-wrap items-center gap-2.5 border-b border-line bg-[#080808] px-5 py-2.5 text-[11px]">
-          <span className="inline-flex items-center gap-1.5 text-[#9c9c9c]">
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-line bg-[#161b22] px-5 py-2.5 text-[11px]">
+          <span className="inline-flex items-center gap-1.5 text-[#8b949e]">
             <KeyRound className="h-3.5 w-3.5" />
             Invite code
           </span>
           {project.referralCode ? (
-            <code className="rounded border border-line-soft bg-black px-2 py-0.5 font-mono text-[11px] tracking-[0.12em] text-ink">
+            <code className="rounded border border-line-soft bg-background px-2 py-0.5 font-mono text-[11px] tracking-[0.12em] text-ink">
               {project.referralCode}
             </code>
           ) : (
-            <span className="text-[#a8a8a8]">Not generated</span>
+            <span className="text-[#8b949e]">Not generated</span>
           )}
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.05em] ${
+              codeState === 'active'
+                ? 'border-[#238636]/40 bg-[#238636]/15 text-[#3fb950]'
+                : codeState === 'used'
+                ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
+                : 'border-[#d29922]/40 bg-[#d29922]/15 text-[#e3b341]'
+            }`}
+          >
+            {codeStatusLabel}
+          </span>
           <button
             type="button"
             onClick={handleGenerateCode}
             disabled={generatingCode}
-            title="Generating a new code invalidates links shared with the old one."
-            className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#d6d6d6] transition-colors hover:border-ink hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+            title="Each code admits one person and expires after 7 days. Generating a new code replaces the current one."
+            className="inline-flex h-7 items-center gap-1.5 rounded border border-line-soft px-2.5 text-[11px] text-[#e6edf3] transition-colors hover:border-[#8b949e] hover:text-ink disabled:pointer-events-none disabled:opacity-40"
           >
             <RefreshCw className={`h-3 w-3 ${generatingCode ? 'animate-spin' : ''}`} />
             {generatingCode ? 'Generating…' : project.referralCode ? 'Generate new code' : 'Generate code'}
           </button>
-          <span className="text-[#808080]">Regenerating invalidates previously shared links.</span>
+          <span className="w-full text-[#6e7681]">
+            Each code admits one person and expires after 7 days. Generating a new code replaces the current link.
+          </span>
         </div>
       )}
 
       {/* Applicants */}
       <div className="p-5">
-        <h3 className="mb-2 text-[10px] uppercase tracking-[0.1em] text-[#808080]">
+        <h3 className="mb-2 text-[10px] uppercase tracking-[0.1em] text-[#6e7681]">
           Applicants ({applicants.length})
         </h3>
 
         {applicants.length === 0 ? (
-          <div className="px-4 py-8 text-center text-[12px] text-[#808080]">
+          <div className="px-4 py-8 text-center text-[12px] text-[#6e7681]">
             No applicants yet. Share your join link on LinkedIn, X, or WhatsApp.
           </div>
         ) : (
@@ -251,18 +280,18 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
               const label = statusFor(applicant, project.joinMode);
               const statusClass =
                 applicant.status === 'approved'
-                  ? 'border-ink text-ink'
+                  ? 'border-[#238636]/40 bg-[#238636]/15 text-[#3fb950]'
                   : applicant.status === 'rejected'
-                  ? 'border-[#333333] text-[#808080] line-through'
-                  : 'border-[#6b6b6b] text-[#dedede]';
+                  ? 'border-[#da3633]/40 bg-[#da3633]/15 text-[#f85149]'
+                  : 'border-[#d29922]/40 bg-[#d29922]/15 text-[#e3b341]';
 
               return (
                 <div
                   key={applicant.id}
-                  className="flex flex-wrap items-center justify-between gap-4 border-b border-[#3d3d3d] py-3.5 last:border-0"
+                  className="flex flex-wrap items-center justify-between gap-4 border-b border-[#30363d] py-3.5 last:border-0"
                 >
                   <div className="flex min-w-0 items-start gap-3">
-                    <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-[#3f3f3f] text-[11px] text-[#b3b3b3]">
+                    <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-[#30363d] text-[11px] text-[#8b949e]">
                       {applicant.userAvatar ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -281,7 +310,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                           href={`https://github.com/${applicant.userLogin}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[13px] font-normal text-[#eaeaea] hover:text-ink hover:underline"
+                          className="text-[13px] font-normal text-link hover:underline"
                         >
                           @{applicant.userLogin}
                         </a>
@@ -292,15 +321,15 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                         </span>
                       </div>
 
-                      <div className="mt-1 text-[11px] text-[#9c9c9c]">
-                        Account age: <strong className="font-normal text-[#c2c2c2]">{applicant.accountAge}</strong>
+                      <div className="mt-1 text-[11px] text-[#8b949e]">
+                        Account age: <strong className="font-normal text-[#c9d1d9]">{applicant.accountAge}</strong>
                         <span className="mx-1.5">&middot;</span>
                         Public repositories:{' '}
-                        <strong className="font-normal text-[#c2c2c2]">{applicant.publicRepoCount}</strong>
+                        <strong className="font-normal text-[#c9d1d9]">{applicant.publicRepoCount}</strong>
                       </div>
 
                       {applicant.message && (
-                        <p className="mt-2 border-l border-[#3f3f3f] pl-2.5 text-[11px] leading-relaxed text-[#c2c2c2]">
+                        <p className="mt-2 border-l border-[#30363d] pl-2.5 text-[11px] leading-relaxed text-[#c9d1d9]">
                           &ldquo;{applicant.message}&rdquo;
                         </p>
                       )}
@@ -312,7 +341,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                               href={applicant.githubUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#c9c9c9] transition-colors hover:border-ink hover:text-ink"
+                              className="inline-flex items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#c9d1d9] transition-colors hover:border-[#8b949e] hover:text-ink"
                             >
                               <Code2 className="h-3 w-3" />
                               GitHub
@@ -323,7 +352,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                               href={applicant.linkedinUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#c9c9c9] transition-colors hover:border-ink hover:text-ink"
+                              className="inline-flex items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#c9d1d9] transition-colors hover:border-[#8b949e] hover:text-ink"
                             >
                               <Briefcase className="h-3 w-3" />
                               LinkedIn
@@ -335,7 +364,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                               target="_blank"
                               rel="noopener noreferrer"
                               title={applicant.resumeFileName}
-                              className="inline-flex max-w-[180px] items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#c9c9c9] transition-colors hover:border-ink hover:text-ink"
+                              className="inline-flex max-w-[180px] items-center gap-1 rounded border border-line-soft px-2 py-0.5 text-[11px] text-[#c9d1d9] transition-colors hover:border-[#8b949e] hover:text-ink"
                             >
                               <FileText className="h-3 w-3 flex-none" />
                               <span className="truncate">Resume</span>
@@ -352,24 +381,24 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                         <button
                           type="button"
                           onClick={() => setConfirmApprove(applicant)}
-                          className="h-7 rounded-md border border-ink bg-ink px-3 text-[12px] text-black transition-colors hover:border-[#d6d6d6] hover:bg-[#d6d6d6]"
+                          className="h-7 rounded-md border border-success bg-success px-3 text-[12px] font-semibold text-white transition-colors hover:border-success-emphasis hover:bg-success-emphasis disabled:opacity-40"
                         >
                           Approve
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmReject(applicant)}
-                          className="h-7 rounded-md border border-[#3f3f3f] px-3 text-[12px] text-[#c9c9c9] transition-colors hover:border-ink hover:text-ink"
+                          className="h-7 rounded-md border border-line-soft px-3 text-[12px] text-[#c9d1d9] transition-colors hover:border-[#f85149]/60 hover:text-[#f85149]"
                         >
                           Reject
                         </button>
                       </>
                     ) : applicant.status === 'approved' ? (
-                      <span className="flex items-center gap-1 text-[11px] text-[#dedede]">
+                      <span className="flex items-center gap-1 text-[11px] text-[#3fb950]">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Invitation sent
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 text-[11px] text-[#808080]">
+                      <span className="flex items-center gap-1 text-[11px] text-[#f85149]">
                         <XCircle className="h-3.5 w-3.5" /> Declined
                       </span>
                     )}
@@ -384,11 +413,11 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
       {/* Confirm: approve */}
       {confirmApprove && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-[#333333] bg-panel p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-xl border border-[#30363d] bg-panel p-6 shadow-2xl">
             <h3 className="mb-2 text-base font-normal text-ink">Approve @{confirmApprove.userLogin}?</h3>
-            <p className="mb-5 text-[12px] leading-relaxed text-[#c2c2c2]">
+            <p className="mb-5 text-[12px] leading-relaxed text-[#c9d1d9]">
               Approving will send a <strong className="font-normal text-ink">real GitHub collaborator invitation</strong>{' '}
-              for repository <code className="font-mono text-[11px] text-[#dedede]">{project.repoFullName}</code>. The
+              for repository <code className="font-mono text-[11px] text-[#e6edf3]">{project.repoFullName}</code>. The
               user must accept the invitation on GitHub to get access.
             </p>
             <div className="flex justify-end gap-2">
@@ -396,7 +425,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 type="button"
                 disabled={loadingAction}
                 onClick={() => setConfirmApprove(null)}
-                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#b3b3b3] transition-colors hover:border-[#808080] hover:text-[#dedede] disabled:opacity-40"
+                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#8b949e] transition-colors hover:border-[#6e7681] hover:text-[#e6edf3] disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -404,7 +433,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 type="button"
                 disabled={loadingAction}
                 onClick={handleConfirmApprove}
-                className="h-9 rounded-md border border-ink bg-ink px-4 text-[12px] text-black transition-colors hover:border-[#d6d6d6] hover:bg-[#d6d6d6] disabled:opacity-40"
+                className="h-9 rounded-md border border-success bg-success px-4 text-[12px] font-semibold text-white transition-colors hover:border-success-emphasis hover:bg-success-emphasis disabled:opacity-40"
               >
                 {loadingAction ? 'Sending invite…' : 'Confirm & send invitation'}
               </button>
@@ -416,9 +445,9 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
       {/* Confirm: reject */}
       {confirmReject && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-[#333333] bg-panel p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-xl border border-[#30363d] bg-panel p-6 shadow-2xl">
             <h3 className="mb-2 text-base font-normal text-ink">Reject @{confirmReject.userLogin}?</h3>
-            <p className="mb-5 text-[12px] leading-relaxed text-[#c2c2c2]">
+            <p className="mb-5 text-[12px] leading-relaxed text-[#c9d1d9]">
               Are you sure you want to decline this applicant&apos;s request to join?
             </p>
             <div className="flex justify-end gap-2">
@@ -426,7 +455,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 type="button"
                 disabled={loadingAction}
                 onClick={() => setConfirmReject(null)}
-                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#b3b3b3] transition-colors hover:border-[#808080] hover:text-[#dedede] disabled:opacity-40"
+                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#8b949e] transition-colors hover:border-[#6e7681] hover:text-[#e6edf3] disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -434,7 +463,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 type="button"
                 disabled={loadingAction}
                 onClick={handleConfirmReject}
-                className="h-9 rounded-md border border-red-500/60 px-4 text-[12px] text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-40"
+                className="h-9 rounded-md border border-[#da3633] bg-[#da3633] px-4 text-[12px] font-semibold text-white transition-colors hover:border-[#f85149] hover:bg-[#f85149] disabled:opacity-40"
               >
                 {loadingAction ? 'Rejecting…' : 'Reject applicant'}
               </button>
@@ -445,9 +474,9 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
       {/* Confirm: delete */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-[#333333] bg-panel p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-xl border border-[#30363d] bg-panel p-6 shadow-2xl">
             <h3 className="mb-2 text-base font-normal text-ink">Delete {project.title}?</h3>
-            <p className="mb-5 text-[12px] leading-relaxed text-[#c2c2c2]">
+            <p className="mb-5 text-[12px] leading-relaxed text-[#c9d1d9]">
               This permanently removes the project, its join link, the applicant list and any uploaded
               files. Your GitHub repository and its collaborators are <strong className="font-normal text-ink">not</strong>{' '}
               affected. This cannot be undone.
@@ -457,7 +486,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 type="button"
                 disabled={loadingAction}
                 onClick={() => setConfirmDelete(false)}
-                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#b3b3b3] transition-colors hover:border-[#808080] hover:text-[#dedede] disabled:opacity-40"
+                className="h-9 rounded-md border border-line-soft px-4 text-[12px] text-[#8b949e] transition-colors hover:border-[#6e7681] hover:text-[#e6edf3] disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -465,7 +494,7 @@ export function ProjectCard({ project, onApprove, onReject, onGenerateCode, onDe
                 type="button"
                 disabled={loadingAction}
                 onClick={handleConfirmDelete}
-                className="h-9 rounded-md border border-red-500/60 px-4 text-[12px] text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-40"
+                className="h-9 rounded-md border border-[#da3633] bg-[#da3633] px-4 text-[12px] font-semibold text-white transition-colors hover:border-[#f85149] hover:bg-[#f85149] disabled:opacity-40"
               >
                 {loadingAction ? 'Deleting…' : 'Delete project'}
               </button>

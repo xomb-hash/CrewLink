@@ -11,7 +11,7 @@ export function VisibilityBadge({ isPrivate, showText = true }: VisibilityBadgeP
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full border border-[#3f3f3f] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.06em] text-[#c2c2c2]"
+      className="inline-flex items-center gap-1.5 rounded-full border border-[#30363d] px-2.5 py-0.5 text-[10px] uppercase tracking-[0.06em] text-[#c9d1d9]"
       title={isPrivate ? 'Private repository' : 'Public repository'}
     >
       <Icon className="h-3 w-3" strokeWidth={1.5} aria-hidden="true" />

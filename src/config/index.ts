@@ -8,6 +8,9 @@ export const config = {
   githubClientSecret: process.env.GITHUB_CLIENT_SECRET || '',
   githubAppId: process.env.GITHUB_APP_ID || '',
   githubPrivateKeyPath: process.env.GITHUB_PRIVATE_KEY_PATH || '',
+  gcsBucketName: process.env.GCS_BUCKET_NAME || '',
+  gcpProjectId: process.env.GCP_PROJECT_ID || '',
+  gcsCredentialsJson: process.env.GCS_CREDENTIALS_JSON || '',
 };
 
 export default config;

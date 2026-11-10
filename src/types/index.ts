@@ -41,6 +41,8 @@ export interface Project {
   requireGithubLink?: boolean;
   requireLinkedinLink?: boolean;
   referralCode?: string;
+  referralCodeCreatedAt?: string;
+  referralCodeUsedAt?: string;
   logoPath?: string;
   createdAt: string;
   updatedAt: string;

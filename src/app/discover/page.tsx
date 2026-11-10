@@ -16,24 +16,40 @@ export default async function DiscoverPage() {
     }
   }
 
-  const projects: DiscoverProject[] = allProjects
-    .filter((project) => !project.isPrivate)
-    .filter(
-      (project) =>
-        !user || project.ownerLogin.toLowerCase() !== user.login.toLowerCase()
-    )
-    .map((project) => ({
-      id: project.id,
-      slug: project.slug,
-      title: project.title,
-      description: project.description || '',
-      ownerLogin: project.ownerLogin,
-      joinMode: project.joinMode,
-      roles: project.roles || [],
-      logoUrl: projectLogoUrl(project),
-      requiresCode: project.joinMode === 'referral' && Boolean(project.referralCode),
-      appliedStatus: appliedStatus.get(project.id) ?? null,
-    }));
+  const projects: DiscoverProject[] = await Promise.all(
+    allProjects
+      .filter((project) => !project.isPrivate)
+      .filter(
+        (project) =>
+          !user || project.ownerLogin.toLowerCase() !== user.login.toLowerCase()
+      )
+      .map(async (project) => {
+        let applicantsCount = 0;
+        try {
+          applicantsCount = (await storage.getApplicantsByProject(project.id)).length;
+        } catch {
+          applicantsCount = 0;
+        }
+
+        return {
+          id: project.id,
+          slug: project.slug,
+          title: project.title,
+          description: project.description || '',
+          ownerLogin: project.ownerLogin,
+          ownerAvatar: project.ownerAvatar || '',
+          repoFullName: project.repoFullName,
+          isPrivate: project.isPrivate,
+          joinMode: project.joinMode,
+          roles: project.roles || [],
+          logoUrl: projectLogoUrl(project),
+          requiresCode: project.joinMode === 'referral',
+          appliedStatus: appliedStatus.get(project.id) ?? null,
+          applicantsCount,
+          createdAt: project.createdAt,
+        };
+      })
+  );
 
   return <DiscoverClient projects={projects} />;
 }

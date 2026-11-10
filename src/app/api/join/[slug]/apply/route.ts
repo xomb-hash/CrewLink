@@ -5,7 +5,8 @@ import { rateLimiter } from '@/lib/rateLimit';
 import { notifyOwnerNewApplication } from '@/lib/notifications';
 import { formatAccountAge, validateApplicantInput } from '@/lib/validation';
 import { deleteResume, ResumeUploadError, saveResume } from '@/lib/uploads';
-import { referralCodeMatches } from '@/projects/referral';
+import { referralCodeMatches, normalizeReferralCode } from '@/projects/referral';
+import { referralCodeState } from '@/projects/referralState';
 
 export async function POST(
   request: NextRequest,
@@ -89,12 +90,17 @@ export async function POST(
   });
 
   const errors = [...validation.errors];
-  if (
-    project.joinMode === 'referral' &&
-    project.referralCode &&
-    !referralCodeMatches(project.referralCode, rawReferralCode)
-  ) {
-    errors.push('This project requires a valid referral code.');
+  const codeState = project.joinMode === 'referral' ? referralCodeState(project) : 'active';
+  if (project.joinMode === 'referral') {
+    if (codeState === 'used') {
+      errors.push('This invite link has already been used. Ask the creator for a new one.');
+    } else if (codeState === 'expired') {
+      errors.push('This invite link has expired. Ask the creator for a new one.');
+    } else if (codeState === 'missing') {
+      errors.push('This project requires a referral code.');
+    } else if (!referralCodeMatches(project.referralCode, rawReferralCode)) {
+      errors.push('This referral code is not valid.');
+    }
   }
   if (project.requireGithubLink && !validation.data.githubUrl) {
     errors.push('This project requires a GitHub profile link.');
@@ -120,6 +126,20 @@ export async function POST(
       }
       throw err;
     }
+  }
+
+  let claimedCode: string | null = null;
+  if (project.joinMode === 'referral') {
+    const code = normalizeReferralCode(rawReferralCode);
+    const claimed = await storage.claimReferralCode(project.id, code);
+    if (!claimed) {
+      if (savedResume) await deleteResume(savedResume.storedName);
+      return NextResponse.json(
+        { errors: ['This invite link has already been used. Ask the creator for a new one.'] },
+        { status: 400 }
+      );
+    }
+    claimedCode = code;
   }
 
   const accountAge = formatAccountAge(currentUser.createdAt);
@@ -154,6 +174,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (err) {
+    if (claimedCode) await storage.releaseReferralCode(project.id, claimedCode);
     if (savedResume) await deleteResume(savedResume.storedName);
     throw err;
   }

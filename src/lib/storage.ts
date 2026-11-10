@@ -5,6 +5,7 @@ import { prisma } from './prisma';
 import { encryptSecret, decryptSecret } from './crypto';
 import { logger } from './logger';
 import { generateReferralCode } from '../projects/referral';
+import { REFERRAL_CODE_TTL_MS } from '../projects/referralState';
 import type { User, Project, Applicant, Session, Draft, DraftStatus } from '../types/index';
 
 interface StorageData {
@@ -288,6 +289,8 @@ export class Storage {
     requireGithubLink?: boolean;
     requireLinkedinLink?: boolean;
     referralCode?: string;
+    referralCodeCreatedAt?: string;
+    referralCodeUsedAt?: string;
     logoPath?: string;
   }): Promise<Project> {
     const id = `prj_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`;
@@ -301,6 +304,9 @@ export class Storage {
       : [];
     const joinMode = project.joinMode === 'screening' ? 'screening' : 'referral';
     const referralCode = joinMode === 'referral' ? project.referralCode || generateReferralCode() : '';
+    const referralCodeCreatedAt =
+      joinMode === 'referral' ? project.referralCodeCreatedAt || new Date().toISOString() : '';
+    const referralCodeUsedAt = joinMode === 'referral' ? project.referralCodeUsedAt || '' : '';
 
     if (this.isPrismaActive()) {
       try {
@@ -325,6 +331,8 @@ export class Storage {
             requireGithubLink: Boolean(project.requireGithubLink),
             requireLinkedinLink: Boolean(project.requireLinkedinLink),
             referralCode: referralCode || null,
+            referralCodeCreatedAt: referralCodeCreatedAt ? new Date(referralCodeCreatedAt) : null,
+            referralCodeUsedAt: referralCodeUsedAt ? new Date(referralCodeUsedAt) : null,
             logoPath: project.logoPath || null,
           },
         });
@@ -348,6 +356,8 @@ export class Storage {
           requireGithubLink: created.requireGithubLink,
           requireLinkedinLink: created.requireLinkedinLink,
           referralCode: created.referralCode ?? undefined,
+          referralCodeCreatedAt: created.referralCodeCreatedAt?.toISOString(),
+          referralCodeUsedAt: created.referralCodeUsedAt?.toISOString(),
           logoPath: created.logoPath ?? undefined,
           createdAt: created.createdAt.toISOString(),
           updatedAt: created.updatedAt.toISOString(),
@@ -379,6 +389,8 @@ export class Storage {
       requireGithubLink: Boolean(project.requireGithubLink),
       requireLinkedinLink: Boolean(project.requireLinkedinLink),
       referralCode,
+      referralCodeCreatedAt,
+      referralCodeUsedAt,
       logoPath: project.logoPath || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -414,6 +426,8 @@ export class Storage {
           requireGithubLink: p.requireGithubLink,
           requireLinkedinLink: p.requireLinkedinLink,
           referralCode: p.referralCode ?? undefined,
+          referralCodeCreatedAt: p.referralCodeCreatedAt?.toISOString(),
+          referralCodeUsedAt: p.referralCodeUsedAt?.toISOString(),
           logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
@@ -453,6 +467,8 @@ export class Storage {
           requireGithubLink: p.requireGithubLink,
           requireLinkedinLink: p.requireLinkedinLink,
           referralCode: p.referralCode ?? undefined,
+          referralCodeCreatedAt: p.referralCodeCreatedAt?.toISOString(),
+          referralCodeUsedAt: p.referralCodeUsedAt?.toISOString(),
           logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
@@ -494,6 +510,8 @@ export class Storage {
           requireGithubLink: p.requireGithubLink,
           requireLinkedinLink: p.requireLinkedinLink,
           referralCode: p.referralCode ?? undefined,
+          referralCodeCreatedAt: p.referralCodeCreatedAt?.toISOString(),
+          referralCodeUsedAt: p.referralCodeUsedAt?.toISOString(),
           logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),
@@ -513,7 +531,14 @@ export class Storage {
   async updateProjectReferralCode(id: string, referralCode: string): Promise<Project | null> {
     if (this.isPrismaActive()) {
       try {
-        await prisma.project.update({ where: { id }, data: { referralCode } });
+        await prisma.project.update({
+          where: { id },
+          data: {
+            referralCode,
+            referralCodeCreatedAt: new Date(),
+            referralCodeUsedAt: null,
+          },
+        });
         return this.getProjectById(id);
       } catch (err) {
         logger.error('Prisma updateProjectReferralCode failed', err, { projectId: id });
@@ -525,9 +550,68 @@ export class Storage {
     const project = this.data.projects.find((p) => p.id === id);
     if (!project) return null;
     project.referralCode = referralCode;
+    project.referralCodeCreatedAt = new Date().toISOString();
+    project.referralCodeUsedAt = '';
     project.updatedAt = new Date().toISOString();
     this.save();
     return project;
+  }
+
+  async claimReferralCode(projectId: string, code: string): Promise<boolean> {
+    const issuedAfter = new Date(Date.now() - REFERRAL_CODE_TTL_MS);
+
+    if (this.isPrismaActive()) {
+      try {
+        const result = await prisma.project.updateMany({
+          where: {
+            id: projectId,
+            referralCode: code,
+            referralCodeUsedAt: null,
+            OR: [
+              { referralCodeCreatedAt: { gt: issuedAfter } },
+              { referralCodeCreatedAt: null, createdAt: { gt: issuedAfter } },
+            ],
+          },
+          data: { referralCodeUsedAt: new Date() },
+        });
+        return result.count === 1;
+      } catch (err) {
+        logger.error('Prisma claimReferralCode failed', err, { projectId });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const project = this.data.projects.find((p) => p.id === projectId);
+    if (!project || project.referralCode !== code || project.referralCodeUsedAt) return false;
+    const issuedAt = new Date(project.referralCodeCreatedAt || project.createdAt).getTime();
+    if (Number.isNaN(issuedAt) || issuedAt <= issuedAfter.getTime()) return false;
+    project.referralCodeUsedAt = new Date().toISOString();
+    project.updatedAt = new Date().toISOString();
+    this.save();
+    return true;
+  }
+
+  async releaseReferralCode(projectId: string, code: string): Promise<void> {
+    if (this.isPrismaActive()) {
+      try {
+        await prisma.project.updateMany({
+          where: { id: projectId, referralCode: code },
+          data: { referralCodeUsedAt: null },
+        });
+        return;
+      } catch (err) {
+        logger.error('Prisma releaseReferralCode failed', err, { projectId });
+        throw err;
+      }
+    }
+
+    this.ensureLoaded();
+    const project = this.data.projects.find((p) => p.id === projectId);
+    if (!project || project.referralCode !== code) return;
+    project.referralCodeUsedAt = '';
+    project.updatedAt = new Date().toISOString();
+    this.save();
   }
 
   async deleteProject(id: string): Promise<boolean> {
@@ -576,6 +660,8 @@ export class Storage {
           requireGithubLink: p.requireGithubLink,
           requireLinkedinLink: p.requireLinkedinLink,
           referralCode: p.referralCode ?? undefined,
+          referralCodeCreatedAt: p.referralCodeCreatedAt?.toISOString(),
+          referralCodeUsedAt: p.referralCodeUsedAt?.toISOString(),
           logoPath: p.logoPath ?? undefined,
           createdAt: p.createdAt.toISOString(),
           updatedAt: p.updatedAt.toISOString(),

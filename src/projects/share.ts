@@ -1,11 +1,22 @@
 import { config } from '../config/index';
-import type { Project, ShareLinks } from '../types/index';
+import { referralCodeState } from './referralState';
+import type { ShareLinks } from '../types/index';
+
+interface ShareProject {
+  slug: string;
+  title: string;
+  referralCode?: string;
+  referralCodeCreatedAt?: string;
+  referralCodeUsedAt?: string;
+  createdAt?: string;
+}
 
 export function generateShareLinks(
-  project: Pick<Project, 'slug' | 'title' | 'referralCode'>,
+  project: ShareProject,
   baseUrl = config.appUrl
 ): ShareLinks {
-  const code = project.referralCode?.trim().toUpperCase();
+  const activeCode = referralCodeState(project) === 'active' ? project.referralCode : undefined;
+  const code = activeCode?.trim().toUpperCase();
   const joinUrl = code
     ? `${baseUrl}/join/${project.slug}?ref=${encodeURIComponent(code)}`
     : `${baseUrl}/join/${project.slug}`;

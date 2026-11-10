@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { generateShareLinks } from '@/projects/share';
+import { referralCodeExpiresAt } from '@/projects/referralState';
 import { generateReferralCode } from '@/projects/referral';
 
 export async function POST(
@@ -41,6 +42,8 @@ export async function POST(
 
   return NextResponse.json({
     referralCode,
+    referralCodeCreatedAt: updated.referralCodeCreatedAt,
+    expiresAt: referralCodeExpiresAt(updated),
     shareLinks: generateShareLinks(updated),
   });
 }

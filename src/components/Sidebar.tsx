@@ -17,7 +17,7 @@ export function Sidebar({ user, pathname }: SidebarProps) {
   return (
     <nav
       aria-label="Main"
-      className="fixed left-0 top-14 bottom-0 z-[90] hidden w-[68px] flex-col items-center gap-0.5 border-r border-line bg-black py-4 md:flex"
+      className="fixed left-0 top-14 bottom-0 z-[90] hidden w-[76px] flex-col items-center gap-0.5 border-r border-line bg-canvas-inset py-4 md:flex"
     >
       <NavItem href="/" label="Home" active={isActive('/')} icon={<Home className="h-[18px] w-[18px]" strokeWidth={1.4} />} />
       <NavItem
@@ -28,7 +28,7 @@ export function Sidebar({ user, pathname }: SidebarProps) {
       />
       <NavItem
         href="/applications"
-        label="Apps"
+        label="Applications"
         active={isActive('/applications')}
         icon={<Send className="h-[18px] w-[18px]" strokeWidth={1.4} />}
       />
@@ -42,20 +42,20 @@ export function Sidebar({ user, pathname }: SidebarProps) {
       {user ? (
         <a
           href="/auth/logout"
-          className="flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] text-[#9c9c9c] transition-colors hover:bg-[#1c1c1c] hover:text-[#dedede]"
+          className="flex w-[64px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-normal tracking-[0.02em] text-[#8b949e] transition-colors hover:bg-[#21262d] hover:text-[#e6edf3]"
         >
           <LogOut className="h-[18px] w-[18px]" strokeWidth={1.4} />
           Sign out
-          <span className="mt-[-2px] h-[3px] w-[3px] rounded-full bg-ink opacity-0" />
+          <span className="mt-[-2px] h-[3px] w-[3px] rounded-full bg-selected opacity-0" />
         </a>
       ) : (
         <a
           href="/auth/github?redirect_to=%2Fdashboard"
-          className="flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] text-[#9c9c9c] transition-colors hover:bg-[#1c1c1c] hover:text-[#dedede]"
+          className="flex w-[64px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-normal tracking-[0.02em] text-[#8b949e] transition-colors hover:bg-[#21262d] hover:text-[#e6edf3]"
         >
           <LogIn className="h-[18px] w-[18px]" strokeWidth={1.4} />
           Sign in
-          <span className="mt-[-2px] h-[3px] w-[3px] rounded-full bg-ink opacity-0" />
+          <span className="mt-[-2px] h-[3px] w-[3px] rounded-full bg-selected opacity-0" />
         </a>
       )}
     </nav>
@@ -78,13 +78,13 @@ function NavItem({
       href={href}
       prefetch={false}
       aria-current={active ? 'page' : undefined}
-      className={`flex w-[52px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-light tracking-[0.05em] transition-colors hover:bg-[#1c1c1c] hover:text-[#dedede] ${
-        active ? 'text-ink' : 'text-[#9c9c9c]'
+      className={`flex w-[64px] flex-col items-center gap-1 rounded-lg py-2.5 text-[10px] font-normal tracking-[0.02em] transition-colors hover:bg-[#21262d] hover:text-[#e6edf3] ${
+        active ? 'text-ink' : 'text-[#8b949e]'
       }`}
     >
       {icon}
       {label}
-      <span className={`mt-[-2px] h-[3px] w-[3px] rounded-full bg-ink ${active ? 'opacity-100' : 'opacity-0'}`} />
+      <span className={`mt-[-2px] h-[3px] w-[3px] rounded-full bg-selected ${active ? 'opacity-100' : 'opacity-0'}`} />
     </Link>
   );
 }

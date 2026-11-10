@@ -27,7 +27,7 @@ export function AppShell({ user, children }: AppShellProps) {
       <Sidebar user={user} pathname={pathname} />
       <MobileNav user={user} pathname={pathname} />
 
-      <main className="min-h-screen pt-14 pb-20 md:pb-0 md:pl-[68px]">{children}</main>
+      <main className="min-h-screen pt-14 pb-20 md:pb-0 md:pl-[76px]">{children}</main>
     </>
   );
 }

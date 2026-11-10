@@ -1,12 +1,14 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useRef, useState } from 'react';
 
 const GRADIENTS: Array<[string, string]> = [
-  ['#2f2f2f', '#050505'],
-  ['#3d3d3d', '#0b0b0b'],
-  ['#242424', '#000000'],
-  ['#4a4a4a', '#101010'],
-  ['#333333', '#080808'],
-  ['#292929', '#030303'],
+  ['#1f6feb', '#0d1117'],
+  ['#238636', '#0d1117'],
+  ['#8957e5', '#0d1117'],
+  ['#d29922', '#0d1117'],
+  ['#1f6feb', '#010409'],
+  ['#3fb950', '#010409'],
 ];
 
 function hashName(name: string): number {
@@ -25,13 +27,27 @@ interface ProjectLogoProps {
 }
 
 export function ProjectLogo({ title, logoUrl, className = 'h-10 w-10', textClassName = 'text-[15px]' }: ProjectLogoProps) {
+  const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const cleanTitle = title.trim() || 'Project';
   const baseClass = `relative flex-none overflow-hidden rounded-lg border border-line-soft ${className}`;
 
-  if (logoUrl) {
+  useEffect(() => {
+    setFailed(false);
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth === 0) setFailed(true);
+  }, [logoUrl]);
+
+  if (logoUrl && !failed) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={logoUrl} alt={`${cleanTitle} logo`} className={`${baseClass} object-cover`} />
+      <img
+        ref={imgRef}
+        src={logoUrl}
+        alt={`${cleanTitle} logo`}
+        className={`${baseClass} object-cover`}
+        onError={() => setFailed(true)}
+      />
     );
   }
 

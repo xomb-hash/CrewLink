@@ -8,8 +8,9 @@ Reusable UI components built with React 19, TypeScript, Tailwind CSS (v4), and L
 - `MobileNav.tsx`: Bottom icon navigation (Home, Discover, Dashboard, Sign in/out) shown below the `md` breakpoint.
 - `NotificationBell.tsx`: Popover listing pending join requests on owned projects and status updates on the user's applications, with a pending-count badge.
 - `CreateProjectForm.tsx`: Shared admin-repo selection, optional project logo upload (PNG/JPEG/WebP, 2 MB), join mode, screening form, optional creator note, and required-credential toggles (resume, GitHub link, LinkedIn link). Referral projects get an invite code embedded in the join link.
-- `ProjectLogo.tsx`: Displays an uploaded project logo or deterministic gradient/initials art generated from the project name.
+- `ProjectLogo.tsx`: Displays an uploaded project logo, falling back to deterministic gradient/initials art generated from the project name when no logo is set or the stored file can't load.
+- `ProjectDetailsModal.tsx`: Dialog for a project's public details (visibility and join-mode badges, repo path, description, roles, screening link, owner card, share link and join actions) used by Explore and the intercepted `/join/[slug]` modal.
 - `VisibilityBadge.tsx`: Lock icon for private repositories and globe icon for public repositories.
-- `ProjectCard.tsx`: Owner project card with join-link copy, invite-code generation/regeneration, share triggers (LinkedIn, X, WhatsApp), applicant review rows (GitHub/LinkedIn links and resume download when provided), confirmation dialogs for Approve/Reject, and an owner-only Delete with confirmation.
+- `ProjectCard.tsx`: Owner project card with join-link copy, invite-code status (expires in N days, used, expired, or not generated), code regeneration, share triggers (LinkedIn, X, WhatsApp; used or expired codes are omitted), applicant review rows (GitHub/LinkedIn links and resume download when provided), confirmation dialogs for Approve/Reject, and an owner-only Delete with confirmation.
 - `AdvisoryBanners.tsx`: GitHub personal-repository write-access and honour-system screening notices.
 - `ui/`: shadcn/ui primitives (`badge.tsx`, `button.tsx`, `card.tsx`, `input.tsx`, `label.tsx`, `textarea.tsx`).

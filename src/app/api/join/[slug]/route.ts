@@ -49,7 +49,7 @@ export async function GET(
       requireResume: Boolean(project.requireResume),
       requireGithubLink: Boolean(project.requireGithubLink),
       requireLinkedinLink: Boolean(project.requireLinkedinLink),
-      requiresReferralCode: project.joinMode === 'referral' && Boolean(project.referralCode),
+      requiresReferralCode: project.joinMode === 'referral',
       logoUrl: projectLogoUrl(project),
       githubUrl: project.isPrivate ? null : `https://github.com/${project.repoFullName}`,
     },

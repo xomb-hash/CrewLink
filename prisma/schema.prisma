@@ -54,6 +54,8 @@ model Project {
   requireGithubLink   Boolean @default(false)
   requireLinkedinLink Boolean @default(false)
   referralCode String?
+  referralCodeCreatedAt DateTime?
+  referralCodeUsedAt DateTime?
   logoPath     String?
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt

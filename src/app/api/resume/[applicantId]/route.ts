@@ -29,7 +29,12 @@ export async function GET(
     return NextResponse.json({ error: 'You are not allowed to view this resume.' }, { status: 403 });
   }
 
-  const buffer = await readResume(applicant.resumePath);
+  let buffer: Buffer | null;
+  try {
+    buffer = await readResume(applicant.resumePath);
+  } catch {
+    return NextResponse.json({ error: 'Could not load this resume right now.' }, { status: 502 });
+  }
   if (!buffer) {
     return NextResponse.json({ error: 'Resume file is missing.' }, { status: 404 });
   }

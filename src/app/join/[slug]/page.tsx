@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { formatAccountAge } from '@/lib/validation';
 import { normalizeReferralCode, referralCodeMatches } from '@/projects/referral';
+import { referralCodeState } from '@/projects/referralState';
 import { projectLogoUrl } from '@/projects/logo';
 import { JoinClient } from './JoinClient';
 
@@ -22,9 +23,27 @@ export default async function JoinPage({
   }
 
   const providedCode = typeof ref === 'string' ? ref : '';
-  const requiresReferralCode = project.joinMode === 'referral' && Boolean(project.referralCode);
-  const codeIsValid = !requiresReferralCode || referralCodeMatches(project.referralCode, providedCode);
-  const { referralCode: _referralCode, logoPath: _logoPath, ...publicProject } = project;
+  const requiresReferralCode = project.joinMode === 'referral';
+  const codeState = requiresReferralCode ? referralCodeState(project) : 'active';
+  const codeIsValid =
+    !requiresReferralCode || (codeState === 'active' && referralCodeMatches(project.referralCode, providedCode));
+  let referralCodeError = '';
+  if (providedCode && !codeIsValid) {
+    if (codeState === 'used') {
+      referralCodeError = 'This invite link has already been used. Ask the creator for a new one.';
+    } else if (codeState === 'expired') {
+      referralCodeError = 'This invite link has expired. Ask the creator for a new one.';
+    } else {
+      referralCodeError = 'This referral code is not valid. Check the link the creator shared.';
+    }
+  }
+  const {
+    referralCode: _referralCode,
+    referralCodeCreatedAt: _referralCodeCreatedAt,
+    referralCodeUsedAt: _referralCodeUsedAt,
+    logoPath: _logoPath,
+    ...publicProject
+  } = project;
 
   const owner = await storage.getUser(project.ownerId);
   const creator = {
@@ -62,7 +81,7 @@ export default async function JoinPage({
         requiresReferralCode,
       }}
       initialReferralCode={codeIsValid ? normalizeReferralCode(providedCode) : ''}
-      referralCodeInvalid={Boolean(providedCode) && !codeIsValid}
+      referralCodeError={referralCodeError}
       creator={creator}
       currentUser={
         currentUser

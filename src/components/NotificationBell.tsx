@@ -85,11 +85,11 @@ export function NotificationBell() {
         onClick={toggle}
         aria-label="Notifications"
         aria-expanded={open}
-        className="relative grid h-9 w-9 place-items-center rounded-full text-[#c9c9c9] transition-colors hover:bg-[#1c1c1c] hover:text-ink"
+        className="relative grid h-9 w-9 place-items-center rounded-full text-[#c9d1d9] transition-colors hover:bg-[#21262d] hover:text-ink"
       >
         <Bell className="h-[18px] w-[18px]" strokeWidth={1.4} />
         {pendingCount > 0 && (
-          <span className="absolute right-1 top-1 grid min-w-[15px] place-items-center rounded-full bg-ink px-1 text-[9px] font-medium leading-[15px] text-black">
+          <span className="absolute right-1 top-1 grid min-w-[15px] place-items-center rounded-full bg-[#1f6feb] px-1 text-[9px] font-semibold leading-[15px] text-white">
             {pendingCount > 9 ? '9+' : pendingCount}
           </span>
         )}
@@ -100,7 +100,7 @@ export function NotificationBell() {
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="text-[12px] text-ink">Notifications</span>
             {pendingCount > 0 && (
-              <span className="text-[10px] uppercase tracking-[0.08em] text-[#a8a8a8]">
+              <span className="text-[10px] uppercase tracking-[0.08em] text-[#8b949e]">
                 {pendingCount} pending
               </span>
             )}
@@ -108,11 +108,11 @@ export function NotificationBell() {
 
           <div className="max-h-[360px] overflow-y-auto">
             {loading ? (
-              <div className="px-4 py-6 text-center text-[12px] text-[#9c9c9c]">Loading…</div>
+              <div className="px-4 py-6 text-center text-[12px] text-[#8b949e]">Loading…</div>
             ) : error ? (
-              <div className="px-4 py-6 text-center text-[12px] text-red-300">{error}</div>
+              <div className="px-4 py-6 text-center text-[12px] text-[#f85149]">{error}</div>
             ) : items.length === 0 ? (
-              <div className="px-4 py-8 text-center text-[12px] text-[#9c9c9c]">
+              <div className="px-4 py-8 text-center text-[12px] text-[#8b949e]">
                 No new activity. Join requests and decisions will appear here.
               </div>
             ) : (
@@ -131,21 +131,21 @@ export function NotificationBell() {
                     : item.title.startsWith('You were approved')
                     ? 'text-ink'
                     : item.title.startsWith('Your request')
-                    ? 'text-red-300'
-                    : 'text-[#c9c9c9]';
+                    ? 'text-[#f85149]'
+                    : 'text-[#c9d1d9]';
                 return (
                   <Link
                     key={item.id}
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="flex items-start gap-3 border-b border-[#3d3d3d] px-4 py-3 transition-colors last:border-0 hover:bg-[#1c1c1c]"
+                    className="flex items-start gap-3 border-b border-[#30363d] px-4 py-3 transition-colors last:border-0 hover:bg-[#21262d]"
                   >
                     <Icon className={`mt-0.5 h-4 w-4 flex-none ${iconClass}`} strokeWidth={1.6} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] leading-snug text-[#eaeaea]">{item.title}</p>
-                      {item.detail && <p className="mt-0.5 text-[11px] text-[#a8a8a8]">{item.detail}</p>}
+                      <p className="text-[12px] leading-snug text-[#f0f6fc]">{item.title}</p>
+                      {item.detail && <p className="mt-0.5 text-[11px] text-[#8b949e]">{item.detail}</p>}
                     </div>
-                    <span className="flex-none text-[10px] text-[#808080]">{timeAgo(item.createdAt)}</span>
+                    <span className="flex-none text-[10px] text-[#6e7681]">{timeAgo(item.createdAt)}</span>
                   </Link>
                 );
               })
