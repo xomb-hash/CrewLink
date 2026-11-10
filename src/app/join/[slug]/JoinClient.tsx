@@ -136,10 +136,16 @@ export function JoinClient({
               className={`rounded-full border px-2.5 py-0.5 text-[10px] uppercase tracking-[0.06em] ${
                 project.joinMode === 'screening'
                   ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
+                  : project.joinMode === 'direct'
+                  ? 'border-[#238636]/40 bg-[#238636]/10 text-[#3fb950]'
                   : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
               }`}
             >
-              {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
+              {project.joinMode === 'screening'
+                ? 'Screening'
+                : project.joinMode === 'direct'
+                ? 'Direct join'
+                : 'Referral'}
             </span>
             <VisibilityBadge isPrivate={project.isPrivate} />
           </div>

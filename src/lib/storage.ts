@@ -6,7 +6,7 @@ import { encryptSecret, decryptSecret } from './crypto';
 import { logger } from './logger';
 import { generateReferralCode } from '../projects/referral';
 import { REFERRAL_CODE_TTL_MS } from '../projects/referralState';
-import type { User, Project, Applicant, Session, Draft, DraftStatus } from '../types/index';
+import type { User, Project, Applicant, Session, Draft, DraftStatus, JoinMode } from '../types/index';
 
 interface StorageData {
   projects: Project[];
@@ -278,7 +278,7 @@ export class Storage {
     repoName: string;
     repoOwner: string;
     isPrivate?: boolean;
-    joinMode?: 'referral' | 'screening';
+    joinMode?: JoinMode;
     screeningUrl?: string;
     screeningNote?: string;
     roles?: string[];
@@ -302,7 +302,8 @@ export class Storage {
     const roles = Array.isArray(project.roles)
       ? project.roles.map(String).map((r) => r.trim()).filter(Boolean).slice(0, 10)
       : [];
-    const joinMode = project.joinMode === 'screening' ? 'screening' : 'referral';
+    const joinMode: JoinMode =
+      project.joinMode === 'screening' ? 'screening' : project.joinMode === 'direct' ? 'direct' : 'referral';
     const referralCode = joinMode === 'referral' ? project.referralCode || generateReferralCode() : '';
     const referralCodeCreatedAt =
       joinMode === 'referral' ? project.referralCodeCreatedAt || new Date().toISOString() : '';
@@ -346,7 +347,7 @@ export class Storage {
           repoName: created.repoName,
           repoOwner: created.repoOwner,
           isPrivate: created.isPrivate,
-          joinMode: created.joinMode as 'referral' | 'screening',
+          joinMode: created.joinMode as JoinMode,
           screeningUrl: created.screeningUrl ?? undefined,
           roles: created.roles,
           title: created.title,
@@ -416,7 +417,7 @@ export class Storage {
           repoName: p.repoName,
           repoOwner: p.repoOwner,
           isPrivate: p.isPrivate,
-          joinMode: p.joinMode as 'referral' | 'screening',
+          joinMode: p.joinMode as JoinMode,
           screeningUrl: p.screeningUrl ?? undefined,
           roles: p.roles,
           title: p.title,
@@ -457,7 +458,7 @@ export class Storage {
           repoName: p.repoName,
           repoOwner: p.repoOwner,
           isPrivate: p.isPrivate,
-          joinMode: p.joinMode as 'referral' | 'screening',
+          joinMode: p.joinMode as JoinMode,
           screeningUrl: p.screeningUrl ?? undefined,
           roles: p.roles,
           title: p.title,
@@ -500,7 +501,7 @@ export class Storage {
           repoName: p.repoName,
           repoOwner: p.repoOwner,
           isPrivate: p.isPrivate,
-          joinMode: p.joinMode as 'referral' | 'screening',
+          joinMode: p.joinMode as JoinMode,
           screeningUrl: p.screeningUrl ?? undefined,
           roles: p.roles,
           title: p.title,
@@ -650,7 +651,7 @@ export class Storage {
           repoName: p.repoName,
           repoOwner: p.repoOwner,
           isPrivate: p.isPrivate,
-          joinMode: p.joinMode as 'referral' | 'screening',
+          joinMode: p.joinMode as JoinMode,
           screeningUrl: p.screeningUrl ?? undefined,
           roles: p.roles,
           title: p.title,

@@ -71,6 +71,16 @@ test('Validation functions (TypeScript)', async (t) => {
     assert.equal(valid.data.screeningUrl, 'https://forms.gle/sample123');
   });
 
+  await t.test('validates project input with direct join mode and no screening URL', () => {
+    const valid = validateProjectInput({
+      repoFullName: 'owner/project',
+      joinMode: 'direct',
+    });
+    assert.equal(valid.isValid, true);
+    assert.equal(valid.data.joinMode, 'direct');
+    assert.equal(valid.data.screeningUrl, '');
+  });
+
   await t.test('validates applicant input length and proof urls', () => {
     const valid = validateApplicantInput({
       message: 'Hello, I want to contribute!',

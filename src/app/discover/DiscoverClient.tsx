@@ -2,11 +2,11 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, KeyRound, Search, Users } from 'lucide-react';
+import { ArrowRight, Search, Users } from 'lucide-react';
 import { ProjectLogo } from '@/components/ProjectLogo';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
 import { Badge } from '@/components/ui/badge';
-import type { JoinMode, ApplicantStatus } from '@/types/index';
+import type { ApplicantStatus, JoinMode } from '@/types/index';
 
 export interface DiscoverProject {
   id: string;
@@ -20,14 +20,10 @@ export interface DiscoverProject {
   joinMode: JoinMode;
   roles: string[];
   logoUrl: string | null;
-  requiresCode: boolean;
   appliedStatus: ApplicantStatus | null;
   applicantsCount: number;
   createdAt: string;
 }
-
-const FILTERS = ['All', 'Referral', 'Screening'] as const;
-type Filter = (typeof FILTERS)[number];
 
 function formatTimeAgo(isoDate: string): string {
   try {
@@ -48,32 +44,29 @@ interface DiscoverClientProps {
 }
 
 export function DiscoverClient({ projects }: DiscoverClientProps) {
-  const [filter, setFilter] = useState<Filter>('All');
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    if (!q) return projects;
     return projects.filter((project) => {
-      if (filter === 'Referral' && project.joinMode !== 'referral') return false;
-      if (filter === 'Screening' && project.joinMode !== 'screening') return false;
-      if (!q) return true;
       const haystack = `${project.title} ${project.description} ${project.ownerLogin} ${project.roles.join(' ')}`;
       return haystack.toLowerCase().includes(q);
     });
-  }, [projects, filter, query]);
+  }, [projects, query]);
 
   return (
     <div className="mx-auto max-w-[1100px] px-6 py-8">
       <div className="mb-6">
         <h1 className="text-xl font-semibold tracking-tight text-ink">Discover projects</h1>
         <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#8b949e]">
-          Public projects from other creators. Open one to request access — referral projects need the invite
-          code from their creator.
+          Public projects from other creators. Some are open for direct requests; others ask you to
+          complete a screening step first. Private invite-only projects never appear here.
         </p>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2.5">
-        <div className="flex h-9 min-w-[220px] flex-1 items-center gap-2 rounded-md border border-line-soft bg-background px-3 transition-colors focus-within:border-ring">
+      <div className="mb-5 flex items-center">
+        <div className="flex h-9 w-full items-center gap-2 rounded-md border border-line-soft bg-background px-3 transition-colors focus-within:border-ring">
           <Search className="h-3.5 w-3.5 flex-none text-[#8b949e]" />
           <input
             type="search"
@@ -84,22 +77,6 @@ export function DiscoverClient({ projects }: DiscoverClientProps) {
             className="h-full w-full border-0 bg-transparent text-[12px] text-ink outline-none"
           />
         </div>
-        <div className="flex gap-1.5">
-          {FILTERS.map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setFilter(option)}
-              className={`h-7 rounded-full border px-3.5 text-[12px] font-medium transition-colors ${
-                filter === option
-                  ? 'border-[#1f6feb] bg-[#1f6feb]/15 text-[#4493f8]'
-                  : 'border-line-soft text-[#8b949e] hover:border-[#6e7681] hover:text-[#e6edf3]'
-              }`}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -109,7 +86,7 @@ export function DiscoverClient({ projects }: DiscoverClientProps) {
             {projects.length === 0 ? 'No public projects are open right now' : 'Nothing matches that search'}
           </p>
           <p className="mt-1 text-[12px] text-[#8b949e]">
-            {projects.length === 0 ? 'Check back soon.' : 'Try a different filter.'}
+            {projects.length === 0 ? 'Check back soon.' : 'Try a different search.'}
           </p>
         </div>
       ) : (
@@ -129,10 +106,10 @@ export function DiscoverClient({ projects }: DiscoverClientProps) {
                     className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
                       project.joinMode === 'screening'
                         ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
-                        : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
+                        : 'border-[#238636]/40 bg-[#238636]/10 text-[#3fb950]'
                     }`}
                   >
-                    {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                    {project.joinMode === 'screening' ? 'Screening first' : 'Direct join'}
                   </Badge>
                 </div>
 
@@ -210,19 +187,14 @@ export function DiscoverClient({ projects }: DiscoverClientProps) {
               {/* Card Footer */}
               <div className="flex items-center justify-between gap-2 border-t border-line bg-background px-5 py-3">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {project.requiresCode && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[#30363d] px-2.5 py-0.5 text-[10px] text-[#8b949e]">
-                      <KeyRound className="h-2.5 w-2.5" />
-                      Invite code
-                    </span>
-                  )}
-                  {project.appliedStatus && (
+                  {project.appliedStatus ? (
                     <span className="rounded-full border border-line px-2.5 py-0.5 text-[10px] uppercase tracking-[0.05em] text-ink">
                       {project.appliedStatus === 'pending' ? 'Applied' : project.appliedStatus}
                     </span>
-                  )}
-                  {!project.requiresCode && !project.appliedStatus && (
-                    <span className="text-[11px] text-[#6e7681]">Open for requests</span>
+                  ) : (
+                    <span className="text-[11px] text-[#6e7681]">
+                      {project.joinMode === 'screening' ? 'Screening required' : 'Open for requests'}
+                    </span>
                   )}
                 </div>
                 <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#c9d1d9] transition-colors group-hover:text-ink">

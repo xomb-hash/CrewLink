@@ -4,9 +4,10 @@ Crewlink is a place where people who share an idea or goal find each other and s
 
 The first version connects collaborators around GitHub repositories:
 1. An **owner** signs in with GitHub and creates a project from a repository they administer.
-2. The owner selects a join mode:
-   - **Referral link**: people sign in, owner approves.
-   - **Screening first**: applicants take the owner's test or interview link before approval.
+2. The owner selects a visibility:
+   - **Private (default)**: invite-only referral link. The project stays out of Discover, and the owner approves each request.
+   - **Public, direct join**: anyone signed in with GitHub can request to join from Discover or Explore; the owner still approves each request.
+   - **Public, screening first**: applicants take the owner's test or interview link before approval, and the project appears in Discover and Explore.
 3. The owner gets a **join link** and shares it (with built-in LinkedIn, X, and WhatsApp share buttons).
 4. An **applicant** opens the link, signs in with GitHub, and requests to join. The owner reviews their account age and public repo count.
 5. The owner approves or rejects. Approving triggers a real **GitHub collaborator invitation**.

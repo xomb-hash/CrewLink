@@ -89,7 +89,10 @@ export async function POST(request: NextRequest) {
       const form = await request.formData();
       body = {
         repoFullName: String(form.get('repoFullName') || ''),
-        joinMode: form.get('joinMode') === 'screening' ? 'screening' : 'referral',
+        joinMode: (() => {
+          const mode = form.get('joinMode');
+          return mode === 'screening' || mode === 'direct' ? mode : 'referral';
+        })(),
         screeningUrl: String(form.get('screeningUrl') || ''),
         title: String(form.get('title') || ''),
         description: String(form.get('description') || ''),

@@ -2,6 +2,7 @@ import React from 'react';
 import { storage } from '@/lib/storage';
 import { config } from '@/config/index';
 import { getCurrentUser } from '@/lib/auth';
+import { isDiscoverable } from '@/projects/visibility';
 import { ExploreClient } from './ExploreClient';
 import type { ExploreProject } from '@/types/index';
 
@@ -17,7 +18,7 @@ export default async function ExplorePage() {
   let initialProjects: ExploreProject[] = [];
 
   try {
-    const allProjects = (await storage.listProjects()).filter((project) => !project.isPrivate);
+    const allProjects = (await storage.listProjects()).filter((project) => isDiscoverable(project));
     initialProjects = await Promise.all(
       allProjects.map(async (project) => {
         try {

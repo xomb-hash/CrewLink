@@ -32,7 +32,7 @@ export function formatAccountAge(createdAt?: string | null): string {
 
 export interface ProjectInput {
   repoFullName: string;
-  joinMode?: 'referral' | 'screening';
+  joinMode?: 'referral' | 'screening' | 'direct';
   screeningUrl?: string;
   screeningNote?: string;
   title?: string;
@@ -63,7 +63,8 @@ export function validateProjectInput(data: Partial<ProjectInput>) {
     }
   }
 
-  const joinMode: 'referral' | 'screening' = data.joinMode === 'screening' ? 'screening' : 'referral';
+  const joinMode: 'referral' | 'screening' | 'direct' =
+    data.joinMode === 'screening' ? 'screening' : data.joinMode === 'direct' ? 'direct' : 'referral';
 
   let screeningUrl = '';
   if (joinMode === 'screening') {

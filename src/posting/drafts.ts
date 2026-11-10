@@ -8,7 +8,7 @@ export interface ProjectDraftContext {
   description?: string;
   roles?: string[];
   joinUrl: string;
-  mode?: 'referral' | 'screening';
+  mode?: 'referral' | 'screening' | 'direct';
   screeningUrl?: string;
 }
 

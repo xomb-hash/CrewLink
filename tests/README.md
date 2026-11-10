@@ -14,7 +14,8 @@ npm test
 - `auth.test.ts`: Session cookie cryptographic signing, verification, and tamper resistance.
 - `crypto.test.ts`: AES-256-GCM encryption/decryption round-trip, tamper resistance, and legacy token compatibility.
 - `rate_limit.test.ts`: IP-based sliding-window rate limiting, headers, and quota enforcement.
-- `health.test.ts`: System health check endpoint verification, database latency check, and uptime reporting.
+- `health.test.ts`: System health check endpoint verification, database latency check, uptime reporting, and absence of storage internals in the public payload.
+- `explore_api.test.ts`: Public listing discoverability (direct join and screening), referral/private exclusion, role and search filters, and My Applications visibility for private requests.
 - `webhooks.test.ts`: GitHub HMAC-SHA256 webhook signature validation and real-time member addition tracking.
 - `notifications.test.ts`: Transactional notification event dispatching.
 - `projects_share.test.ts`: LinkedIn, X, and WhatsApp share URL generation.

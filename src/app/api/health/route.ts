@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { resumeStorageMode } from '@/lib/uploads';
 
 export async function GET() {
   const startTime = Date.now();
@@ -37,7 +36,6 @@ export async function GET() {
       status: dbStatus,
       latencyMs: dbLatencyMs,
     },
-    resumeStorage: resumeStorageMode(),
     version: '1.0.0',
   };
 

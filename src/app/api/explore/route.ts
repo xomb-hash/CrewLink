@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { storage } from '@/lib/storage';
 import { config } from '@/config/index';
 import { rateLimiter } from '@/lib/rateLimit';
+import { isDiscoverable } from '@/projects/visibility';
 import type { ExploreProject } from '@/types/index';
 
 export async function GET(request: NextRequest) {
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get('q')?.toLowerCase().trim() || '';
   const roleFilter = searchParams.get('role')?.toLowerCase().trim() || '';
 
-  const allProjects = (await storage.listProjects()).filter((project) => !project.isPrivate);
+  const allProjects = (await storage.listProjects()).filter((project) => isDiscoverable(project));
 
   const exploreProjects: ExploreProject[] = await Promise.all(
     allProjects.map(async (project) => {

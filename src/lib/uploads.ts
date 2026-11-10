@@ -42,10 +42,6 @@ function getGcsBucket(): GcsBucket | null {
   return gcsBucket;
 }
 
-export function resumeStorageMode(): 'google-cloud-storage' | 'local-disk' {
-  return config.gcsBucketName ? 'google-cloud-storage' : 'local-disk';
-}
-
 export function validateResumeFile(file: { size: number; type: string; name: string }): string | null {
   if (file.size <= 0) return 'The uploaded resume is empty.';
   if (file.size > MAX_RESUME_BYTES) return 'Resume must be 5 MB or smaller.';

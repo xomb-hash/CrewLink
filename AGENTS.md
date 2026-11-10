@@ -14,8 +14,9 @@ Crewlink is a place where people who share an idea or goal find each other and s
 
 1. The **owner** signs in with GitHub and creates a project from a repo they administer (admin access is checked).
 2. The owner chooses how people join:
-   - **Referral link**: people sign in with the invite code from the owner's link, the owner approves. Each generated code is unique, valid for 7 days, and admits one person.
-   - **Screening first**: people complete the owner's own test or interview link before approval.
+   - **Private (default) — referral link**: the project stays out of Discover and Explore. People sign in with the invite code from the owner's link, the owner approves. Each generated code is unique, valid for 7 days, and admits one person.
+   - **Public — direct join**: the project appears in Discover and Explore. Anyone signed in with GitHub can request to join; the owner still approves or rejects each request.
+   - **Public — screening first**: the project appears in Discover and Explore. People complete the owner's own test or interview link before approval.
 3. The owner gets one **join link** and shares it.
 4. An **applicant** opens the link, signs in with GitHub and requests to join. The owner sees their account age and public repo count.
 5. The owner approves or rejects. Approving sends a **real GitHub collaborator invitation**. The person must accept it on GitHub.
@@ -64,7 +65,7 @@ tests/            automated tests using node:test and tsx (fake GitHub)
 - Enforce owner-only approve and reject on the server, not only in the UI.
 
 **Ask first**
-- Changing the core flow or the two join modes.
+- Changing the core flow or the three join modes.
 - Showing owners more applicant data than account age and public repo count.
 - Changing the GitHub App's permissions.
 - Anything about payments, premium tiers or featured listings (the business model is not validated).
@@ -80,7 +81,7 @@ tests/            automated tests using node:test and tsx (fake GitHub)
 
 ## Status
 
-**Built:** Next.js App Router + TypeScript + Tailwind CSS migration complete. PostgreSQL (Supabase) integration with Prisma ORM, AES-256-GCM token encryption at rest, sliding-window rate limiting, GitHub webhook listener with HMAC-SHA256 signature verification, `/api/health` monitoring, structured JSON logging, GitHub Actions CI/CD workflow, create project from repo (with admin-access check) with optional logo upload or generated art, sign in with GitHub, join link and join page with project overview and creator card, request to join with optional GitHub/LinkedIn links and PDF resume (owner can mark each as required), referral invite codes embedded in join links, unique per project and valid 7 days for one applicant each, with owner-only regeneration, owner dashboard with Approve and Reject plus the GitHub invitation call and owner-only project deletion, "Projects you joined" section, Discover page for public projects, Explore page with search and role filters, applications tracker at `/applications`, notification bell popover, lock and globe icons, share links for LinkedIn, X and WhatsApp, 104 automatic tests (fake GitHub).
+**Built:** Next.js App Router + TypeScript + Tailwind CSS migration complete. PostgreSQL (Supabase) integration with Prisma ORM, AES-256-GCM token encryption at rest, sliding-window rate limiting, GitHub webhook listener with HMAC-SHA256 signature verification, `/api/health` monitoring, structured JSON logging, GitHub Actions CI/CD workflow, create project from repo (with admin-access check) with optional logo upload or generated art, sign in with GitHub, join link and join page with project overview and creator card, request to join with optional GitHub/LinkedIn links and PDF resume (owner can mark each as required), referral invite codes embedded in join links, unique per project and valid 7 days for one applicant each, with owner-only regeneration, owner dashboard with Approve and Reject plus the GitHub invitation call and owner-only project deletion, "Projects you joined" section, private/public visibility chosen at creation (private referral projects are hidden from Discover and Explore by the server, not just the UI), public direct-join and screening projects listed in Discover, Explore page with search and role filters, applications tracker at `/applications` showing both private and public requests, notification bell popover, lock and globe icons, share links for LinkedIn, X and WhatsApp, 108 automatic tests (fake GitHub).
 
 **Not built (do not touch making of agent):** testing against real GitHub, the posting agent (done by friend), Google AI drafting, platform connections, college spaces and verified clubs, the events list, people-to-people matching.
 

@@ -6,6 +6,7 @@ import { storage } from '../src/lib/storage';
 import { signValue, SESSION_COOKIE } from '../src/lib/auth';
 import { GET as exploreHandler } from '../src/app/api/explore/route';
 import { GET as applicationsHandler } from '../src/app/api/applications/route';
+import { isDiscoverable } from '../src/projects/visibility';
 
 test('Explore & Applications API route handlers (TypeScript)', async (t) => {
   // Setup mock owner and project
@@ -25,7 +26,40 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
     title: 'Awesome Engine',
     description: 'High performance physics engine looking for help.',
     roles: ['Physics Dev', 'C++ Expert'],
+    joinMode: 'screening',
+    screeningUrl: 'https://forms.example.com/physics',
+  });
+
+  const privateProject = await storage.createProject({
+    ownerLogin: owner.login,
+    ownerId: String(owner.id),
+    repoFullName: 'explore-owner/secret-engine',
+    repoName: 'secret-engine',
+    repoOwner: 'explore-owner',
+    title: 'Secret Engine',
     joinMode: 'referral',
+  });
+
+  const privateRepoProject = await storage.createProject({
+    ownerLogin: owner.login,
+    ownerId: String(owner.id),
+    repoFullName: 'explore-owner/closed-engine',
+    repoName: 'closed-engine',
+    repoOwner: 'explore-owner',
+    title: 'Closed Engine',
+    joinMode: 'screening',
+    screeningUrl: 'https://forms.example.com/closed',
+    isPrivate: true,
+  });
+
+  const directProject = await storage.createProject({
+    ownerLogin: owner.login,
+    ownerId: String(owner.id),
+    repoFullName: 'explore-owner/open-engine',
+    repoName: 'open-engine',
+    repoOwner: 'explore-owner',
+    title: 'Open Engine',
+    joinMode: 'direct',
   });
 
   // Setup mock applicant
@@ -64,6 +98,20 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
     assert.deepEqual(found.roles, ['Physics Dev', 'C++ Expert']);
     assert.equal(found.applicantsCount, 1);
     assert.ok(found.joinUrl.includes(project.slug));
+
+    const foundDirect = data.projects.find((p: { id: string }) => p.id === directProject.id);
+    assert.ok(foundDirect);
+    assert.equal(foundDirect.joinMode, 'direct');
+
+    assert.equal(data.projects.some((p: { id: string }) => p.id === privateProject.id), false);
+    assert.equal(data.projects.some((p: { id: string }) => p.id === privateRepoProject.id), false);
+  });
+
+  await t.test('isDiscoverable exposes public screening and direct listings', async () => {
+    assert.equal(isDiscoverable(project), true);
+    assert.equal(isDiscoverable(directProject), true);
+    assert.equal(isDiscoverable(privateProject), false);
+    assert.equal(isDiscoverable(privateRepoProject), false);
   });
 
   await t.test('GET /api/explore filters by role and search query', async () => {
@@ -102,6 +150,37 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
     assert.equal(data.applications[0].projectId, project.id);
     assert.equal(data.applications[0].project.title, 'Awesome Engine');
     assert.equal(data.applications[0].status, 'pending');
+  });
+
+  await t.test('private referral applications still appear in My Applications', async () => {
+    const referralApplicant = await storage.saveUser({
+      id: 993,
+      login: 'quiet-builder',
+      name: 'Quiet Builder',
+      avatarUrl: 'https://github.com/quiet-builder.png',
+    });
+
+    const referralSession = await storage.createSession(referralApplicant.id);
+    await storage.createApplicant({
+      projectId: privateProject.id,
+      userId: referralApplicant.id,
+      userLogin: referralApplicant.login,
+      accountAge: '1 year ago',
+      publicRepoCount: 3,
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/applications', {
+      headers: {
+        cookie: `${SESSION_COOKIE}=${encodeURIComponent(signValue(referralSession))}`,
+      },
+    });
+
+    const res = await applicationsHandler(req);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.total, 1);
+    assert.equal(data.applications[0].projectId, privateProject.id);
+    assert.equal(data.applications[0].project.title, 'Secret Engine');
   });
 
   await t.test('GET /api/applications blocks unauthenticated requests with 401', async () => {

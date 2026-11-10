@@ -106,10 +106,16 @@ export function ProjectDetailsModal({
               className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                 project.joinMode === 'screening'
                   ? 'bg-[#8957e5]/10 text-[#d2a8ff] border-[#8957e5]/40'
+                  : project.joinMode === 'direct'
+                  ? 'bg-[#238636]/10 text-[#3fb950] border-[#238636]/40'
                   : 'bg-[#1f6feb]/10 text-[#79c0ff] border-[#1f6feb]/40'
               }`}
             >
-              {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+              {project.joinMode === 'screening'
+                ? 'Screening first'
+                : project.joinMode === 'direct'
+                ? 'Direct join'
+                : 'Referral link'}
             </Badge>
           </div>
 

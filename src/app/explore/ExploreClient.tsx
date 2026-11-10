@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, KeyRound, Search, Users } from 'lucide-react';
+import { ArrowRight, Search, Users } from 'lucide-react';
 import { ProjectLogo } from '@/components/ProjectLogo';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
 import { ProjectDetailsModal } from '@/components/ProjectDetailsModal';
@@ -165,10 +165,10 @@ export function ExploreClient({ initialProjects }: ExploreClientProps) {
                     className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
                       project.joinMode === 'screening'
                         ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
-                        : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
+                        : 'border-[#238636]/40 bg-[#238636]/10 text-[#3fb950]'
                     }`}
                   >
-                    {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                    {project.joinMode === 'screening' ? 'Screening first' : 'Direct join'}
                   </Badge>
                 </div>
 
@@ -247,14 +247,9 @@ export function ExploreClient({ initialProjects }: ExploreClientProps) {
 
               <div className="flex items-center justify-between gap-2 border-t border-line bg-background px-5 py-3">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {project.joinMode === 'referral' ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[#30363d] px-2.5 py-0.5 text-[10px] text-[#8b949e]">
-                      <KeyRound className="h-2.5 w-2.5" />
-                      Invite code
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-[#6e7681]">Open for requests</span>
-                  )}
+                  <span className="text-[11px] text-[#6e7681]">
+                    {project.joinMode === 'screening' ? 'Screening required' : 'Open for requests'}
+                  </span>
                 </div>
                 <span className="inline-flex items-center gap-1 text-[12px] font-medium text-[#c9d1d9] transition-colors group-hover:text-ink">
                   View details

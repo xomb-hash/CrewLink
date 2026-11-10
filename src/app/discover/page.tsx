@@ -2,6 +2,7 @@ import React from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { projectLogoUrl } from '@/projects/logo';
+import { isDiscoverable } from '@/projects/visibility';
 import { DiscoverClient, type DiscoverProject } from './DiscoverClient';
 
 export default async function DiscoverPage() {
@@ -18,7 +19,7 @@ export default async function DiscoverPage() {
 
   const projects: DiscoverProject[] = await Promise.all(
     allProjects
-      .filter((project) => !project.isPrivate)
+      .filter((project) => isDiscoverable(project))
       .filter(
         (project) =>
           !user || project.ownerLogin.toLowerCase() !== user.login.toLowerCase()
@@ -43,7 +44,6 @@ export default async function DiscoverPage() {
           joinMode: project.joinMode,
           roles: project.roles || [],
           logoUrl: projectLogoUrl(project),
-          requiresCode: project.joinMode === 'referral',
           appliedStatus: appliedStatus.get(project.id) ?? null,
           applicantsCount,
           createdAt: project.createdAt,

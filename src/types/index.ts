@@ -1,4 +1,4 @@
-export type JoinMode = 'referral' | 'screening';
+export type JoinMode = 'referral' | 'screening' | 'direct';
 
 export type ApplicantStatus = 'pending' | 'approved' | 'rejected';
 

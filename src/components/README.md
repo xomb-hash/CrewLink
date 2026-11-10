@@ -7,7 +7,7 @@ Reusable UI components built with React 19, TypeScript, Tailwind CSS (v4), and L
 - `Sidebar.tsx`: Desktop icon navigation (Home, Discover, Dashboard, Sign in/out) with active indicators.
 - `MobileNav.tsx`: Bottom icon navigation (Home, Discover, Dashboard, Sign in/out) shown below the `md` breakpoint.
 - `NotificationBell.tsx`: Popover listing pending join requests on owned projects and status updates on the user's applications, with a pending-count badge.
-- `CreateProjectForm.tsx`: Shared admin-repo selection, optional project logo upload (PNG/JPEG/WebP, 2 MB), join mode, screening form, optional creator note, and required-credential toggles (resume, GitHub link, LinkedIn link). Referral projects get an invite code embedded in the join link.
+- `CreateProjectForm.tsx`: Shared admin-repo selection, optional project logo upload (PNG/JPEG/WebP, 2 MB), visibility selector (Private referral by default, Public direct join, or Public screening), screening link, optional creator note, and required-credential toggles (resume, GitHub link, LinkedIn link). Private projects get an invite code embedded in the join link and stay out of Discover.
 - `ProjectLogo.tsx`: Displays an uploaded project logo, falling back to deterministic gradient/initials art generated from the project name when no logo is set or the stored file can't load.
 - `ProjectDetailsModal.tsx`: Dialog for a project's public details (visibility and join-mode badges, repo path, description, roles, screening link, owner card, share link and join actions) used by Explore and the intercepted `/join/[slug]` modal.
 - `VisibilityBadge.tsx`: Lock icon for private repositories and globe icon for public repositories.

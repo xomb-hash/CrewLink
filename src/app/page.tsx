@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { generateShareLinks } from '@/projects/share';
 import { projectLogoUrl } from '@/projects/logo';
+import { isDiscoverable } from '@/projects/visibility';
 import { HomeClient, type HomeProject, type HomeDiscoverProject } from './HomeClient';
 
 function timeAgo(iso: string): string {
@@ -62,10 +63,8 @@ export default async function HomePage({
 
   const allProjects = await storage.listProjects();
   const discoverProjects: HomeDiscoverProject[] = allProjects
-    .filter(
-      (project) =>
-        !project.isPrivate && project.ownerLogin.toLowerCase() !== user.login.toLowerCase()
-    )
+    .filter((project) => isDiscoverable(project))
+    .filter((project) => project.ownerLogin.toLowerCase() !== user.login.toLowerCase())
     .slice(0, 3)
     .map((project) => ({
       id: project.id,
@@ -76,7 +75,6 @@ export default async function HomePage({
       joinMode: project.joinMode,
       roles: project.roles || [],
       logoUrl: projectLogoUrl(project),
-      requiresCode: project.joinMode === 'referral',
     }));
 
   return (
@@ -140,7 +138,8 @@ function Landing() {
             </div>
             <h3 className="mb-1.5 text-[13px] font-normal text-ink">2. Choose join mode</h3>
             <p className="text-[12px] leading-relaxed text-[#8b949e]">
-              Pick <strong className="font-normal text-[#e6edf3]">Referral link</strong> for standard review or{' '}
+              Pick <strong className="font-normal text-[#e6edf3]">Referral link</strong> for invite-only sharing,{' '}
+              <strong className="font-normal text-[#e6edf3]">Direct join</strong> for open requests, or{' '}
               <strong className="font-normal text-[#e6edf3]">Screening first</strong> to require an interview or test link.
             </p>
           </div>

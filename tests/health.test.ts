@@ -12,5 +12,5 @@ test('health check: returns 200 with status ok and uptime', async () => {
   assert.ok(typeof data.uptimeSeconds === 'number');
   assert.ok(data.timestamp);
   assert.ok(data.database);
-  assert.equal(data.resumeStorage, 'local-disk');
+  assert.equal('resumeStorage' in data, false);
 });

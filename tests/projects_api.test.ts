@@ -84,4 +84,28 @@ test('Project API route handlers (TypeScript)', async (t) => {
     assert.equal(data.projects.length, 1);
     assert.equal(data.projects[0].repoFullName, 'alice-owner/rocket-ship');
   });
+
+  await t.test('creates a direct-join project without a screening link', async () => {
+    fakeGitHub.addRepo({ name: 'open-ship', owner: 'alice-owner', isPrivate: false });
+    const req = new NextRequest('http://localhost:3000/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        cookie: sessionCookie,
+      },
+      body: JSON.stringify({
+        repoFullName: 'alice-owner/open-ship',
+        joinMode: 'direct',
+        title: 'Open Ship',
+      }),
+    });
+
+    const res = await POST(req);
+    assert.equal(res.status, 201);
+
+    const data = await res.json();
+    assert.equal(data.project.joinMode, 'direct');
+    assert.equal(data.project.screeningUrl, '');
+    assert.equal(data.project.referralCode, '');
+  });
 });

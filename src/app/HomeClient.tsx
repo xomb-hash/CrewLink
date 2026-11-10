@@ -34,10 +34,9 @@ export interface HomeDiscoverProject {
   joinMode: JoinMode;
   roles: string[];
   logoUrl: string | null;
-  requiresCode: boolean;
 }
 
-const FILTERS = ['All', 'Public', 'Private', 'Referral', 'Screening'] as const;
+const FILTERS = ['All', 'Public', 'Private', 'Referral', 'Direct', 'Screening'] as const;
 type Filter = (typeof FILTERS)[number];
 
 interface HomeClientProps {
@@ -63,6 +62,7 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
       if (filter === 'Public' && p.isPrivate) return false;
       if (filter === 'Private' && !p.isPrivate) return false;
       if (filter === 'Referral' && p.joinMode !== 'referral') return false;
+      if (filter === 'Direct' && p.joinMode !== 'direct') return false;
       if (filter === 'Screening' && p.joinMode !== 'screening') return false;
       if (!q) return true;
       const haystack = `${p.title} ${p.description} ${p.repoFullName} ${p.roles.join(' ')}`.toLowerCase();
@@ -91,7 +91,8 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
             <div>
               <h2 className="text-[15px] font-normal text-ink">Projects looking for collaborators</h2>
               <p className="mt-0.5 text-[11px] text-[#8b949e]">
-                Public projects from other creators. You still need their invite code to request access.
+                Public projects from other creators. Some are open for direct requests; others ask you to
+                complete a screening step first.
               </p>
             </div>
             <Link
@@ -128,16 +129,11 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
                       className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                         project.joinMode === 'screening'
                           ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
-                          : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
+                          : 'border-[#238636]/40 bg-[#238636]/10 text-[#3fb950]'
                       }`}
                     >
-                      {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                      {project.joinMode === 'screening' ? 'Screening first' : 'Direct join'}
                     </Badge>
-                    {project.requiresCode && (
-                      <span className="rounded-full border border-[#30363d] px-2.5 py-0.5 text-[10px] text-[#8b949e]">
-                        Invite code
-                      </span>
-                    )}
                   </div>
                 </div>
               </Link>
@@ -191,10 +187,16 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
                     className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
                       project.joinMode === 'screening'
                         ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
+                        : project.joinMode === 'direct'
+                        ? 'border-[#238636]/40 bg-[#238636]/10 text-[#3fb950]'
                         : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
                     }`}
                   >
-                    {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                    {project.joinMode === 'screening'
+                      ? 'Screening first'
+                      : project.joinMode === 'direct'
+                      ? 'Direct join'
+                      : 'Referral link'}
                   </Badge>
                 </div>
 

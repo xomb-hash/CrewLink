@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AlertTriangle, ExternalLink, ImagePlus, X } from 'lucide-react';
 import { ProjectLogo } from './ProjectLogo';
 import type { GitHubRepo } from '@/github/api';
+import type { JoinMode } from '@/types/index';
 
 interface CreateProjectFormProps {
   onSuccess?: () => void;
@@ -28,7 +29,7 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
   const [description, setDescription] = useState('');
   const [creatorNote, setCreatorNote] = useState('');
   const [rolesInput, setRolesInput] = useState('');
-  const [joinMode, setJoinMode] = useState<'referral' | 'screening'>('referral');
+  const [joinMode, setJoinMode] = useState<JoinMode>('referral');
   const [screeningUrl, setScreeningUrl] = useState('');
   const [requireResume, setRequireResume] = useState(false);
   const [requireGithubLink, setRequireGithubLink] = useState(false);
@@ -291,21 +292,34 @@ export function CreateProjectForm({ onSuccess, onCancel }: CreateProjectFormProp
 
           <div>
             <label htmlFor="create-mode" className={labelClass}>
-              Join mode
+              Visibility
             </label>
             <select
               id="create-mode"
               value={joinMode}
-              onChange={(e) => setJoinMode(e.target.value === 'screening' ? 'screening' : 'referral')}
+              onChange={(e) => setJoinMode(e.target.value as JoinMode)}
               className={fieldClass}
             >
-              <option value="referral">Referral link — you approve each request</option>
-              <option value="screening">Screening first — test or interview before approval</option>
+              <option value="referral">Private — invite-only referral link</option>
+              <option value="direct">Public — direct join, you approve</option>
+              <option value="screening">Public — screening first, listed in Discover</option>
             </select>
             {joinMode === 'referral' && (
               <span className={hintClass}>
-                Referral projects get an invite code embedded in the link. Regenerate it any time from your
-                dashboard.
+                Private projects stay out of Discover. A unique invite code and join link are created for
+                you, and you approve each request from your dashboard.
+              </span>
+            )}
+            {joinMode === 'direct' && (
+              <span className={hintClass}>
+                Public projects appear in Discover and Explore. Anyone signed in with GitHub can request
+                to join; you still approve or reject each request.
+              </span>
+            )}
+            {joinMode === 'screening' && (
+              <span className={hintClass}>
+                Public projects appear in Discover and Explore. Applicants complete your screening step
+                before you approve them.
               </span>
             )}
           </div>
