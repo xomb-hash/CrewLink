@@ -40,9 +40,5 @@ export default async function ExplorePage() {
     initialProjects = [];
   }
 
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <ExploreClient initialProjects={initialProjects} currentUser={user} />
-    </div>
-  );
+  return <ExploreClient initialProjects={initialProjects} currentUser={user} />;
 }

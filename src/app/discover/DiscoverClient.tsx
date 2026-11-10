@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, KeyRound, Search } from 'lucide-react';
+import { ArrowRight, KeyRound, Search, Users } from 'lucide-react';
 import { ProjectLogo } from '@/components/ProjectLogo';
 import { VisibilityBadge } from '@/components/VisibilityBadge';
 import { Badge } from '@/components/ui/badge';
@@ -90,9 +90,9 @@ export function DiscoverClient({ projects }: DiscoverClientProps) {
               key={option}
               type="button"
               onClick={() => setFilter(option)}
-              className={`h-9 rounded-md border px-3.5 text-[12px] transition-colors ${
+              className={`h-7 rounded-full border px-3.5 text-[12px] font-medium transition-colors ${
                 filter === option
-                  ? 'border-[#1f6feb] bg-[#1f6feb]/15 text-[#4493f8] font-medium'
+                  ? 'border-[#1f6feb] bg-[#1f6feb]/15 text-[#4493f8]'
                   : 'border-line-soft text-[#8b949e] hover:border-[#6e7681] hover:text-[#e6edf3]'
               }`}
             >
@@ -103,10 +103,14 @@ export function DiscoverClient({ projects }: DiscoverClientProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-[10px] border border-dashed border-line-soft bg-panel px-6 py-16 text-center text-[13px] text-[#8b949e]">
-          {projects.length === 0
-            ? 'No public projects are open right now. Check back soon.'
-            : 'Nothing matches that search. Try a different filter.'}
+        <div className="rounded-[10px] border border-dashed border-line-soft bg-panel px-6 py-16 text-center">
+          <Users className="mx-auto mb-3 h-9 w-9 text-[#6e7681]" strokeWidth={1.25} />
+          <p className="text-[13px] text-[#c9d1d9]">
+            {projects.length === 0 ? 'No public projects are open right now' : 'Nothing matches that search'}
+          </p>
+          <p className="mt-1 text-[12px] text-[#8b949e]">
+            {projects.length === 0 ? 'Check back soon.' : 'Try a different filter.'}
+          </p>
         </div>
       ) : (
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(310px,1fr))]">

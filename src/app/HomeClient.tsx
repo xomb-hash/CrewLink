@@ -3,8 +3,10 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Lock, Globe, Copy } from 'lucide-react';
+import { ArrowRight, Copy } from 'lucide-react';
 import { ProjectLogo } from '@/components/ProjectLogo';
+import { VisibilityBadge } from '@/components/VisibilityBadge';
+import { Badge } from '@/components/ui/badge';
 import type { JoinMode } from '@/types/index';
 
 export interface HomeProject {
@@ -106,7 +108,7 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
               <Link
                 key={project.id}
                 href={`/join/${project.slug}`}
-                className="group flex items-start gap-3 rounded-[10px] border border-line bg-panel p-4 transition-colors hover:border-[#8b949e]"
+                className="group flex items-start gap-3 rounded-xl border border-line bg-panel p-4 transition-colors hover:border-[#8b949e]"
               >
                 <ProjectLogo
                   title={project.title}
@@ -115,14 +117,24 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
                   textClassName="text-[13px]"
                 />
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-[13px] font-normal text-ink">{project.title}</h3>
-                  <p className="mt-0.5 text-[11px] text-[#8b949e]">@{project.ownerLogin}</p>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="rounded-full border border-[#30363d] px-2 py-0.5 text-[10px] text-[#8b949e]">
-                      {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-[13px] font-semibold text-ink">{project.title}</h3>
+                    <ArrowRight className="ml-auto h-3.5 w-3.5 flex-none text-[#6e7681] transition-colors group-hover:text-ink" />
+                  </div>
+                  <p className="mt-0.5 truncate font-mono text-[11px] text-[#8b949e]">@{project.ownerLogin}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      variant="outline"
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
+                        project.joinMode === 'screening'
+                          ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
+                          : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
+                      }`}
+                    >
+                      {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                    </Badge>
                     {project.requiresCode && (
-                      <span className="rounded-full border border-[#30363d] px-2 py-0.5 text-[10px] text-[#8b949e]">
+                      <span className="rounded-full border border-[#30363d] px-2.5 py-0.5 text-[10px] text-[#8b949e]">
                         Invite code
                       </span>
                     )}
@@ -158,7 +170,7 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
             : 'Nothing here — try a different filter.'}
         </div>
       ) : (
-        <div className="grid gap-6 p-6 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+        <div className="grid gap-4 p-6 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
           {filtered.map((project, index) => (
             <article
               key={project.id}
@@ -168,61 +180,76 @@ export function HomeClient({ projects, discoverProjects, initialQuery }: HomeCli
               onKeyDown={(e) => {
                 if (e.key === 'Enter') openProject(project);
               }}
-              className="cl-rise group cursor-pointer overflow-hidden rounded-[10px] border border-line bg-panel transition duration-200 hover:-translate-y-0.5 hover:border-[#8b949e] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.07),0_16px_48px_rgba(0,0,0,0.85)]"
+              className="cl-rise group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-line bg-panel transition duration-200 hover:border-[#8b949e] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.07),0_16px_48px_rgba(0,0,0,0.85)]"
               style={{ animationDelay: `${index * 25}ms` }}
             >
-              <div className="relative flex aspect-video items-end justify-between bg-[#161b22] px-3.5 py-3">
-                <div className="absolute left-3.5 top-3.5 flex max-w-[calc(100%-28px)] items-start gap-2.5">
+              <div className="border-b border-line bg-canvas-inset/70 p-4">
+                <div className="mb-2.5 flex flex-wrap items-center gap-2">
+                  <VisibilityBadge isPrivate={project.isPrivate} />
+                  <Badge
+                    variant="outline"
+                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                      project.joinMode === 'screening'
+                        ? 'border-[#8957e5]/40 bg-[#8957e5]/10 text-[#d2a8ff]'
+                        : 'border-[#1f6feb]/40 bg-[#1f6feb]/10 text-[#79c0ff]'
+                    }`}
+                  >
+                    {project.joinMode === 'screening' ? 'Screening first' : 'Referral link'}
+                  </Badge>
+                </div>
+
+                <div className="flex items-center gap-3">
                   <ProjectLogo
                     title={project.title}
                     logoUrl={project.logoUrl}
-                    className="h-9 w-9"
+                    className="h-10 w-10"
                     textClassName="text-[13px]"
                   />
-                  <h3 className="line-clamp-2 pt-0.5 text-[17px] font-semibold leading-tight tracking-[-0.01em] text-ink">
-                    {project.title}
-                  </h3>
-                </div>
-                <span className="text-[10px] uppercase tracking-[0.08em] text-[#8b949e]">
-                  {project.joinMode === 'screening' ? 'Screening' : 'Referral'}
-                </span>
-                {project.isPrivate ? (
-                  <Lock className="h-3.5 w-3.5 text-[#6e7681]" strokeWidth={1.5} aria-label="Private repository" />
-                ) : (
-                  <Globe className="h-3.5 w-3.5 text-[#6e7681]" strokeWidth={1.5} aria-label="Public repository" />
-                )}
-              </div>
-
-              <div className="flex items-start gap-2.5 px-3.5 pb-2.5 pt-3.5">
-                <div className="grid h-7 w-7 flex-none place-items-center rounded-full border border-[#30363d] text-[11px] text-[#8b949e]">
-                  {project.ownerLogin.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h4 className="line-clamp-2 text-[13px] font-normal leading-snug text-[#f0f6fc]">
-                    {project.description || 'No description yet.'}
-                  </h4>
-                  <div className="mt-1 text-[11px] text-[#8b949e]">
-                    {project.ownerLogin} &middot; {project.applicantCount}{' '}
-                    {project.applicantCount === 1 ? 'applicant' : 'applicants'} &middot; {project.createdAtLabel}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-[17px] font-semibold leading-tight tracking-tight text-ink">
+                      {project.title}
+                    </h3>
+                    <p className="mt-0.5 truncate font-mono text-[11px] text-[#8b949e]">{project.repoFullName}</p>
                   </div>
+                  <ArrowRight className="h-4 w-4 flex-none self-start text-[#6e7681] transition-colors group-hover:text-ink" />
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyJoin(project);
-                  }}
-                  title="Copy join link"
-                  aria-label={`Copy join link for ${project.title}`}
-                  className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-[#6e7681] transition-colors hover:bg-[#21262d] hover:text-[#e6edf3]"
-                >
-                  <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
-                </button>
               </div>
 
-              <div className="mx-3.5 h-px bg-[#30363d]" />
+              <div className="flex flex-1 flex-col gap-3 p-4">
+                <p className="line-clamp-2 min-h-[34px] text-[12px] leading-relaxed text-[#c9d1d9]">
+                  {project.description || 'No description yet.'}
+                </p>
 
-              <div className="flex flex-wrap gap-1.5 px-3.5 pb-3 pt-2.5">
+                <div className="flex items-center justify-between gap-2 rounded-md border border-line bg-background px-3 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="grid h-7 w-7 flex-none place-items-center rounded-full border border-[#30363d] text-[11px] text-[#8b949e]">
+                      {project.ownerLogin.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="min-w-0 leading-tight">
+                      <div className="truncate text-[12px] font-semibold text-link">@{project.ownerLogin}</div>
+                      <div className="mt-0.5 text-[11px] text-[#8b949e]">
+                        {project.applicantCount} {project.applicantCount === 1 ? 'applicant' : 'applicants'} &middot;{' '}
+                        {project.createdAtLabel}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyJoin(project);
+                    }}
+                    title="Copy join link"
+                    aria-label={`Copy join link for ${project.title}`}
+                    className="grid h-7 w-7 flex-none place-items-center rounded-md text-[#6e7681] transition-colors hover:bg-[#21262d] hover:text-[#e6edf3]"
+                  >
+                    <Copy className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5 border-t border-line bg-background px-4 py-2.5">
+                <span className="text-[11px] text-[#6e7681]">Roles:</span>
                 {(project.roles.length ? project.roles : ['Any role']).map((role) => (
                   <span key={role} className="rounded-full border border-[#30363d] px-2.5 py-0.5 text-[11px] text-[#8b949e]">
                     {role}

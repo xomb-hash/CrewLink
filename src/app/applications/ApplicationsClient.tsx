@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Clock, XCircle, ExternalLink, ArrowRight, Sparkles, FolderGit2, FileText } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, ExternalLink, ArrowRight, Compass, FolderGit2, FileText } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,30 +27,30 @@ export function ApplicationsClient({ applications, user }: ApplicationsClientPro
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">My Applications</h1>
-          <p className="text-sm text-[#8b949e] mt-1">
+          <h1 className="text-xl font-semibold tracking-tight text-ink">My applications</h1>
+          <p className="mt-1 text-[12px] text-[#8b949e]">
             Track your requests to collaborate on GitHub projects.
           </p>
         </div>
 
         <Button asChild size="sm" variant="outline" className="bg-panel-2 border-line text-[#e6edf3] hover:bg-[#21262d] hover:text-ink">
           <Link href="/explore" className="inline-flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-ink" />
-            <span>Explore More Projects</span>
+            <Compass className="w-3.5 h-3.5 text-ink" />
+            <span>Explore projects</span>
           </Link>
         </Button>
       </div>
 
       {applications.length === 0 ? (
-        <Card className="p-12 text-center bg-panel border-line rounded-xl">
-          <FolderGit2 className="w-12 h-12 text-[#8b949e] mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-ink mb-2">No applications yet</h3>
-          <p className="text-sm text-[#8b949e] max-w-md mx-auto mb-6">
+        <Card className="p-10 text-center bg-panel border-line rounded-xl">
+          <FolderGit2 className="w-10 h-10 text-[#6e7681] mx-auto mb-3" strokeWidth={1.25} />
+          <h3 className="text-base font-semibold text-ink mb-1.5">No applications yet</h3>
+          <p className="text-[12px] text-[#8b949e] max-w-sm mx-auto mb-5 leading-relaxed">
             You haven&apos;t requested to join any projects yet. Browse open projects to find something exciting to build!
           </p>
-          <Button asChild className="bg-success text-white font-semibold hover:bg-success-emphasis border-0">
+          <Button asChild className="self-center bg-success text-white font-semibold hover:bg-success-emphasis border-0">
             <Link href="/explore" className="inline-flex items-center gap-2">
-              <span>Explore Projects</span>
+              <span>Explore projects</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
@@ -141,7 +141,7 @@ export function ApplicationsClient({ applications, user }: ApplicationsClientPro
                 <div className="flex items-center gap-2">
                   <Button asChild size="sm" variant="outline" className="bg-background border-line text-[#e6edf3] hover:text-ink hover:bg-panel-2">
                     <Link href={`/join/${app.project.slug}`}>
-                      View Project
+                      View project
                     </Link>
                   </Button>
 

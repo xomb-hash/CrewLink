@@ -28,28 +28,20 @@ interface ProjectLogoProps {
 
 export function ProjectLogo({ title, logoUrl, className = 'h-10 w-10', textClassName = 'text-[15px]' }: ProjectLogoProps) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const cleanTitle = title.trim() || 'Project';
   const baseClass = `relative flex-none overflow-hidden rounded-lg border border-line-soft ${className}`;
 
   useEffect(() => {
     setFailed(false);
+    setLoaded(false);
     const img = imgRef.current;
-    if (img && img.complete && img.naturalWidth === 0) setFailed(true);
+    if (img && img.complete) {
+      if (img.naturalWidth > 0) setLoaded(true);
+      else setFailed(true);
+    }
   }, [logoUrl]);
-
-  if (logoUrl && !failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        ref={imgRef}
-        src={logoUrl}
-        alt={`${cleanTitle} logo`}
-        className={`${baseClass} object-cover`}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
 
   const [from, to] = GRADIENTS[hashName(cleanTitle.toLowerCase()) % GRADIENTS.length];
   const angle = 120 + (hashName(cleanTitle) % 90);
@@ -62,17 +54,30 @@ export function ProjectLogo({ title, logoUrl, className = 'h-10 w-10', textClass
 
   return (
     <div
-      aria-hidden="true"
       className={baseClass}
       style={{ backgroundImage: `linear-gradient(${angle}deg, ${from}, ${to})` }}
     >
-      <span className="absolute -right-2 -top-3 h-8 w-8 rounded-full bg-white/[0.06]" />
-      <span className="absolute -bottom-3 -left-1 h-7 w-7 rounded-full border border-white/[0.08]" />
+      <span aria-hidden="true" className="absolute -right-2 -top-3 h-8 w-8 rounded-full bg-white/[0.06]" />
+      <span aria-hidden="true" className="absolute -bottom-3 -left-1 h-7 w-7 rounded-full border border-white/[0.08]" />
       <span
+        aria-hidden="true"
         className={`relative grid h-full w-full place-items-center font-mono font-medium tracking-[0.04em] text-white/85 ${textClassName}`}
       >
         {initials || 'P'}
       </span>
+      {logoUrl && !failed && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          ref={imgRef}
+          src={logoUrl}
+          alt={`${cleanTitle} logo`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-200 ${
+            loaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
     </div>
   );
 }
