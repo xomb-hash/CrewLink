@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { config } from '../config/index';
 import { storage } from '../lib/storage';
 import { byId } from '../platforms/registry';
-import { getCredentialVault, type EncryptedCredential } from './credentials';
+import { getCredentialVault, type EncryptedCredential, CredentialDecryptionError } from './credentials';
 import { createPkcePair } from './x/pkce';
 import { BotError, type BotPlatform, type VerifiedChannel } from './bots/types';
 import { getBotClient, loadBotToken } from './bots/index';
@@ -1770,23 +1770,37 @@ export async function decryptConnectionTokens(
     platformId: connection.platformId,
     connectionId: connection.id,
   };
-  const accessToken = await vault.decrypt(
-    {
-      ciphertext: connection.accessTokenCiphertext,
-      provider: connection.credentialProvider,
-      keyRef: connection.keyRef,
-    },
-    context
-  );
+  const decrypt = async (credential: EncryptedCredential): Promise<string> => {
+    try {
+      return await vault.decrypt(credential, context);
+    } catch (err) {
+      // A local-vault decryption failure is deterministic: the ciphertext is
+      // malformed, corrupt, or was written under a different key version. The
+      // owner must reconnect; retrying can never succeed. KMS decryption can
+      // also fail transiently, so it keeps its generic error.
+      if (
+        err instanceof CredentialDecryptionError &&
+        connection.credentialProvider === 'local'
+      ) {
+        throw new ConnectionError(
+          'The stored credential could not be decrypted. Reconnect this account.',
+          'invalid_credentials'
+        );
+      }
+      throw err;
+    }
+  };
+  const accessToken = await decrypt({
+    ciphertext: connection.accessTokenCiphertext,
+    provider: connection.credentialProvider,
+    keyRef: connection.keyRef,
+  });
   const refreshToken = connection.refreshTokenCiphertext
-    ? await vault.decrypt(
-        {
-          ciphertext: connection.refreshTokenCiphertext,
-          provider: connection.credentialProvider,
-          keyRef: connection.keyRef,
-        },
-        context
-      )
+    ? await decrypt({
+        ciphertext: connection.refreshTokenCiphertext,
+        provider: connection.credentialProvider,
+        keyRef: connection.keyRef,
+      })
     : undefined;
 
   return { accessToken, refreshToken, tokenExpiresAt: connection.tokenExpiresAt };

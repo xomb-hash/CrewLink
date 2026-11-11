@@ -16,6 +16,19 @@ operator runs the smoke test in section 9.
   backend values, not model text numbers.
 - The missing **M1–M3 baseline migration** was created. A fresh PostgreSQL
   database can now run `prisma migrate deploy` successfully.
+- A later final-hardening review fixed two defects found while re-verifying the
+  pass (2026-11-11):
+  - An **undecryptable local credential** (corrupt ciphertext or a key-version
+    mismatch) used to surface as a vague `platform_error`. `decryptConnectionTokens`
+    now maps a deterministic local-vault decryption failure to
+    `invalid_credentials`, so syncs and publishing report `auth_revoked` and the
+    owner is told to reconnect. A GCP KMS failure is deliberately **not** mapped
+    that way because it can be a transient outage.
+  - The **file-backed connection store** did not enforce Prisma's
+    `userId:platformId:projectId` uniqueness: a reconnect could add a duplicate
+    row and a stale disconnected duplicate could shadow the live connection in
+    reads. The file upsert now reuses the row for the tuple and the read prefers
+    the active one. Regression coverage lives in `tests/connection_parity.test.ts`.
 - Production startup now **fails closed** on unsafe defaults (localhost APP_URL,
   placeholder secrets, file-backed database, implicit transport, missing
   provider keys).

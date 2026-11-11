@@ -1894,9 +1894,13 @@ export class Storage {
     }
 
     this.ensureLoaded();
-    const found = this.data.platformConnections.find(
+    // Prisma can hold only one row per (userId, platformId, projectId). Legacy
+    // file data may contain duplicates, so prefer the active row instead of
+    // letting a stale disconnected one shadow a live connection.
+    const matches = this.data.platformConnections.filter(
       (c) => c.userId === userId && c.projectId === projectId && c.platformId === platformId
     );
+    const found = matches.find((c) => c.status === 'active') || matches[0];
     return found ? copyStoredConnection(found) : null;
   }
 
@@ -2010,10 +2014,24 @@ export class Storage {
     }
 
     this.ensureLoaded();
-    const index = this.data.platformConnections.findIndex((c) => c.id === connection.id);
+    // Prisma keeps one row per (userId, platformId, projectId) via a unique
+    // constraint: a reconnect reuses the existing connection. The file store
+    // must match, or a duplicate row can shadow the live connection in reads.
+    const tupleIndex = this.data.platformConnections.findIndex(
+      (c) =>
+        c.userId === connection.userId &&
+        c.platformId === connection.platformId &&
+        c.projectId === connection.projectId
+    );
+    const index = tupleIndex >= 0
+      ? tupleIndex
+      : this.data.platformConnections.findIndex((c) => c.id === connection.id);
+    const existing =
+      index >= 0 ? this.data.platformConnections[index] : undefined;
     const saved: StoredPlatformConnection = {
       ...connection,
-      createdAt: index >= 0 ? this.data.platformConnections[index].createdAt : connection.createdAt || now,
+      id: index >= 0 ? existing!.id : connection.id,
+      createdAt: index >= 0 ? existing!.createdAt : connection.createdAt || now,
       updatedAt: now,
     };
     if (index >= 0) {
