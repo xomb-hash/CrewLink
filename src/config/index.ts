@@ -20,8 +20,8 @@ function parseResearchProvider(value: string | undefined): 'none' | 'brave' | 'r
 }
 
 export const config = {
-  port: parseInt(process.env.PORT || '3000', 10),
-  appUrl: process.env.APP_URL || 'http://localhost:3000',
+  port: parseInt(process.env.PORT || '3100', 10),
+  appUrl: process.env.APP_URL || 'http://localhost:3100',
   nodeEnv: process.env.NODE_ENV || 'development',
   databaseUrl: process.env.DATABASE_URL || '',
   sessionSecret: process.env.SESSION_SECRET || 'crewlink-dev-secret-key-change-in-production-32chars',

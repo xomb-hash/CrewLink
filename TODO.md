@@ -51,7 +51,7 @@ operational follow-up. Items under "Accepted by design" are deliberate.
   and no live call may run from the automated suite.
 
 - [ ] **Make production config fail closed.**
-  `APP_URL` defaults to `http://localhost:3000`, placeholder `SESSION_SECRET`
+  `APP_URL` defaults to `http://localhost:3100`, placeholder `SESSION_SECRET`
   and `ENCRYPTION_SECRET` values are accepted, `ENCRYPTION_SECRET` falls back to
   `SESSION_SECRET`, and a missing or non-Postgres `DATABASE_URL` silently selects
   the file-backed store (`src/config/index.ts`, `src/lib/storage.ts`).

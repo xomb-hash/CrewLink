@@ -5,7 +5,7 @@ import { RateLimiter } from '../src/lib/rateLimit';
 
 test('rate limiter: tracks requests within window and blocks exceeding quota', () => {
   const limiter = new RateLimiter(3, 1000); // 3 requests per second
-  const fakeReq = new Request('http://localhost:3000/api/test', {
+  const fakeReq = new Request('http://localhost:3100/api/test', {
     headers: { 'x-forwarded-for': '203.0.113.195' },
   });
 
@@ -37,10 +37,10 @@ test('rate limiter: tracks requests within window and blocks exceeding quota', (
 
 test('rate limiter: isolates limits by IP address and key prefix', () => {
   const limiter = new RateLimiter(2, 2000);
-  const ip1Req = new Request('http://localhost:3000/api/test', {
+  const ip1Req = new Request('http://localhost:3100/api/test', {
     headers: { 'x-forwarded-for': '1.1.1.1' },
   });
-  const ip2Req = new Request('http://localhost:3000/api/test', {
+  const ip2Req = new Request('http://localhost:3100/api/test', {
     headers: { 'x-forwarded-for': '2.2.2.2' },
   });
 

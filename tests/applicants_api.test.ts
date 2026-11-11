@@ -56,7 +56,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
   let applicantId = '';
 
   await t.test('retrieves public join page data', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/join/${project.slug}`);
+    const req = new NextRequest(`http://localhost:3100/api/join/${project.slug}`);
     const res = await getJoinData(req, { params: Promise.resolve({ slug: project.slug }) });
     assert.equal(res.status, 200);
 
@@ -68,7 +68,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('applicant submits join request', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/join/${project.slug}/apply`, {
+    const req = new NextRequest(`http://localhost:3100/api/join/${project.slug}/apply`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('prevents duplicate applications', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/join/${project.slug}/apply`, {
+    const req = new NextRequest(`http://localhost:3100/api/join/${project.slug}/apply`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
 
   await t.test('owner approves applicant without granting GitHub access', async () => {
     const req = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/applicants/${applicantId}/approve`,
+      `http://localhost:3100/api/projects/${project.id}/applicants/${applicantId}/approve`,
       {
         method: 'POST',
         headers: { cookie: ownerCookie },
@@ -156,7 +156,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
       requireLinkedinLink: false,
     });
 
-    const joinReq = new NextRequest(`http://localhost:3000/api/join/${strictProject.slug}`);
+    const joinReq = new NextRequest(`http://localhost:3100/api/join/${strictProject.slug}`);
     const joinRes = await getJoinData(joinReq, {
       params: Promise.resolve({ slug: strictProject.slug }),
     });
@@ -178,7 +178,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     const carolCookie = `crewlink_session=${encodeURIComponent(signValue(carolSession))}`;
 
     const missingReq = new NextRequest(
-      `http://localhost:3000/api/join/${strictProject.slug}/apply`,
+      `http://localhost:3100/api/join/${strictProject.slug}/apply`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', cookie: carolCookie },
@@ -206,7 +206,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     );
 
     const uploadReq = new NextRequest(
-      `http://localhost:3000/api/join/${strictProject.slug}/apply`,
+      `http://localhost:3100/api/join/${strictProject.slug}/apply`,
       { method: 'POST', headers: { cookie: carolCookie }, body: form }
     );
     const uploadRes = await applyToProject(uploadReq, {
@@ -222,7 +222,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     assert.ok(stored?.resumePath);
 
     const ownerResumeReq = new NextRequest(
-      `http://localhost:3000/api/resume/${uploaded.applicant.id}`,
+      `http://localhost:3100/api/resume/${uploaded.applicant.id}`,
       { headers: { cookie: ownerCookie } }
     );
     const ownerResumeRes = await getResume(ownerResumeReq, {
@@ -243,7 +243,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     const strangerCookie = `crewlink_session=${encodeURIComponent(signValue(strangerSession))}`;
 
     const strangerResumeReq = new NextRequest(
-      `http://localhost:3000/api/resume/${uploaded.applicant.id}`,
+      `http://localhost:3100/api/resume/${uploaded.applicant.id}`,
       { headers: { cookie: strangerCookie } }
     );
     const strangerResumeRes = await getResume(strangerResumeReq, {
@@ -251,7 +251,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     });
     assert.equal(strangerResumeRes.status, 403);
 
-    const projectsReq = new NextRequest('http://localhost:3000/api/projects', {
+    const projectsReq = new NextRequest('http://localhost:3100/api/projects', {
       headers: { cookie: ownerCookie },
     });
     const projectsRes = await getProjects(projectsReq);

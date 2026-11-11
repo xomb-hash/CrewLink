@@ -61,7 +61,7 @@ test('LinkedIn client uses only the documented official API contract', async (t)
     const url = new URL(
       client.authorizationUrl({
         clientId: 'client-id',
-        redirectUri: 'http://localhost:3000/api/platforms/linkedin/callback',
+        redirectUri: 'http://localhost:3100/api/platforms/linkedin/callback',
         state: 'state-value',
       })
     );
@@ -70,7 +70,7 @@ test('LinkedIn client uses only the documented official API contract', async (t)
     assert.equal(url.searchParams.get('client_id'), 'client-id');
     assert.equal(
       url.searchParams.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/linkedin/callback'
+      'http://localhost:3100/api/platforms/linkedin/callback'
     );
     assert.equal(url.searchParams.get('state'), 'state-value');
     assert.equal(url.searchParams.get('scope'), LINKEDIN_SCOPE_STRING);
@@ -96,7 +96,7 @@ test('LinkedIn client uses only the documented official API contract', async (t)
       clientId: 'client-id',
       clientSecret: 'client-secret',
       code: 'auth-code',
-      redirectUri: 'http://localhost:3000/api/platforms/linkedin/callback',
+      redirectUri: 'http://localhost:3100/api/platforms/linkedin/callback',
     });
 
     assert.equal(calls.length, 2);
@@ -113,7 +113,7 @@ test('LinkedIn client uses only the documented official API contract', async (t)
     assert.equal(form.get('client_secret'), 'client-secret');
     assert.equal(
       form.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/linkedin/callback'
+      'http://localhost:3100/api/platforms/linkedin/callback'
     );
 
     const userinfoCall = byUrl(calls, '/v2/userinfo');
@@ -165,7 +165,7 @@ test('LinkedIn client uses only the documented official API contract', async (t)
       clientId: 'client-id',
       clientSecret: 'client-secret',
       code: 'code',
-      redirectUri: 'http://localhost:3000/callback',
+      redirectUri: 'http://localhost:3100/callback',
     });
     assert.equal(session.account.externalAccountName, 'Grace Hopper');
 
@@ -374,7 +374,7 @@ test('Mock LinkedIn client models access and refresh tokens explicitly', async (
     client.failCode = 'rate_limited';
     await client.authorizationUrl({
       clientId: 'client-id',
-      redirectUri: 'http://localhost:3000/callback',
+      redirectUri: 'http://localhost:3100/callback',
       state: 'state',
     });
     client.reset();

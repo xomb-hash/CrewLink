@@ -67,7 +67,7 @@ test('Reddit OAuth keeps state and tokens server-side', async (t) => {
     assert.equal(url.searchParams.get('scope'), 'identity read submit');
     assert.equal(
       url.searchParams.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/reddit/callback'
+      'http://localhost:3100/api/platforms/reddit/callback'
     );
 
     const stored = await storage.findPlatformConnection(ownerId, project.id, 'reddit');

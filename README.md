@@ -38,8 +38,8 @@ Crewlink **only connects people**. It is not a chat application and does not tra
 2. Configure GitHub OAuth App credentials in `.env`:
    - Visit [GitHub Developer Settings](https://github.com/settings/developers) -> **OAuth Apps** -> **New OAuth App**.
    - Application name: `Crewlink`
-   - Homepage URL: `http://localhost:3000`
-   - Authorization callback URL: `http://localhost:3000/auth/github/callback`
+   - Homepage URL: `http://localhost:3100`
+   - Authorization callback URL: `http://localhost:3100/auth/github/callback`
    - Copy the Client ID and create a Client Secret, then paste them into `.env`.
 
 3. Install dependencies:
@@ -57,7 +57,7 @@ Crewlink **only connects people**. It is not a chat application and does not tra
    npm run dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3100](http://localhost:3100) in your browser.
 
 ---
 
@@ -65,7 +65,7 @@ Crewlink **only connects people**. It is not a chat application and does not tra
 
 ```bash
 npm test        # run automated test suites (uses mock GitHub)
-npm run dev     # start local development server at http://localhost:3000
+npm run dev     # start local development server at http://localhost:3100
 npm run build   # compile Next.js production build
 npm start       # start Next.js production server
 ```
@@ -76,7 +76,7 @@ npm start       # start Next.js production server
 
 If using a GitHub App rather than an OAuth App:
 1. GitHub > Settings > Developer settings > GitHub Apps > New GitHub App.
-2. Callback URL: `http://localhost:3000/auth/github/callback`.
+2. Callback URL: `http://localhost:3100/auth/github/callback`.
 3. Repository permissions: Administration (Read and write) and Metadata (Read-only).
 4. Copy the App ID and Client ID. Generate a client secret and a private key (.pem).
 5. Put the .pem in the project directory, fill in `GITHUB_APP_PRIVATE_KEY_PATH` in `.env`, and install the app on a test repo.
@@ -273,7 +273,7 @@ Slack uses the official OAuth v2 install flow and the official Web API. Crewlink
 
 1. Create an app at `https://api.slack.com/apps` ("From scratch") for the workspace you want to test with.
 2. Under **OAuth & Permissions**, add only these bot token scopes: `chat:write`, `channels:read`, `groups:read`. Do not add user scopes.
-3. Set the redirect URL to `{APP_URL}/api/platforms/slack/callback` (for local development, `http://localhost:3000/api/platforms/slack/callback`).
+3. Set the redirect URL to `{APP_URL}/api/platforms/slack/callback` (for local development, `http://localhost:3100/api/platforms/slack/callback`).
 4. Copy the client id and secret into `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET`. Leave them empty to keep Slack disconnected: connecting and automatic publishing fail closed, while drafts stay editable.
 
 Default endpoints are `https://slack.com/oauth/v2/authorize`, `https://slack.com/api/oauth.v2.access`, and `https://slack.com/api`. They can be overridden with `SLACK_AUTHORIZE_URL`, `SLACK_TOKEN_URL`, and `SLACK_API_BASE_URL` for a test proxy; `PUBLISHING_TRANSPORT=mock` (the default) keeps all Slack calls in the deterministic mock client.

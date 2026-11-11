@@ -16,7 +16,7 @@ import type { User } from '../src/types/index';
 const TOKEN = 'scheduler-token-'.padEnd(40, 'x');
 
 function request(body: unknown, token?: string): NextRequest {
-  return new NextRequest('http://localhost:3000/api/analytics/sync/scheduled', {
+  return new NextRequest('http://localhost:3100/api/analytics/sync/scheduled', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

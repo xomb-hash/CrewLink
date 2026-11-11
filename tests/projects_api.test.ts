@@ -26,7 +26,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
   const sessionCookie = `crewlink_session=${encodeURIComponent(signValue(sessionId))}`;
 
   await t.test('creates project successfully when user is admin', async () => {
-    const req = new NextRequest('http://localhost:3000/api/projects', {
+    const req = new NextRequest('http://localhost:3100/api/projects', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('rejects project creation if user is not repo admin', async () => {
-    const req = new NextRequest('http://localhost:3000/api/projects', {
+    const req = new NextRequest('http://localhost:3100/api/projects', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('lists projects with applicants and share links', async () => {
-    const req = new NextRequest('http://localhost:3000/api/projects', {
+    const req = new NextRequest('http://localhost:3100/api/projects', {
       headers: { cookie: sessionCookie },
     });
     const res = await GET(req);
@@ -87,7 +87,7 @@ test('Project API route handlers (TypeScript)', async (t) => {
 
   await t.test('creates a direct-join project without a screening link', async () => {
     fakeGitHub.addRepo({ name: 'open-ship', owner: 'alice-owner', isPrivate: false });
-    const req = new NextRequest('http://localhost:3000/api/projects', {
+    const req = new NextRequest('http://localhost:3100/api/projects', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

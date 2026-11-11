@@ -70,10 +70,10 @@ test('M8 AI workspace APIs', async (t) => {
   let scheduleId = '';
 
   await t.test('requires a signed-in owner for the workspace status', async () => {
-    const anonymous = await aiStatus(request('http://localhost:3000/api/ai/status'));
+    const anonymous = await aiStatus(request('http://localhost:3100/api/ai/status'));
     assert.equal(anonymous.status, 401);
 
-    const res = await aiStatus(request('http://localhost:3000/api/ai/status', { cookie: ownerCookie }));
+    const res = await aiStatus(request('http://localhost:3100/api/ai/status', { cookie: ownerCookie }));
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.status.provider, 'mock');
@@ -90,13 +90,13 @@ test('M8 AI workspace APIs', async (t) => {
 
   await t.test('enforces project ownership for the brand profile', async () => {
     const anonymous = await getBrand(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/brand`),
+      request(`http://localhost:3100/api/ai/projects/${project.id}/brand`),
       { params: Promise.resolve({ id: project.id }) }
     );
     assert.equal(anonymous.status, 401);
 
     const forbidden = await getBrand(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/brand`, {
+      request(`http://localhost:3100/api/ai/projects/${project.id}/brand`, {
         cookie: intruderCookie,
       }),
       { params: Promise.resolve({ id: project.id }) }
@@ -104,7 +104,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(forbidden.status, 403);
 
     const invalid = await putBrand(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/brand`, {
+      request(`http://localhost:3100/api/ai/projects/${project.id}/brand`, {
         method: 'PUT',
         cookie: ownerCookie,
         ip: '10.0.0.1',
@@ -115,7 +115,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(invalid.status, 400);
 
     const saved = await putBrand(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/brand`, {
+      request(`http://localhost:3100/api/ai/projects/${project.id}/brand`, {
         method: 'PUT',
         cookie: ownerCookie,
         ip: '10.0.0.2',
@@ -133,7 +133,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(savedBody.brand.brandName, 'Rocket Lab');
 
     const loaded = await getBrand(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/brand`, { cookie: ownerCookie }),
+      request(`http://localhost:3100/api/ai/projects/${project.id}/brand`, { cookie: ownerCookie }),
       { params: Promise.resolve({ id: project.id }) }
     );
     assert.equal((await loaded.json()).brand.tone, 'Direct and factual');
@@ -141,7 +141,7 @@ test('M8 AI workspace APIs', async (t) => {
 
   await t.test('creates and lists campaigns only for the project owner', async () => {
     const denied = await createCampaignRoute(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/campaigns`, {
+      request(`http://localhost:3100/api/ai/projects/${project.id}/campaigns`, {
         method: 'POST',
         cookie: intruderCookie,
         ip: '10.0.0.3',
@@ -152,7 +152,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(denied.status, 403);
 
     const invalid = await createCampaignRoute(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/campaigns`, {
+      request(`http://localhost:3100/api/ai/projects/${project.id}/campaigns`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.0.4',
@@ -163,7 +163,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(invalid.status, 400);
 
     const created = await createCampaignRoute(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/campaigns`, {
+      request(`http://localhost:3100/api/ai/projects/${project.id}/campaigns`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.0.5',
@@ -187,14 +187,14 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(body.campaign.ownerId, String(owner.id));
 
     const listed = await listCampaigns(
-      request(`http://localhost:3000/api/ai/projects/${project.id}/campaigns`, { cookie: ownerCookie }),
+      request(`http://localhost:3100/api/ai/projects/${project.id}/campaigns`, { cookie: ownerCookie }),
       { params: Promise.resolve({ id: project.id }) }
     );
     assert.equal(listed.status, 200);
     assert.equal((await listed.json()).campaigns.length, 1);
 
     const other = await getCampaign(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}`, { cookie: intruderCookie }),
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}`, { cookie: intruderCookie }),
       { params: Promise.resolve({ id: campaignId }) }
     );
     assert.equal(other.status, 403);
@@ -202,7 +202,7 @@ test('M8 AI workspace APIs', async (t) => {
 
   await t.test('runs the pipeline through the API without approving or publishing', async () => {
     const denied = await runCampaignRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/run`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/run`, {
         method: 'POST',
         cookie: intruderCookie,
         ip: '10.0.1.1',
@@ -213,7 +213,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(denied.status, 403);
 
     const run = await runCampaignRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/run`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/run`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.1.2',
@@ -241,7 +241,7 @@ test('M8 AI workspace APIs', async (t) => {
     }
 
     const second = await runCampaignRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/run`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/run`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.1.3',
@@ -254,7 +254,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(rerun.detail.generated.length, draftCount);
 
     const detail = await getCampaign(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}`, { cookie: ownerCookie }),
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}`, { cookie: ownerCookie }),
       { params: Promise.resolve({ id: campaignId }) }
     );
     assert.equal(detail.status, 200);
@@ -265,7 +265,7 @@ test('M8 AI workspace APIs', async (t) => {
 
   await t.test('reviews, regenerates, approves and never bypasses publish gates', async () => {
     const quality = await qualityRoute(
-      request(`http://localhost:3000/api/ai/drafts/${generatedDraftId}/quality`, {
+      request(`http://localhost:3100/api/ai/drafts/${generatedDraftId}/quality`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.2.1',
@@ -283,7 +283,7 @@ test('M8 AI workspace APIs', async (t) => {
       text: 'Hand written draft.',
     });
     const notGenerated = await qualityRoute(
-      request(`http://localhost:3000/api/ai/drafts/${nonAiDraft.id}/quality`, {
+      request(`http://localhost:3100/api/ai/drafts/${nonAiDraft.id}/quality`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.2.2',
@@ -293,7 +293,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(notGenerated.status, 404);
 
     const conflict = await generateIdeaRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/ideas/${ideaId}/generate`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/ideas/${ideaId}/generate`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.2.3',
@@ -304,7 +304,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal(conflict.status, 409);
 
     const regenerated = await generateIdeaRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/ideas/${ideaId}/generate`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/ideas/${ideaId}/generate`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.2.4',
@@ -319,7 +319,7 @@ test('M8 AI workspace APIs', async (t) => {
 
     // An unapproved AI draft cannot be published through the existing route.
     const blocked = await publishDraftRoute(
-      request(`http://localhost:3000/api/drafts/${generatedDraftId}/publish`, {
+      request(`http://localhost:3100/api/drafts/${generatedDraftId}/publish`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.2.5',
@@ -331,7 +331,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal((await blocked.json()).code, 'draft_not_approved');
 
     const approved = await approveDraftRoute(
-      request(`http://localhost:3000/api/drafts/${generatedDraftId}/approve`, {
+      request(`http://localhost:3100/api/drafts/${generatedDraftId}/approve`, {
         method: 'POST',
         cookie: ownerCookie,
       }),
@@ -341,7 +341,7 @@ test('M8 AI workspace APIs', async (t) => {
 
     // Approval alone is not enough: the existing connection gate still applies.
     const noConnection = await publishDraftRoute(
-      request(`http://localhost:3000/api/drafts/${generatedDraftId}/publish`, {
+      request(`http://localhost:3100/api/drafts/${generatedDraftId}/publish`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.2.6',
@@ -358,7 +358,7 @@ test('M8 AI workspace APIs', async (t) => {
 
   await t.test('persists strategy edits and recomputes the schedule', async () => {
     const patched = await patchStrategy(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/strategy`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/strategy`, {
         method: 'PATCH',
         cookie: ownerCookie,
         ip: '10.0.3.1',
@@ -370,7 +370,7 @@ test('M8 AI workspace APIs', async (t) => {
     assert.equal((await patched.json()).detail.campaign.audience, 'University rocket teams');
 
     const recalculated = await scheduleRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/schedule`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/schedule`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.3.2',
@@ -383,7 +383,7 @@ test('M8 AI workspace APIs', async (t) => {
     scheduleId = rows[0].id;
 
     const past = await overrideScheduleRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/schedules/${scheduleId}`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/schedules/${scheduleId}`, {
         method: 'PATCH',
         cookie: ownerCookie,
         ip: '10.0.3.3',
@@ -395,7 +395,7 @@ test('M8 AI workspace APIs', async (t) => {
 
     const future = new Date(Date.now() + 7 * 86_400_000).toISOString();
     const overridden = await overrideScheduleRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/schedules/${scheduleId}`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/schedules/${scheduleId}`, {
         method: 'PATCH',
         cookie: ownerCookie,
         ip: '10.0.3.4',
@@ -413,7 +413,7 @@ test('M8 AI workspace APIs', async (t) => {
 
   await t.test('reports analytics from Crewlink records only', async () => {
     const res = await analyticsRoute(
-      request(`http://localhost:3000/api/ai/campaigns/${campaignId}/analytics`, {
+      request(`http://localhost:3100/api/ai/campaigns/${campaignId}/analytics`, {
         method: 'POST',
         cookie: ownerCookie,
         ip: '10.0.4.1',
@@ -432,7 +432,7 @@ test('M8 AI workspace APIs', async (t) => {
     setLlmProvider(new UnconfiguredProvider('openai'));
     try {
       const res = await runCampaignRoute(
-        request(`http://localhost:3000/api/ai/campaigns/${campaignId}/run`, {
+        request(`http://localhost:3100/api/ai/campaigns/${campaignId}/run`, {
           method: 'POST',
           cookie: ownerCookie,
           ip: '10.0.5.1',
@@ -461,7 +461,7 @@ test('M8 AI workspace APIs', async (t) => {
     setLlmProvider(provider);
     try {
       const res = await runCampaignRoute(
-        request(`http://localhost:3000/api/ai/campaigns/${campaign.id}/run`, {
+        request(`http://localhost:3100/api/ai/campaigns/${campaign.id}/run`, {
           method: 'POST',
           cookie: ownerCookie,
           ip: '10.0.5.2',
@@ -488,7 +488,7 @@ test('M8 AI workspace APIs', async (t) => {
     const statuses: number[] = [];
     for (let index = 0; index < 11; index += 1) {
       const res = await createCampaignRoute(
-        request(`http://localhost:3000/api/ai/projects/${project.id}/campaigns`, {
+        request(`http://localhost:3100/api/ai/projects/${project.id}/campaigns`, {
           method: 'POST',
           cookie: ownerCookie,
           ip: '10.9.9.9',

@@ -52,7 +52,7 @@ test('Reddit client uses only the official API contract', async (t) => {
     const url = new URL(
       client.authorizationUrl({
         clientId: 'client-id',
-        redirectUri: 'http://localhost:3000/api/platforms/reddit/callback',
+        redirectUri: 'http://localhost:3100/api/platforms/reddit/callback',
         state: 'state-value',
       })
     );
@@ -62,7 +62,7 @@ test('Reddit client uses only the official API contract', async (t) => {
     assert.equal(url.searchParams.get('state'), 'state-value');
     assert.equal(
       url.searchParams.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/reddit/callback'
+      'http://localhost:3100/api/platforms/reddit/callback'
     );
     assert.equal(url.searchParams.get('duration'), 'permanent');
     assert.equal(url.searchParams.get('scope'), REDDIT_SCOPE_STRING);
@@ -87,7 +87,7 @@ test('Reddit client uses only the official API contract', async (t) => {
       clientId: 'client-id',
       clientSecret: 'client-secret',
       code: 'auth-code',
-      redirectUri: 'http://localhost:3000/api/platforms/reddit/callback',
+      redirectUri: 'http://localhost:3100/api/platforms/reddit/callback',
     });
 
     assert.equal(calls.length, 2);
@@ -103,7 +103,7 @@ test('Reddit client uses only the official API contract', async (t) => {
     assert.equal(form.get('code'), 'auth-code');
     assert.equal(
       form.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/reddit/callback'
+      'http://localhost:3100/api/platforms/reddit/callback'
     );
     assert.ok(!tokenCall.body.includes('client-secret'));
 

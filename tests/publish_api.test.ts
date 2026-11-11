@@ -56,7 +56,7 @@ test('Draft publish API', async (t) => {
   });
 
   const publishRequest = (draftId: string, headers: Record<string, string> = {}) =>
-    new NextRequest(`http://localhost:3000/api/drafts/${draftId}/publish`, {
+    new NextRequest(`http://localhost:3100/api/drafts/${draftId}/publish`, {
       method: 'POST',
       headers,
     });

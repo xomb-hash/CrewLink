@@ -62,13 +62,13 @@ async function seed(idBase: number, label: string): Promise<Seed> {
 }
 
 function get(path: string, cookie: string): NextRequest {
-  return new NextRequest(`http://localhost:3000${path}`, {
+  return new NextRequest(`http://localhost:3100${path}`, {
     headers: { cookie },
   });
 }
 
 function post(path: string, cookie: string, body: unknown): NextRequest {
-  return new NextRequest(`http://localhost:3000${path}`, {
+  return new NextRequest(`http://localhost:3100${path}`, {
     method: 'POST',
     headers: { cookie, 'content-type': 'application/json' },
     body: JSON.stringify(body),

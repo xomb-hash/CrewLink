@@ -52,7 +52,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   let redditDraftId = '';
 
   await t.test('creating a Reddit draft starts with a title and a type but no subreddit', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}/drafts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({ platforms: ['reddit'] }),
@@ -70,11 +70,11 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   });
 
   await t.test('the owner can set the title, subreddit and type', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}`, {
+    const req = new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({
-        text: `Join our crew and help us build the rocket: http://localhost:3000/join/${project.slug}`,
+        text: `Join our crew and help us build the rocket: http://localhost:3100/join/${project.slug}`,
         title: 'Looking for collaborators',
         subreddit: 'r/programming',
         submissionType: 'self',
@@ -93,7 +93,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   });
 
   await t.test('an invalid subreddit and a non-Reddit field are rejected', async () => {
-    const invalid = new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}`, {
+    const invalid = new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({ subreddit: 'bad name' }),
@@ -108,7 +108,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
       platformId: 'discord',
       text: 'Discord text',
     });
-    const misplaced = new NextRequest(`http://localhost:3000/api/drafts/${discord.id}`, {
+    const misplaced = new NextRequest(`http://localhost:3100/api/drafts/${discord.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({ title: 'Not for Discord' }),
@@ -120,7 +120,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   });
 
   await t.test('a title over the Reddit limit is rejected, not silently cut', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}`, {
+    const req = new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({ title: 'x'.repeat(400) }),
@@ -132,7 +132,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
     const stored = await storage.getDraftById(redditDraftId);
     assert.equal(stored?.title, 'Looking for collaborators');
 
-    const tooLongBody = new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}`, {
+    const tooLongBody = new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({ text: 'y'.repeat(40_001) }),
@@ -145,7 +145,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
 
   await t.test('approval is owner-only and an edit invalidates it', async () => {
     const intruderRes = await approveDraft(
-      new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}/approve`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}/approve`, {
         method: 'POST',
         headers: { cookie: intruderCookie },
       }),
@@ -154,7 +154,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
     assert.equal(intruderRes.status, 403);
 
     const ownerRes = await approveDraft(
-      new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}/approve`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}/approve`, {
         method: 'POST',
         headers: { cookie: ownerCookie },
       }),
@@ -164,7 +164,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
     const approved = await ownerRes.json();
     assert.equal(approved.draft.status, 'approved');
 
-    const edit = new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}`, {
+    const edit = new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
       body: JSON.stringify({ text: 'A changed body.' }),
@@ -179,14 +179,14 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   await t.test('subreddit discovery requires an owner session and a connection', async () => {
     const noSession = await searchSubreddits(
       new NextRequest(
-        `http://localhost:3000/api/platforms/reddit/subreddits?projectId=${project.id}&q=code`
+        `http://localhost:3100/api/platforms/reddit/subreddits?projectId=${project.id}&q=code`
       )
     );
     assert.equal(noSession.status, 401);
 
     const intruderRes = await searchSubreddits(
       new NextRequest(
-        `http://localhost:3000/api/platforms/reddit/subreddits?projectId=${project.id}&q=code`,
+        `http://localhost:3100/api/platforms/reddit/subreddits?projectId=${project.id}&q=code`,
         { headers: { cookie: intruderCookie } }
       )
     );
@@ -194,7 +194,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
 
     const noConnection = await searchSubreddits(
       new NextRequest(
-        `http://localhost:3000/api/platforms/reddit/subreddits?projectId=${project.id}&q=code`,
+        `http://localhost:3100/api/platforms/reddit/subreddits?projectId=${project.id}&q=code`,
         { headers: { cookie: ownerCookie } }
       )
     );
@@ -219,7 +219,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   await t.test('connection summaries never expose credential material', async () => {
     const res = await listConnections(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections?projectId=${project.id}`,
+        `http://localhost:3100/api/platforms/connections?projectId=${project.id}`,
         { headers: { cookie: ownerCookie } }
       )
     );
@@ -240,7 +240,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
   await t.test('the owner can search and load a subreddit', async () => {
     const search = await searchSubreddits(
       new NextRequest(
-        `http://localhost:3000/api/platforms/reddit/subreddits?projectId=${project.id}&q=program`,
+        `http://localhost:3100/api/platforms/reddit/subreddits?projectId=${project.id}&q=program`,
         { headers: { cookie: ownerCookie } }
       )
     );
@@ -250,7 +250,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
 
     const detailsRes = await subredditDetails(
       new NextRequest(
-        `http://localhost:3000/api/platforms/reddit/subreddits/programming?projectId=${project.id}`,
+        `http://localhost:3100/api/platforms/reddit/subreddits/programming?projectId=${project.id}`,
         { headers: { cookie: ownerCookie } }
       ),
       { params: Promise.resolve({ name: 'programming' }) }
@@ -264,7 +264,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
 
   await t.test('live validation is owner-only and reports unverifiable rules', async () => {
     const intruderRes = await validateReddit(
-      new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}/reddit/check`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}/reddit/check`, {
         method: 'POST',
         headers: { cookie: intruderCookie },
       }),
@@ -278,7 +278,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
       text: 'Discord text',
     });
     const wrongPlatform = await validateReddit(
-      new NextRequest(`http://localhost:3000/api/drafts/${discord.id}/reddit/check`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${discord.id}/reddit/check`, {
         method: 'POST',
         headers: { cookie: ownerCookie },
       }),
@@ -287,7 +287,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
     assert.equal(wrongPlatform.status, 400);
 
     const res = await validateReddit(
-      new NextRequest(`http://localhost:3000/api/drafts/${redditDraftId}/reddit/check`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${redditDraftId}/reddit/check`, {
         method: 'POST',
         headers: { cookie: ownerCookie },
       }),
@@ -314,7 +314,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
     });
     const res = await searchSubreddits(
       new NextRequest(
-        `http://localhost:3000/api/platforms/reddit/subreddits?projectId=${second.id}&q=program`,
+        `http://localhost:3100/api/platforms/reddit/subreddits?projectId=${second.id}&q=program`,
         { headers: { cookie: ownerCookie } }
       )
     );
@@ -325,7 +325,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
 
   await t.test('the authorize route refuses unauthenticated and non-owner callers', async () => {
     const noSession = await authorizeReddit(
-      new NextRequest('http://localhost:3000/api/platforms/reddit/authorize', {
+      new NextRequest('http://localhost:3100/api/platforms/reddit/authorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: project.id }),
@@ -334,7 +334,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
     assert.equal(noSession.status, 401);
 
     const intruderRes = await authorizeReddit(
-      new NextRequest('http://localhost:3000/api/platforms/reddit/authorize', {
+      new NextRequest('http://localhost:3100/api/platforms/reddit/authorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', cookie: intruderCookie },
         body: JSON.stringify({ projectId: project.id }),
@@ -345,7 +345,7 @@ test('Reddit APIs enforce ownership and server-side validation', async (t) => {
 
   await t.test('the drafts list includes the Reddit submission fields', async () => {
     const res = await getDrafts(
-      new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+      new NextRequest(`http://localhost:3100/api/projects/${project.id}/drafts`, {
         headers: { cookie: ownerCookie },
       }),
       { params: Promise.resolve({ id: project.id }) }

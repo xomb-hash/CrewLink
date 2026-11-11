@@ -12,7 +12,7 @@ test('GitHub webhook: handles ping event', async () => {
 
   try {
     const payload = JSON.stringify({ zen: 'Keep it logically awesome.' });
-    const req = new NextRequest('http://localhost:3000/api/webhooks/github', {
+    const req = new NextRequest('http://localhost:3100/api/webhooks/github', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -39,7 +39,7 @@ test('GitHub webhook: validates HMAC-SHA256 signature', async () => {
   const payload = JSON.stringify({ zen: 'Non-matching signature payload' });
 
   // 1. Invalid signature
-  const badReq = new NextRequest('http://localhost:3000/api/webhooks/github', {
+  const badReq = new NextRequest('http://localhost:3100/api/webhooks/github', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -54,7 +54,7 @@ test('GitHub webhook: validates HMAC-SHA256 signature', async () => {
 
   // 2. Valid signature
   const hmac = crypto.createHmac('sha256', 'test-secret-key-123').update(payload).digest('hex');
-  const goodReq = new NextRequest('http://localhost:3000/api/webhooks/github', {
+  const goodReq = new NextRequest('http://localhost:3100/api/webhooks/github', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -102,7 +102,7 @@ test('GitHub webhook: records collaborator acceptance when member is added', asy
     },
   });
 
-  const req = new NextRequest('http://localhost:3000/api/webhooks/github', {
+  const req = new NextRequest('http://localhost:3100/api/webhooks/github', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',

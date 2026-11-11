@@ -84,7 +84,7 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('GET /api/explore returns list of projects with roles and applicant counts', async () => {
-    const req = new NextRequest('http://localhost:3000/api/explore');
+    const req = new NextRequest('http://localhost:3100/api/explore');
     const res = await exploreHandler(req);
 
     assert.equal(res.status, 200);
@@ -116,26 +116,26 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
 
   await t.test('GET /api/explore filters by role and search query', async () => {
     // Search matching "physics"
-    const req1 = new NextRequest('http://localhost:3000/api/explore?q=physics');
+    const req1 = new NextRequest('http://localhost:3100/api/explore?q=physics');
     const res1 = await exploreHandler(req1);
     const data1 = await res1.json();
     assert.ok(data1.projects.some((p: { id: string }) => p.id === project.id));
 
     // Filter matching role "C++ Expert"
-    const req2 = new NextRequest('http://localhost:3000/api/explore?role=c%2B%2B');
+    const req2 = new NextRequest('http://localhost:3100/api/explore?role=c%2B%2B');
     const res2 = await exploreHandler(req2);
     const data2 = await res2.json();
     assert.ok(data2.projects.some((p: { id: string }) => p.id === project.id));
 
     // Filter with non-matching role
-    const req3 = new NextRequest('http://localhost:3000/api/explore?role=nonexistentrole');
+    const req3 = new NextRequest('http://localhost:3100/api/explore?role=nonexistentrole');
     const res3 = await exploreHandler(req3);
     const data3 = await res3.json();
     assert.equal(data3.projects.length, 0);
   });
 
   await t.test('GET /api/applications returns list of applications for signed in user', async () => {
-    const req = new NextRequest('http://localhost:3000/api/applications', {
+    const req = new NextRequest('http://localhost:3100/api/applications', {
       headers: {
         cookie: `${SESSION_COOKIE}=${encodeURIComponent(signedCookie)}`,
       },
@@ -169,7 +169,7 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
       publicRepoCount: 3,
     });
 
-    const req = new NextRequest('http://localhost:3000/api/applications', {
+    const req = new NextRequest('http://localhost:3100/api/applications', {
       headers: {
         cookie: `${SESSION_COOKIE}=${encodeURIComponent(signValue(referralSession))}`,
       },
@@ -184,7 +184,7 @@ test('Explore & Applications API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('GET /api/applications blocks unauthenticated requests with 401', async () => {
-    const req = new NextRequest('http://localhost:3000/api/applications');
+    const req = new NextRequest('http://localhost:3100/api/applications');
     const res = await applicationsHandler(req);
     assert.equal(res.status, 401);
   });

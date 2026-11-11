@@ -8,7 +8,7 @@ import {
 } from '@/posting/connections';
 
 function redirectToPublishing(params: Record<string, string>): NextResponse {
-  const url = new URL('/publishing', config.appUrl || 'http://localhost:3000');
+  const url = new URL('/publishing', config.appUrl || 'http://localhost:3100');
   for (const [key, value] of Object.entries(params)) {
     if (value) url.searchParams.set(key, value);
   }

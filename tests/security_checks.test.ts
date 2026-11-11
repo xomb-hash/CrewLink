@@ -46,7 +46,7 @@ test('Server-side security checks (TypeScript)', async (t) => {
 
   await t.test('blocks non-owner from approving applicants with 403 Forbidden', async () => {
     const req = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/applicants/${applicant.id}/approve`,
+      `http://localhost:3100/api/projects/${project.id}/applicants/${applicant.id}/approve`,
       {
         method: 'POST',
         headers: { cookie: impostorCookie },
@@ -63,7 +63,7 @@ test('Server-side security checks (TypeScript)', async (t) => {
 
   await t.test('blocks non-owner from rejecting applicants with 403 Forbidden', async () => {
     const req = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/applicants/${applicant.id}/reject`,
+      `http://localhost:3100/api/projects/${project.id}/applicants/${applicant.id}/reject`,
       {
         method: 'POST',
         headers: { cookie: impostorCookie },
@@ -79,7 +79,7 @@ test('Server-side security checks (TypeScript)', async (t) => {
   });
 
   await t.test('blocks non-owner from viewing project applicant details with 403 Forbidden', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}`, {
       headers: { cookie: impostorCookie },
     });
 

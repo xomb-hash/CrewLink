@@ -8,15 +8,15 @@ test('Share link generator (TypeScript)', async (t) => {
     title: 'Rocket Ship',
   };
 
-  const share = generateShareLinks(project, 'http://localhost:3000');
+  const share = generateShareLinks(project, 'http://localhost:3100');
 
   await t.test('generates valid join URL', () => {
-    assert.equal(share.joinUrl, 'http://localhost:3000/join/rocket-ship-1a2b');
+    assert.equal(share.joinUrl, 'http://localhost:3100/join/rocket-ship-1a2b');
   });
 
   await t.test('generates valid LinkedIn share link', () => {
     assert.ok(share.linkedIn.startsWith('https://www.linkedin.com/sharing/share-offsite/'));
-    assert.ok(share.linkedIn.includes(encodeURIComponent('http://localhost:3000/join/rocket-ship-1a2b')));
+    assert.ok(share.linkedIn.includes(encodeURIComponent('http://localhost:3100/join/rocket-ship-1a2b')));
   });
 
   await t.test('generates valid X (Twitter) share link', () => {

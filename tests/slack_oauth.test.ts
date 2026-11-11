@@ -75,7 +75,7 @@ test('Slack OAuth keeps state and the bot token server-side', async (t) => {
     assert.equal(url.searchParams.has('user_scope'), false);
     assert.equal(
       url.searchParams.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/slack/callback'
+      'http://localhost:3100/api/platforms/slack/callback'
     );
 
     const stored = await storage.findPlatformConnection(ownerId, project.id, 'slack');

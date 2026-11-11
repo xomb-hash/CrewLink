@@ -87,7 +87,7 @@ test('Reddit composer validation follows the submission rules', async (t) => {
         redditComposerChecks({
           ...validDraft,
           submissionType: 'link',
-          linkUrl: 'https://localhost:3000/join',
+          linkUrl: 'https://localhost:3100/join',
         })
       ).includes('link_host')
     );

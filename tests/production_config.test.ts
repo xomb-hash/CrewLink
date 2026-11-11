@@ -49,7 +49,7 @@ test('unsafe or missing critical values fail closed', async (t) => {
       (error) => error instanceof ProductionConfigError
     );
     assert.throws(
-      () => validateProductionConfig(base({ APP_URL: 'https://localhost:3000' })),
+      () => validateProductionConfig(base({ APP_URL: 'https://localhost:3100' })),
       (error) => error instanceof ProductionConfigError
     );
   });

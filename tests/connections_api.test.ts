@@ -48,7 +48,7 @@ test('Platform connection API', async (t) => {
   let connectionId = '';
 
   const saveRequest = (body: unknown, headers: Record<string, string> = { cookie }) =>
-    new NextRequest('http://localhost:3000/api/platforms/connections', {
+    new NextRequest('http://localhost:3100/api/platforms/connections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify(body),
@@ -56,7 +56,7 @@ test('Platform connection API', async (t) => {
 
   await t.test('requires a signed-in user', async () => {
     const list = await listRoute(
-      new NextRequest('http://localhost:3000/api/platforms/connections')
+      new NextRequest('http://localhost:3100/api/platforms/connections')
     );
     assert.equal(list.status, 401);
 
@@ -64,7 +64,7 @@ test('Platform connection API', async (t) => {
     assert.equal(save.status, 401);
 
     const disconnect = await disconnectRoute(
-      new NextRequest('http://localhost:3000/api/platforms/connections/pcn_missing', {
+      new NextRequest('http://localhost:3100/api/platforms/connections/pcn_missing', {
         method: 'DELETE',
       }),
       { params: Promise.resolve({ id: 'pcn_missing' }) }
@@ -137,7 +137,7 @@ test('Platform connection API', async (t) => {
   await t.test('lists owner connections without tokens', async () => {
     const res = await listRoute(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections?projectId=${project.id}`,
+        `http://localhost:3100/api/platforms/connections?projectId=${project.id}`,
         { headers: { cookie } }
       )
     );
@@ -151,7 +151,7 @@ test('Platform connection API', async (t) => {
 
     const forbidden = await listRoute(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections?projectId=${otherProject.id}`,
+        `http://localhost:3100/api/platforms/connections?projectId=${otherProject.id}`,
         { headers: { cookie } }
       )
     );
@@ -191,7 +191,7 @@ test('Platform connection API', async (t) => {
 
   await t.test('another user cannot disconnect the connection', async () => {
     const res = await disconnectRoute(
-      new NextRequest(`http://localhost:3000/api/platforms/connections/${connectionId}`, {
+      new NextRequest(`http://localhost:3100/api/platforms/connections/${connectionId}`, {
         method: 'DELETE',
         headers: { cookie: otherCookie },
       }),
@@ -202,7 +202,7 @@ test('Platform connection API', async (t) => {
 
   await t.test('the owner can disconnect and tokens are wiped', async () => {
     const res = await disconnectRoute(
-      new NextRequest(`http://localhost:3000/api/platforms/connections/${connectionId}`, {
+      new NextRequest(`http://localhost:3100/api/platforms/connections/${connectionId}`, {
         method: 'DELETE',
         headers: { cookie },
       }),

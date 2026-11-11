@@ -71,7 +71,7 @@ test('X OAuth 2.0 + PKCE keeps verifiers and tokens server-side', async (t) => {
     );
     assert.equal(
       url.searchParams.get('redirect_uri'),
-      'http://localhost:3000/api/platforms/x/callback'
+      'http://localhost:3100/api/platforms/x/callback'
     );
 
     const stored = await storage.findPlatformConnection(ownerId, project.id, 'x');

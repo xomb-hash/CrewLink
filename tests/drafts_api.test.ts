@@ -44,7 +44,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   let draftId = '';
 
   await t.test('creates drafts for specified platforms', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}/drafts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('blocks non-owner from viewing or managing drafts', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}/drafts`, {
       headers: { cookie: intruderCookie },
     });
     const res = await getDrafts(req, { params: Promise.resolve({ id: project.id }) });
@@ -74,7 +74,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('lists drafts with checks for project owner', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}/drafts`, {
       headers: { cookie },
     });
     const res = await getDrafts(req, { params: Promise.resolve({ id: project.id }) });
@@ -88,9 +88,9 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('edits draft and resets approval state', async () => {
-    const joinUrl = `http://localhost:3000/join/${project.slug}`;
+    const joinUrl = `http://localhost:3100/join/${project.slug}`;
     const newText = `Updated rocket launch announcement! Join: ${joinUrl}`;
-    const req = new NextRequest(`http://localhost:3000/api/drafts/${draftId}`, {
+    const req = new NextRequest(`http://localhost:3100/api/drafts/${draftId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('approves draft and computes SHA-256 hash', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/drafts/${draftId}/approve`, {
+    const req = new NextRequest(`http://localhost:3100/api/drafts/${draftId}/approve`, {
       method: 'POST',
       headers: { cookie },
     });
@@ -123,7 +123,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('reports a ready publication state after approval', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}/drafts`, {
       headers: { cookie },
     });
     const res = await getDrafts(req, { params: Promise.resolve({ id: project.id }) });
@@ -137,7 +137,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('skips draft', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/drafts/${draftId}/skip`, {
+    const req = new NextRequest(`http://localhost:3100/api/drafts/${draftId}/skip`, {
       method: 'POST',
       headers: { cookie },
     });
@@ -149,7 +149,7 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
   });
 
   await t.test('generates personal post with checks', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/personal-post`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}/personal-post`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

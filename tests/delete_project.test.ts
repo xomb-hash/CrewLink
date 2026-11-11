@@ -91,7 +91,7 @@ test('Delete project API', async (t) => {
   await storage.createDraft({ projectId: project.id, platformId: 'linkedin', text: 'Draft text' });
 
   await t.test('rejects unauthenticated requests', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}`, {
       method: 'DELETE',
     });
     const res = await deleteProject(req, { params: Promise.resolve({ id: project.id }) });
@@ -100,7 +100,7 @@ test('Delete project API', async (t) => {
   });
 
   await t.test('returns 404 for unknown projects', async () => {
-    const req = new NextRequest('http://localhost:3000/api/projects/prj_missing', {
+    const req = new NextRequest('http://localhost:3100/api/projects/prj_missing', {
       method: 'DELETE',
       headers: { cookie: ownerCookie },
     });
@@ -109,7 +109,7 @@ test('Delete project API', async (t) => {
   });
 
   await t.test('only the owner can delete a project', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}`, {
       method: 'DELETE',
       headers: { cookie: otherCookie },
     });
@@ -119,7 +119,7 @@ test('Delete project API', async (t) => {
   });
 
   await t.test('owner deletion removes the project, applicants, drafts, and uploads', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}`, {
+    const req = new NextRequest(`http://localhost:3100/api/projects/${project.id}`, {
       method: 'DELETE',
       headers: { cookie: ownerCookie },
     });

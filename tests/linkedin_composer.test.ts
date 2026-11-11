@@ -39,12 +39,12 @@ test('LinkedIn composer validates text before approval and publishing', async (t
     text: 'Initial text',
   });
 
-  const joinUrl = `http://localhost:3000/join/${project.slug}`;
+  const joinUrl = `http://localhost:3100/join/${project.slug}`;
   const withJoinLink = (text: string) => `${text} ${joinUrl}`;
 
   const put = (text: string) =>
     editDraft(
-      new NextRequest(`http://localhost:3000/api/drafts/${draft.id}`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${draft.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', cookie },
         body: JSON.stringify({ text }),

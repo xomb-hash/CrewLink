@@ -29,7 +29,7 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS**, and **Luc
 
 ```bash
 npm test        # run all automated tests, all must pass
-npm run dev     # start development server at http://localhost:3000
+npm run dev     # start development server at http://localhost:3100
 npm run build   # build production application
 ```
 

@@ -504,7 +504,7 @@ test('Mastodon OAuth connection lifecycle stores only encrypted handshake data',
         beginMastodonAuthorization({
           userId,
           projectId: seedData.projectId,
-          instanceUrl: 'http://localhost:3000',
+          instanceUrl: 'http://localhost:3100',
           sessionId: seedData.ownerSessionId,
         }),
       (err) => connectionCode(err) === 'invalid_input'
@@ -1120,7 +1120,7 @@ test('Account connection APIs never return or log credential material', async (t
   const ownerId = String(seedData.owner.id);
 
   const post = (body: unknown, cookie = seedData.ownerCookie) =>
-    new NextRequest('http://localhost:3000/api/platforms/connections', {
+    new NextRequest('http://localhost:3100/api/platforms/connections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', cookie },
       body: JSON.stringify(body),
@@ -1203,7 +1203,7 @@ test('Account connection APIs never return or log credential material', async (t
   await t.test('the verify route enforces ownership', async () => {
     const theirs = await verifyConnectionRoute(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections/${connectionId}/verify`,
+        `http://localhost:3100/api/platforms/connections/${connectionId}/verify`,
         { method: 'POST', headers: { cookie: seedData.otherCookie } }
       ),
       paramsFor(connectionId)
@@ -1212,7 +1212,7 @@ test('Account connection APIs never return or log credential material', async (t
 
     const mine = await verifyConnectionRoute(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections/${connectionId}/verify`,
+        `http://localhost:3100/api/platforms/connections/${connectionId}/verify`,
         { method: 'POST', headers: { cookie: seedData.ownerCookie } }
       ),
       paramsFor(connectionId)
@@ -1224,7 +1224,7 @@ test('Account connection APIs never return or log credential material', async (t
   await t.test('lists connections without token fields', async () => {
     const res = await listConnectionsRoute(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections?projectId=${seedData.projectId}`,
+        `http://localhost:3100/api/platforms/connections?projectId=${seedData.projectId}`,
         { headers: { cookie: seedData.ownerCookie } }
       )
     );
@@ -1256,7 +1256,7 @@ test('Account connection APIs never return or log credential material', async (t
   });
 
   const callbackRequest = (query: string, cookie = seedData.ownerCookie) =>
-    new NextRequest(`http://localhost:3000/api/platforms/mastodon/callback?${query}`, {
+    new NextRequest(`http://localhost:3100/api/platforms/mastodon/callback?${query}`, {
       headers: cookie ? { cookie } : {},
     });
 
@@ -1369,7 +1369,7 @@ test('Account connection APIs never return or log credential material', async (t
       'Join the rocket crew'
     );
     const res = await publishRoute(
-      new NextRequest(`http://localhost:3000/api/drafts/${draft.id}/publish`, {
+      new NextRequest(`http://localhost:3100/api/drafts/${draft.id}/publish`, {
         method: 'POST',
         headers: { cookie: seedData.ownerCookie },
       }),
@@ -1391,7 +1391,7 @@ test('Account connection APIs never return or log credential material', async (t
     );
     const res = await disconnectConnectionRoute(
       new NextRequest(
-        `http://localhost:3000/api/platforms/connections/${mastodon!.id}`,
+        `http://localhost:3100/api/platforms/connections/${mastodon!.id}`,
         { method: 'DELETE', headers: { cookie: seedData.ownerCookie } }
       ),
       paramsFor(mastodon!.id)
