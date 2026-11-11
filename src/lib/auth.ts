@@ -31,7 +31,14 @@ export function verifySignedValue(signedVal?: string | null, secret = config.ses
   return val;
 }
 
-export async function getCurrentUser(request?: NextRequest | Request): Promise<User | null> {
+export interface SessionAuth {
+  sessionId: string;
+  user: User;
+}
+
+export async function getCurrentSessionAuth(
+  request?: NextRequest | Request
+): Promise<SessionAuth | null> {
   try {
     let rawSession: string | undefined;
 
@@ -65,8 +72,13 @@ export async function getCurrentUser(request?: NextRequest | Request): Promise<U
     const sessionData = await storage.getSession(sessionId);
     if (!sessionData) return null;
 
-    return sessionData.user;
+    return { sessionId: sessionData.sessionId, user: sessionData.user };
   } catch {
     return null;
   }
+}
+
+export async function getCurrentUser(request?: NextRequest | Request): Promise<User | null> {
+  const auth = await getCurrentSessionAuth(request);
+  return auth?.user ?? null;
 }

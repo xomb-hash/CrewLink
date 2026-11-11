@@ -19,6 +19,7 @@ model User {
   projects    Project[]
   applicants  Applicant[]
   sessions    Session[]
+  platformConnections PlatformConnection[]
 
   @@map("users")
 }
@@ -53,8 +54,14 @@ model Project {
   requireResume       Boolean @default(false)
   requireGithubLink   Boolean @default(false)
   requireLinkedinLink Boolean @default(false)
-  referralCode String?
+  // Reusable referral invite: one code per private project, unique across all
+  // projects. Usage is derived by counting Applicant rows with the same code;
+  // referralCodeUsedAt is legacy from single-use codes.
+  referralCode String?             @unique
   referralCodeCreatedAt DateTime?
+  referralCodeExpiresAt DateTime?
+  referralCodeUsageLimit Int?
+  referralCodeRevokedAt DateTime?
   referralCodeUsedAt DateTime?
   logoPath     String?
   createdAt    DateTime    @default(now())
@@ -62,6 +69,16 @@ model Project {
   owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   applicants   Applicant[]
   drafts       Draft[]
+  platformConnections PlatformConnection[]
+  publications Publication[]
+  campaigns    Campaign[]
+  brandProfile BrandProfile?
+  analyticsAccounts  AnalyticsAccount[]
+  analyticsPosts     AnalyticsPost[]
+  analyticsSnapshots AnalyticsSnapshot[]
+  analyticsSyncs     AnalyticsSync[]
+  analyticsInsights  AnalyticsInsight[]
+  analyticsSyncLocks AnalyticsSyncLock[]
 
   @@index([ownerLogin])
   @@index([ownerId])
@@ -73,6 +90,18 @@ model Draft {
   projectId    String
   platformId   String
   text         String
+  // X thread posts. `text` remains the canonical joined value used for approval.
+  threadParts  Json?
+  // Reddit-only composer fields. A Reddit submission is not just its body, so
+  // approval hashes these fields together with `text`.
+  title        String?
+  subreddit    String?
+  submissionType String?
+  linkUrl      String?
+  // Set when an AI campaign generated this draft. The publishing gates do not
+  // read these fields; they exist so the AI workspace can group its output.
+  campaignId   String?
+  contentIdeaId String?
   status       String      @default("drafted")
   approvedText String?
   approvedHash String?
@@ -81,8 +110,10 @@ model Draft {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publications Publication[]
 
   @@index([projectId])
+  @@index([campaignId])
   @@map("drafts")
 }
 
@@ -100,6 +131,9 @@ model Applicant {
   linkedinUrl       String?
   resumeFileName    String?
   resumePath        String?
+  // Invite code this application arrived with; counted against the project's
+  // usage limit (indexed together with projectId for that lookup).
+  referralCode      String?
   status            String   @default("pending")
   invitationSent    Boolean  @default(false)
   invitationDetails Json?
@@ -110,6 +144,470 @@ model Applicant {
 
   @@unique([projectId, userId])
   @@index([projectId])
+  @@index([projectId, referralCode])
   @@index([userId])
   @@map("applicants")
+}
+
+// One creator-owned integration for one of their projects. Access and refresh
+// tokens are stored only as ciphertext produced by src/posting/credentials.ts;
+// the plaintext is never persisted or returned by an API.
+model PlatformConnection {
+  id                     String   @id @default(cuid())
+  userId                 String
+  projectId              String
+  platformId             String
+  externalAccountId      String?
+  externalAccountName    String?
+  // Discord server (guild) selected alongside the channel.
+  serverId               String?
+  serverName             String?
+  // Telegram channel or Discord channel selected by the owner.
+  channelId              String?
+  channelName            String?
+  // Normalized Mastodon instance origin (creator-owned account platforms).
+  instanceUrl            String?
+  status                 String   @default("pending")
+  scopes                 String[] @default([])
+  tokenExpiresAt         DateTime?
+  accessTokenCiphertext  String
+  refreshTokenCiphertext String?
+  // Short-lived Mastodon OAuth handshake. Only the sha256 hash of the state is
+  // stored; the pending client secret is encrypted with the credential vault.
+  oauthStateHash         String?  @unique
+  oauthStateExpiresAt    DateTime?
+  pendingOAuthCiphertext String?
+  credentialProvider     String
+  keyRef                 String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project                Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publications           Publication[]
+  analyticsAccount       AnalyticsAccount?
+
+  @@unique([userId, platformId, projectId])
+  @@index([userId])
+  @@index([projectId])
+  @@map("platform_connections")
+}
+
+// One record per draft and platform. `sending` is written before the platform
+// call so a crash cannot be mistaken for an unpublished draft; retries are
+// always an explicit owner action and never automatic.
+model Publication {
+  id           String   @id @default(cuid())
+  userId       String
+  projectId    String
+  draftId      String
+  // Manual publications have no platform connection.
+  connectionId String?
+  platformId   String
+  status       String   @default("sending")
+  // "api" = confirmed by the platform; "manual" = owner-reported and unverified.
+  mode         String   @default("api")
+  // sha256 of the approved text at publish time.
+  contentHash  String
+  externalId   String?
+  // Every post id for a thread, in order.
+  externalIds  String[] @default([])
+  // Owner-facing destination and permalink. Reddit stores the subreddit name in
+  // targetName and the submission permalink in externalUrl.
+  targetName   String?
+  externalUrl  String?
+  errorCode    String?
+  confirmedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  draft        Draft    @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  connection   PlatformConnection? @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  analyticsPost AnalyticsPost?
+
+  @@unique([draftId, platformId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("publications")
+}
+
+// One row per X publication attempt that could incur a charge. Prices are stored
+// with the entry so later price changes cannot rewrite history. No token or post
+// body is stored here.
+model UsageLedgerEntry {
+  id            String   @id @default(cuid())
+  userId        String
+  projectId     String
+  draftId       String
+  publicationId String   @unique
+  platformId    String
+  mode          String
+  requestCount  Int      @default(0)
+  costMicros    Int      @default(0)
+  currency      String   @default("USD")
+  status        String   @default("reserved")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([platformId, createdAt])
+  @@index([projectId, createdAt])
+  @@map("x_usage_ledger")
+}
+
+// M8 — AI workspace. These rows describe generated material only. They contain
+// no platform tokens and never bypass the existing approval or publishing gates.
+
+model Campaign {
+  id                String   @id
+  projectId         String
+  // User.id of the owner. Kept as a plain field; ownership is always checked
+  // against the project owner before any campaign row is read or written.
+  ownerId           String
+  brief             String
+  name              String   @default("")
+  objective         String   @default("")
+  audience          String   @default("")
+  platforms         String[] @default([])
+  durationDays      Int      @default(7)
+  timezone          String   @default("UTC")
+  startDate         String   @default("")
+  redditSubreddit   String?
+  themes            String[] @default([])
+  postingFrequency  String   @default("")
+  desiredOutcomes   String[] @default([])
+  status            String   @default("queued")
+  strategyNotes     String?
+  research          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks             CampaignTask[]
+  sources           ResearchSource[]
+  ideas             ContentIdea[]
+  schedules         CampaignSchedule[]
+  generatedPosts    GeneratedPost[]
+  executions        AgentExecution[]
+  analytics         CampaignAnalytics?
+  analyticsPosts    AnalyticsPost[]
+  analyticsInsights AnalyticsInsight[]
+
+  @@index([projectId])
+  @@index([ownerId])
+  @@map("ai_campaigns")
+}
+
+model CampaignTask {
+  id           String   @id
+  campaignId   String
+  kind         String
+  status       String   @default("pending")
+  detail       String?
+  errorCode    String?
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("ai_campaign_tasks")
+}
+
+model ResearchSource {
+  id          String   @id
+  campaignId  String
+  title       String
+  url         String
+  publisher   String?
+  publishedAt DateTime?
+  retrievedAt DateTime @default(now())
+  summary     String?
+  provider    String
+  verified    Boolean  @default(false)
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("ai_research_sources")
+}
+
+model BrandProfile {
+  id           String   @id
+  // One editable profile per project.
+  projectId    String   @unique
+  brandName    String   @default("")
+  description  String   @default("")
+  audience     String   @default("")
+  tone         String   @default("")
+  vocabulary   String[] @default([])
+  style        String   @default("")
+  avoidTopics  String[] @default([])
+  avoidWords   String[] @default([])
+  ctas         String[] @default([])
+  examplePosts String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("ai_brand_profiles")
+}
+
+model ContentIdea {
+  id          String   @id
+  campaignId  String
+  day         Int
+  platformId  String
+  topic       String
+  angle       String   @default("")
+  status      String   @default("planned")
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  generated   GeneratedPost[]
+
+  @@index([campaignId])
+  @@map("ai_content_ideas")
+}
+
+model GeneratedPost {
+  id             String   @id
+  campaignId     String
+  ideaId         String
+  // Ordinary Crewlink draft. There is no second draft table.
+  draftId        String   @unique
+  platformId     String
+  variationIndex Int      @default(0)
+  quality        Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  idea           ContentIdea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([ideaId])
+  @@map("ai_generated_posts")
+}
+
+model CampaignSchedule {
+  id           String   @id
+  campaignId   String
+  draftId      String   @unique
+  platformId   String
+  scheduledFor DateTime
+  timezone     String
+  status       String   @default("suggested")
+  reason       String?
+  source       String   @default("ai")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("ai_campaign_schedules")
+}
+
+model AgentExecution {
+  id               String   @id
+  campaignId       String
+  projectId        String
+  userId           String
+  stage            String
+  provider         String
+  model            String
+  status           String
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  costMicros       Int?
+  latencyMs        Int      @default(0)
+  errorCode        String?
+  createdAt        DateTime @default(now())
+  campaign         Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("ai_agent_executions")
+}
+
+model CampaignAnalytics {
+  id          String   @id
+  campaignId  String   @unique
+  projectId   String
+  metrics     Json
+  unavailable String[] @default([])
+  note        String   @default("")
+  collectedAt DateTime @default(now())
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("ai_campaign_analytics")
+}
+
+// M9 — platform analytics. These tables store platform-reported metrics,
+// historical snapshots and Crewlink/AI interpretation. They never store access
+// tokens, post bodies or credentials.
+
+// One row per platform connection. Latest normalized account-level metrics only;
+// history lives in AnalyticsSnapshot.
+model AnalyticsAccount {
+  id                    String   @id
+  userId                String
+  projectId             String
+  connectionId          String   @unique
+  platformId            String
+  externalAccountId     String?
+  externalAccountName   String?
+  // Normalized metrics: followers / subscribers / posts.
+  metrics               Json?
+  availableMetrics      String[] @default([])
+  unavailableMetrics    String[] @default([])
+  status                String   @default("pending")
+  note                  String?
+  lastSyncedAt          DateTime?
+  lastErrorCode         String?
+  lastErrorMessage      String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  project               Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  connection            PlatformConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  snapshots             AnalyticsSnapshot[]
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([platformId])
+  @@map("analytics_accounts")
+}
+
+// One row per published draft and platform. Metrics are the latest
+// platform-reported values; engagement and engagementRate are Crewlink-calculated.
+model AnalyticsPost {
+  id                  String   @id
+  userId              String
+  projectId           String
+  publicationId       String   @unique
+  draftId             String
+  campaignId          String?
+  platformId          String
+  externalId          String?
+  externalUrl         String?
+  publishedAt         DateTime
+  contentType         String   @default("text")
+  topic               String?
+  metrics             Json?
+  availableMetrics    String[] @default([])
+  unavailableMetrics  String[] @default([])
+  engagement          Float?
+  engagementRate      Float?
+  engagementRateBasis String?
+  status              String   @default("pending")
+  note                String?
+  lastSyncedAt        DateTime?
+  lastErrorCode       String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  publication         Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  campaign            Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  snapshots           AnalyticsSnapshot[]
+
+  @@index([projectId, publishedAt])
+  @@index([campaignId])
+  @@index([platformId])
+  @@index([userId])
+  @@map("analytics_posts")
+}
+
+// Point-in-time metrics for a post or account. `dedupeKey` makes a repeated sync
+// with identical values in the same window idempotent.
+model AnalyticsSnapshot {
+  id                 String   @id
+  userId             String
+  projectId          String
+  platformId         String
+  scope              String
+  analyticsPostId    String?
+  analyticsAccountId String?
+  dedupeKey          String   @unique
+  metrics            Json
+  capturedAt         DateTime
+  source             String   @default("api")
+  createdAt          DateTime @default(now())
+  project            Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  post               AnalyticsPost?    @relation(fields: [analyticsPostId], references: [id], onDelete: Cascade)
+  account            AnalyticsAccount? @relation(fields: [analyticsAccountId], references: [id], onDelete: Cascade)
+
+  @@index([analyticsPostId, capturedAt])
+  @@index([analyticsAccountId, capturedAt])
+  @@index([projectId, capturedAt])
+  @@map("analytics_snapshots")
+}
+
+// One row per sync attempt and platform. Used for status, pacing and a safe error
+// summary; no token, prompt or response body is stored.
+model AnalyticsSync {
+  id             String   @id
+  userId         String
+  projectId      String
+  platformId     String
+  trigger        String   @default("manual")
+  status         String   @default("running")
+  startedAt      DateTime @default(now())
+  finishedAt     DateTime?
+  postsRequested Int      @default(0)
+  postsUpdated   Int      @default(0)
+  snapshotsWritten Int    @default(0)
+  errorCode      String?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, platformId, startedAt])
+  @@index([userId])
+  @@map("analytics_syncs")
+}
+
+// AI performance-analyst output. Advisory only: it never changes a campaign,
+// approves a draft or publishes anything.
+model AnalyticsInsight {
+  id               String   @id
+  userId           String
+  projectId        String
+  campaignId       String?
+  scope            String   @default("project")
+  periodStart      String
+  periodEnd        String
+  provider         String
+  model            String
+  status           String   @default("new")
+  sampleSize       Int      @default(0)
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  payload          Json
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  acceptedAt       DateTime?
+  project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  campaign         Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@index([campaignId])
+  @@index([userId])
+  @@map("analytics_insights")
+}
+
+// One row per project/platform sync. A row is a lease, not a queue: an expired
+// lease can be acquired by another instance, and only the token that owns the
+// row may release it. No transaction is held during external API calls.
+model AnalyticsSyncLock {
+  key         String   @id
+  ownerToken  String
+  projectId   String
+  platformId  String
+  connectionId String?
+  acquiredAt  DateTime
+  expiresAt   DateTime
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("analytics_sync_locks")
 }

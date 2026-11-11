@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
 
   const projectsWithDetails = await Promise.all(
     projects.map(async (project) => {
-      const applicants = (await storage.getApplicantsByProject(project.id)).map((applicant) => ({
+      const rawApplicants = await storage.getApplicantsByProject(project.id);
+      const applicants = rawApplicants.map((applicant) => ({
         id: applicant.id,
         userLogin: applicant.userLogin,
         userAvatar: applicant.userAvatar,
@@ -46,16 +47,25 @@ export async function GET(request: NextRequest) {
         githubUrl: applicant.githubUrl,
         linkedinUrl: applicant.linkedinUrl,
         resumeFileName: applicant.resumeFileName,
+        referralCode: applicant.referralCode,
         status: applicant.status,
         invitationSent: applicant.invitationSent,
         createdAt: applicant.createdAt,
       }));
 
+      // Usage count drives the join URL: a code at its limit falls back to the
+      // permanent slug URL in generateShareLinks.
+      const referralUsageCount =
+        project.joinMode === 'referral' && project.referralCode
+          ? rawApplicants.filter((applicant) => applicant.referralCode === project.referralCode)
+              .length
+          : 0;
+
       const { logoPath: _logoPath, ...publicProject } = project;
       return {
         ...publicProject,
         logoUrl: projectLogoUrl(project),
-        shareLinks: generateShareLinks(project),
+        shareLinks: generateShareLinks(project, undefined, referralUsageCount),
         applicants,
       };
     })

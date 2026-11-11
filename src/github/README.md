@@ -2,7 +2,7 @@
 
 Handles all communication with GitHub's REST and OAuth APIs.
 
-- `api.ts`: Real GitHub API client for OAuth authorization, fetching authenticated user info, listing repositories where user is admin, and sending collaborator invitations (`PUT /repos/{owner}/{repo}/collaborators/{username}`).
+- `api.ts`: Real GitHub API client for OAuth authorization, fetching authenticated user info, listing repositories where user is admin, and a collaborator-invitation helper that approval does not call (contributors use forks and pull requests).
 - `fake.ts`: Mock GitHub implementation used for automated tests. Tests never hit live GitHub servers.
 - `index.ts`: Exports the active GitHub client, switching to the fake mock during test runs or via `setGitHubClient()`.
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
-import { getGitHubClient } from '@/github/index';
 import { notifyApplicantApproved } from '@/lib/notifications';
 
 export async function POST(
@@ -39,37 +38,16 @@ export async function POST(
     });
   }
 
-  try {
-    const client = getGitHubClient();
-    const [owner, repo] = project.repoFullName.split('/');
+  // Approval only changes Crewlink status. Repository access stays with the
+  // owner; contributors participate by forking and opening pull requests.
+  const updated = await storage.updateApplicantStatus(applicant.id, 'approved');
 
-    const invitation = await client.inviteCollaborator({
-      accessToken: user.accessToken,
-      owner,
-      repo,
-      username: applicant.userLogin,
-    });
-
-    const updated = await storage.updateApplicantStatus(applicant.id, 'approved', invitation);
-
-    if (updated) {
-      notifyApplicantApproved(project, updated).catch(() => {});
-    }
-
-    return NextResponse.json({
-      success: true,
-      applicant: updated,
-      invitation,
-    });
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('Failed to send collaborator invitation:', msg);
-    return NextResponse.json(
-      {
-        error: `GitHub invitation could not be sent: ${msg}. Please verify repository admin permissions.`,
-      },
-      { status: 502 }
-    );
+  if (updated) {
+    notifyApplicantApproved(project, updated).catch(() => {});
   }
-}
 
+  return NextResponse.json({
+    success: true,
+    applicant: updated,
+  });
+}

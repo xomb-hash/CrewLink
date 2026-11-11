@@ -49,7 +49,11 @@ export async function GET(request: NextRequest) {
       title: approved
         ? `You were approved for ${project.title}`
         : `Your request to ${project.title} was declined`,
-      detail: approved ? 'Accept the GitHub invitation to get access.' : 'The creator reviewed your request.',
+      detail: approved
+        ? project.isPrivate
+          ? 'You are a contributor. This repository is private, so its code stays with the owner.'
+          : 'You are a contributor. Fork the repo and open a pull request.'
+        : 'The creator reviewed your request.',
       href: `/join/${project.slug}`,
       createdAt: application.updatedAt,
     });

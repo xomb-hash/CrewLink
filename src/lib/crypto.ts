@@ -1,15 +1,28 @@
 import crypto from 'node:crypto';
-import { config } from '../config/index';
 import { logger } from './logger';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12; // 96 bits for GCM
 const TAG_LENGTH = 16; // 128 bits auth tag
 
+export class EncryptionConfigError extends Error {}
+export class DecryptionError extends Error {}
+
+// The single encryption secret for legacy (GitHub token) payloads. Social platform
+// tokens use the versioned CredentialVault in src/posting/credentials.ts instead.
+function getEncryptionSecret(): string {
+  const secret = process.env.ENCRYPTION_SECRET || process.env.SESSION_SECRET;
+  if (!secret) {
+    throw new EncryptionConfigError(
+      'ENCRYPTION_SECRET is required. Set it to a random string of 32+ characters.'
+    );
+  }
+  return secret;
+}
+
 function getEncryptionKey(): Buffer {
-  const secret = process.env.ENCRYPTION_SECRET || config.sessionSecret || 'crewlink-default-encryption-secret-key-32chars';
   // Use SHA-256 to ensure exactly 32 bytes for AES-256
-  return crypto.createHash('sha256').update(secret).digest();
+  return crypto.createHash('sha256').update(getEncryptionSecret()).digest();
 }
 
 /**
@@ -32,10 +45,10 @@ export function isEncrypted(val?: string | null): boolean {
 
 /**
  * Encrypts sensitive secrets (e.g., GitHub OAuth access tokens) at rest using AES-256-GCM.
+ * Always encrypts; callers that need idempotency must check isEncrypted first.
  */
 export function encryptSecret(plainText: string): string {
   if (!plainText) return '';
-  if (isEncrypted(plainText)) return plainText;
 
   const key = getEncryptionKey();
   const iv = crypto.randomBytes(IV_LENGTH);
@@ -51,7 +64,9 @@ export function encryptSecret(plainText: string): string {
 }
 
 /**
- * Decrypts AES-256-GCM encrypted secrets at rest with integrity verification.
+ * Decrypts AES-256-GCM payloads at rest with integrity verification.
+ * Legacy plaintext values are returned as-is for backward compatibility.
+ * Corrupted or tampered ciphertext throws instead of returning a silent empty value.
  */
 export function decryptSecret(encryptedPayload?: string | null): string {
   if (!encryptedPayload) return '';
@@ -61,9 +76,9 @@ export function decryptSecret(encryptedPayload?: string | null): string {
   }
 
   const [ivHex, authTagHex, encryptedHex] = encryptedPayload.split(':');
+  const key = getEncryptionKey();
 
   try {
-    const key = getEncryptionKey();
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
 
@@ -75,7 +90,6 @@ export function decryptSecret(encryptedPayload?: string | null): string {
     return decrypted;
   } catch (err) {
     logger.error('Decryption failed: auth tag invalid or corrupted secret', err);
-    return '';
+    throw new DecryptionError('Encrypted value could not be decrypted with the configured key.');
   }
 }
-

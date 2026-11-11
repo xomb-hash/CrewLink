@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'pong', zen: payload.zen }, { status: 200 });
   }
 
-  // Handle member added event (collaborator accepted invitation)
+  // Handle member added event (owner added an applicant to the repository manually)
   if (event === 'member' && payload.action === 'added') {
     const repoFullName = payload.repository?.full_name;
     const memberLogin = payload.member?.login;

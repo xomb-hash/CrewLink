@@ -6,7 +6,7 @@ import { Compass } from 'lucide-react';
 import { AdvisoryBanners } from '@/components/AdvisoryBanners';
 import { ProjectCard } from '@/components/ProjectCard';
 import { ProjectLogo } from '@/components/ProjectLogo';
-import type { Project, Applicant, ShareLinks } from '@/types/index';
+import type { Project, Applicant, ShareLinks, ReferralSettings } from '@/types/index';
 
 interface ProjectWithDetails extends Project {
   shareLinks: ShareLinks;
@@ -22,13 +22,25 @@ interface JoinedProject {
   logoUrl: string | null;
   ownerLogin: string;
   status: Applicant['status'];
-  invitationSent: boolean;
+  isPrivate: boolean;
 }
 
 interface DashboardUser {
   login: string;
   name?: string;
   avatarUrl?: string;
+}
+
+// --- Payload returned by the referral API after generate/update/revoke ---
+interface ReferralResponse {
+  referralCode: string;
+  referralCodeCreatedAt?: string;
+  referralCodeExpiresAt?: string;
+  referralCodeUsageLimit?: number;
+  referralCodeRevokedAt?: string;
+  referralCodeUsedAt?: string;
+  usageCount: number;
+  shareLinks: ShareLinks;
 }
 
 interface DashboardClientProps {
@@ -58,6 +70,26 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
     }
   };
 
+  // --- Merge fresh referral data into the matching project card ---
+  const applyReferralResponse = (projectId: string, data: ReferralResponse) => {
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === projectId
+          ? {
+              ...project,
+              referralCode: data.referralCode || project.referralCode,
+              referralCodeCreatedAt: data.referralCodeCreatedAt,
+              referralCodeExpiresAt: data.referralCodeExpiresAt,
+              referralCodeUsageLimit: data.referralCodeUsageLimit,
+              referralCodeRevokedAt: data.referralCodeRevokedAt,
+              referralCodeUsedAt: data.referralCodeUsedAt,
+              shareLinks: data.shareLinks,
+            }
+          : project
+      )
+    );
+  };
+
   const handleApprove = async (projectId: string, applicantId: string, login: string) => {
     const res = await fetch(`/api/projects/${projectId}/applicants/${applicantId}/approve`, {
       method: 'POST',
@@ -67,31 +99,48 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
       showToast(data.error || 'Failed to approve applicant');
       return;
     }
-    showToast(`Invitation sent to @${login}! They must accept on GitHub.`);
+    showToast(`@${login} is now a contributor. They can fork the repo and open pull requests.`);
     await reloadProjects();
   };
 
+  // --- Owner action: generate or replace the reusable link ---
   const handleGenerateCode = async (projectId: string) => {
     const res = await fetch(`/api/projects/${projectId}/referral-code`, { method: 'POST' });
     const data = await res.json();
     if (!res.ok) {
-      showToast(data.error || 'Failed to generate referral code');
+      showToast(data.error || 'Failed to generate referral link');
       return;
     }
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === projectId
-          ? {
-              ...project,
-              referralCode: data.referralCode,
-              referralCodeCreatedAt: data.referralCodeCreatedAt,
-              referralCodeUsedAt: '',
-              shareLinks: data.shareLinks,
-            }
-          : project
-      )
-    );
-    showToast('New invite code generated — valid for 7 days and one applicant.');
+    applyReferralResponse(projectId, data);
+    showToast('Referral link ready — share it with as many people as you like.');
+  };
+
+  // --- Owner action: save the optional usage limit and expiry ---
+  const handleUpdateReferral = async (projectId: string, settings: ReferralSettings) => {
+    const res = await fetch(`/api/projects/${projectId}/referral-code`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Failed to update the referral link');
+      return;
+    }
+    applyReferralResponse(projectId, data);
+    showToast('Referral link settings saved.');
+  };
+
+  // --- Owner action: deactivate the link immediately ---
+  const handleRevokeCode = async (projectId: string) => {
+    const res = await fetch(`/api/projects/${projectId}/referral-code`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || 'Failed to revoke the referral link');
+      return;
+    }
+    applyReferralResponse(projectId, data);
+    showToast('Referral link revoked. The old link no longer accepts applications.');
   };
 
   const handleReject = async (projectId: string, applicantId: string, login: string) => {
@@ -146,7 +195,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
         <div>
           <h1 className="text-lg font-semibold tracking-tight text-ink">Your projects</h1>
           <p className="mt-0.5 text-[12px] text-[#8b949e]">
-            Manage join links, review requests, and send GitHub invitations.
+            Manage join links, review requests, and grow your contributor list.
           </p>
         </div>
       </div>
@@ -178,6 +227,8 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
               onApprove={handleApprove}
               onReject={handleReject}
               onGenerateCode={handleGenerateCode}
+              onUpdateReferral={handleUpdateReferral}
+              onRevokeCode={handleRevokeCode}
               onDelete={handleDelete}
             />
           ))}
@@ -193,13 +244,21 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
           <div className="grid gap-3 sm:grid-cols-2">
             {joinedProjects.map((item) => {
               const statusLabel =
-                item.status === 'approved' ? 'Approved' : item.status === 'rejected' ? 'Declined' : 'Pending';
+                item.status === 'approved' ? 'Contributor' : item.status === 'rejected' ? 'Declined' : 'Pending';
               const statusClass =
                 item.status === 'approved'
                   ? 'border-[#238636]/40 bg-[#238636]/15 text-[#3fb950]'
                   : item.status === 'rejected'
                   ? 'border-[#da3633]/40 bg-[#da3633]/15 text-[#f85149]'
                   : 'border-[#d29922]/40 bg-[#d29922]/15 text-[#e3b341]';
+              const detail =
+                item.status === 'approved'
+                  ? item.isPrivate
+                    ? 'You are a contributor. This repository is private, so its code stays with the owner.'
+                    : 'You are a contributor — fork the repo and open a pull request.'
+                  : item.status === 'rejected'
+                  ? 'The creator declined this request.'
+                  : 'Waiting for the creator to review.';
               return (
                 <Link
                   key={item.id}
@@ -222,13 +281,7 @@ export function DashboardClient({ initialProjects, joinedProjects, user }: Dashb
                       </span>
                     </div>
                     <p className="mt-0.5 text-[11px] text-[#8b949e]">by @{item.ownerLogin}</p>
-                    <p className="mt-1 text-[11px] text-[#8b949e]">
-                      {item.status === 'approved'
-                        ? 'Invitation sent — accept it on GitHub.'
-                        : item.status === 'rejected'
-                        ? 'The creator declined this request.'
-                        : 'Waiting for the creator to review.'}
-                    </p>
+                    <p className="mt-1 text-[11px] text-[#8b949e]">{detail}</p>
                   </div>
                 </Link>
               );

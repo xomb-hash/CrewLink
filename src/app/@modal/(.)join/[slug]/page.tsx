@@ -20,6 +20,13 @@ export default async function JoinModalPage({
 
   const applicants = await storage.getApplicantsByProject(project.id);
   const owner = await storage.getUser(project.ownerId);
+  // The modal shows a public join URL only: if the reusable code is at its
+  // limit, generateShareLinks falls back to this project's slug URL. The code
+  // itself is never rendered here.
+  const referralUsageCount =
+    project.joinMode === 'referral' && project.referralCode
+      ? applicants.filter((applicant) => applicant.referralCode === project.referralCode).length
+      : 0;
 
   const modalProject: ProjectModalData = {
     slug: project.slug,
@@ -32,7 +39,7 @@ export default async function JoinModalPage({
     ownerAvatar: owner?.avatarUrl || project.ownerAvatar,
     applicantsCount: applicants.length,
     createdAt: project.createdAt,
-    joinUrl: generateShareLinks(project).joinUrl,
+    joinUrl: generateShareLinks(project, undefined, referralUsageCount).joinUrl,
     roles: project.roles,
     screeningUrl: project.screeningUrl,
   };

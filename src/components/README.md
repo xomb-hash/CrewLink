@@ -4,13 +4,13 @@ Reusable UI components built with React 19, TypeScript, Tailwind CSS (v4), and L
 
 - `AppShell.tsx`: Client shell that renders the fixed topbar, desktop sidebar, and mobile bottom nav.
 - `Topbar.tsx`: Fixed header with brand, project search (submits `/?q=`), the single Create link to `/projects/new`, notification bell popover, and GitHub avatar or sign-in.
-- `Sidebar.tsx`: Desktop icon navigation (Home, Discover, Dashboard, Sign in/out) with active indicators.
-- `MobileNav.tsx`: Bottom icon navigation (Home, Discover, Dashboard, Sign in/out) shown below the `md` breakpoint.
+- `Sidebar.tsx`: Desktop icon navigation (Home, Discover, Applications, Publishing, AI Studio, Dashboard, Sign in/out) with active indicators.
+- `MobileNav.tsx`: Bottom icon navigation (Home, Discover, Applications, Publishing, AI Studio, Dashboard, Sign in/out) shown below the `md` breakpoint.
 - `NotificationBell.tsx`: Popover listing pending join requests on owned projects and status updates on the user's applications, with a pending-count badge.
 - `CreateProjectForm.tsx`: Shared admin-repo selection, optional project logo upload (PNG/JPEG/WebP, 2 MB), visibility selector (Private referral by default, Public direct join, or Public screening), screening link, optional creator note, and required-credential toggles (resume, GitHub link, LinkedIn link). Private projects get an invite code embedded in the join link and stay out of Discover.
 - `ProjectLogo.tsx`: Displays an uploaded project logo, falling back to deterministic gradient/initials art generated from the project name when no logo is set or the stored file can't load.
 - `ProjectDetailsModal.tsx`: Dialog for a project's public details (visibility and join-mode badges, repo path, description, roles, screening link, owner card, share link and join actions) used by Explore and the intercepted `/join/[slug]` modal.
 - `VisibilityBadge.tsx`: Lock icon for private repositories and globe icon for public repositories.
-- `ProjectCard.tsx`: Owner project card with join-link copy, invite-code status (expires in N days, used, expired, or not generated), code regeneration, share triggers (LinkedIn, X, WhatsApp; used or expired codes are omitted), applicant review rows (GitHub/LinkedIn links and resume download when provided), confirmation dialogs for Approve/Reject, and an owner-only Delete with confirmation.
-- `AdvisoryBanners.tsx`: GitHub personal-repository write-access and honour-system screening notices.
+- `ProjectCard.tsx`: Owner project card with join-link copy, invite-code status (expires in N days, used, expired, or not generated), code regeneration, share triggers (LinkedIn, X, WhatsApp; used or expired codes are omitted), applicant review rows (GitHub/LinkedIn links and resume download when provided), confirmation dialogs for Approve (contributor status only, no GitHub access) /Reject, and an owner-only Delete with confirmation.
+- `AdvisoryBanners.tsx`: Fork-and-pull-request contribution model notice (approval never grants GitHub access) and honour-system screening notice.
 - `ui/`: shadcn/ui primitives (`badge.tsx`, `button.tsx`, `card.tsx`, `input.tsx`, `label.tsx`, `textarea.tsx`).

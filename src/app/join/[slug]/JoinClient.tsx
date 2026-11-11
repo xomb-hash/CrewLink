@@ -6,7 +6,16 @@ import { VisibilityBadge } from '@/components/VisibilityBadge';
 import { ProjectLogo } from '@/components/ProjectLogo';
 import type { Project, Applicant } from '@/types/index';
 
-type JoinProject = Omit<Project, 'referralCode' | 'referralCodeCreatedAt' | 'referralCodeUsedAt' | 'logoPath'> & {
+type JoinProject = Omit<
+  Project,
+  | 'referralCode'
+  | 'referralCodeCreatedAt'
+  | 'referralCodeExpiresAt'
+  | 'referralCodeUsageLimit'
+  | 'referralCodeRevokedAt'
+  | 'referralCodeUsedAt'
+  | 'logoPath'
+> & {
   githubUrl: string | null;
   logoUrl: string | null;
   requiresReferralCode: boolean;
@@ -26,7 +35,7 @@ interface JoinClientProps {
   creator: JoinCreator;
   currentUser: { id: string | number; login: string; name?: string; avatarUrl?: string } | null;
   isOwner: boolean;
-  existingApplication: Pick<Applicant, 'id' | 'status' | 'createdAt' | 'invitationSent'> | null;
+  existingApplication: Pick<Applicant, 'id' | 'status' | 'createdAt'> | null;
   initialReferralCode: string;
   referralCodeError: string;
 }
@@ -42,6 +51,8 @@ export function JoinClient({
   initialReferralCode,
   referralCodeError,
 }: JoinClientProps) {
+  // Prefill state: the server only passes a code when this visitor arrived
+  // with a valid one; any invalid-code message is shown under the input.
   const [existingApplication, setExistingApplication] = useState(initialExisting);
   const [referralCode, setReferralCode] = useState(initialReferralCode);
   const [codeError, setCodeError] = useState(referralCodeError);
@@ -52,6 +63,8 @@ export function JoinClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Client-side required-field checks give instant feedback; the apply API
+  // repeats every check before storing anything.
   const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     if (!file) {
@@ -77,6 +90,7 @@ export function JoinClient({
     setSubmitting(true);
     setError(null);
 
+    // Check owner-required fields before touching the network.
     if (project.requiresReferralCode && !referralCode.trim()) {
       setError('Enter the referral code from the creator’s link.');
       setSubmitting(false);
@@ -99,6 +113,7 @@ export function JoinClient({
     }
 
     try {
+      // Multipart body so the optional PDF resume travels with the text fields.
       const formData = new FormData();
       formData.append('message', message);
       formData.append('githubUrl', githubUrl.trim());
@@ -111,6 +126,7 @@ export function JoinClient({
         body: formData,
       });
 
+      // Server errors (wrong code, limit reached, duplicate) surface verbatim.
       const data = await res.json();
       if (!res.ok) {
         throw new Error(
@@ -280,24 +296,47 @@ export function JoinClient({
                 )}
               </div>
 
-              <h3 className="mb-1 text-sm font-normal capitalize text-ink">
-                Application {existingApplication.status}
+              <h3 className="mb-1 text-sm font-normal text-ink">
+                {existingApplication.status === 'approved'
+                  ? 'You are a contributor'
+                  : `Application ${existingApplication.status}`}
               </h3>
 
               <p className="mx-auto max-w-sm text-[12px] leading-relaxed text-[#8b949e]">
                 {existingApplication.status === 'approved' ? (
-                  <>
-                    <strong className="font-normal text-ink">You have been approved!</strong>
-                    <br />
-                    A real GitHub collaborator invitation has been dispatched. Please check your GitHub email or
-                    repository page to accept the invitation and access the code.
-                  </>
+                  project.isPrivate ? (
+                    <>
+                      <strong className="font-normal text-ink">You have been approved as a contributor.</strong>
+                      <br />
+                      This repository is private, so its code stays with the owner. Coordinate with them in the
+                      channel you both use.
+                    </>
+                  ) : (
+                    <>
+                      <strong className="font-normal text-ink">You have been approved as a contributor.</strong>
+                      <br />
+                      Fork the repository, push changes to your fork, and open a pull request for the owner to
+                      review and merge.
+                    </>
+                  )
                 ) : existingApplication.status === 'rejected' ? (
                   'The project owner has reviewed and declined this request.'
                 ) : (
                   'Your request has been submitted and is currently pending review by the project owner.'
                 )}
               </p>
+
+              {existingApplication.status === 'approved' && !project.isPrivate && project.githubUrl && (
+                <a
+                  href={`${project.githubUrl}/fork`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex h-9 items-center gap-2 rounded-md border border-success bg-success px-5 text-[12px] font-semibold text-white transition-colors hover:border-success-emphasis hover:bg-success-emphasis"
+                >
+                  <span>Fork on GitHub</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           ) : !currentUser ? (
             <div className="space-y-4 px-4 py-6 text-center">
@@ -329,6 +368,8 @@ export function JoinClient({
 
               {project.requiresReferralCode && (
                 <div>
+                  {/* Referral code input: prefilled from a valid link, editable
+                      so the applicant can paste a code they were sent. */}
                   <label htmlFor="apply-code" className="mb-1.5 block text-[11px] tracking-[0.03em] text-[#8b949e]">
                     Referral code <span className="text-ink">*</span>
                   </label>
@@ -342,7 +383,7 @@ export function JoinClient({
                         setReferralCode(e.target.value.toUpperCase());
                         setCodeError('');
                       }}
-                      placeholder="e.g. ABCD2345"
+                      placeholder="e.g. CREW-X82K9"
                       required
                       maxLength={32}
                       autoCapitalize="characters"

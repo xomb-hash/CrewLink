@@ -6,11 +6,17 @@ import { storage } from '../src/lib/storage';
 import { setGitHubClient } from '../src/github/index';
 import { FakeGitHubApi } from '../src/github/fake';
 import { signValue } from '../src/lib/auth';
+import { rateLimiter } from '../src/lib/rateLimit';
 import { generateReferralCode, normalizeReferralCode, referralCodeMatches } from '../src/projects/referral';
 import { referralCodeState } from '../src/projects/referralState';
 import { generateShareLinks } from '../src/projects/share';
-import { POST as regenerateCode } from '../src/app/api/projects/[id]/referral-code/route';
+import {
+  POST as regenerateCode,
+  PATCH as updateReferralSettings,
+  DELETE as revokeReferralCode,
+} from '../src/app/api/projects/[id]/referral-code/route';
 import { POST as applyToProject } from '../src/app/api/join/[slug]/apply/route';
+import { GET as getJoinData } from '../src/app/api/join/[slug]/route';
 import { GET as getNotifications } from '../src/app/api/notifications/route';
 import { POST as approveApplicant } from '../src/app/api/projects/[id]/applicants/[applicantId]/approve/route';
 import { POST as createProjectRoute, GET as getProjects } from '../src/app/api/projects/route';
@@ -25,59 +31,112 @@ function cookieFor(sessionId: string) {
   return `crewlink_session=${encodeURIComponent(signValue(sessionId))}`;
 }
 
+function applyRequest(
+  identifier: string,
+  cookie: string,
+  body: Record<string, unknown>
+): NextRequest {
+  return new NextRequest(`http://localhost:3000/api/join/${identifier}/apply`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie },
+    body: JSON.stringify(body),
+  });
+}
+
 test('Referral code helpers', async (t) => {
-  await t.test('generates unambiguous 8-character codes', () => {
+  await t.test('generates short CREW- codes from an unambiguous alphabet', () => {
     for (let i = 0; i < 20; i += 1) {
-      assert.match(generateReferralCode(), /^[A-HJ-NP-Z2-9]{8}$/);
+      assert.match(generateReferralCode(), /^CREW-[A-HJ-NP-Z2-9]{5}$/);
     }
   });
 
   await t.test('normalizes and compares codes case-insensitively', () => {
-    assert.equal(normalizeReferralCode('  ab12cd34 '), 'AB12CD34');
+    assert.equal(normalizeReferralCode('  crew-ab234 '), 'CREW-AB234');
     assert.equal(normalizeReferralCode(undefined), '');
-    assert.equal(referralCodeMatches('AB12CD34', 'ab12cd34'), true);
-    assert.equal(referralCodeMatches('AB12CD34', 'ZZ99ZZ99'), false);
-    assert.equal(referralCodeMatches('AB12CD34', ''), false);
+    assert.equal(referralCodeMatches('CREW-AB234', 'crew-ab234'), true);
+    assert.equal(referralCodeMatches('CREW-AB234', 'CREW-ZZ999'), false);
+    assert.equal(referralCodeMatches('CREW-AB234', ''), false);
   });
 
-  await t.test('embeds the code in the join link while it is active', () => {
+  await t.test('uses the reusable code URL while the link is active', () => {
     const share = generateShareLinks(
       {
         slug: 'rocket-ship-1a2b',
         title: 'Rocket Ship',
-        referralCode: 'AB12CD34',
+        referralCode: 'CREW-AB234',
         referralCodeCreatedAt: new Date().toISOString(),
       },
       'http://localhost:3000'
     );
+    assert.equal(share.joinUrl, 'http://localhost:3000/join/CREW-AB234');
+    assert.ok(share.whatsApp.includes(encodeURIComponent('http://localhost:3000/join/CREW-AB234')));
+  });
+
+  await t.test('honours remaining uses before the limit is reached', () => {
+    const project = {
+      slug: 'rocket-ship-1a2b',
+      title: 'Rocket Ship',
+      referralCode: 'CREW-AB234',
+      referralCodeUsageLimit: 2,
+    };
     assert.equal(
-      share.joinUrl,
-      'http://localhost:3000/join/rocket-ship-1a2b?ref=AB12CD34'
+      generateShareLinks(project, 'http://localhost:3000', 1).joinUrl,
+      'http://localhost:3000/join/CREW-AB234'
+    );
+    assert.equal(
+      generateShareLinks(project, 'http://localhost:3000', 2).joinUrl,
+      'http://localhost:3000/join/rocket-ship-1a2b'
     );
   });
 
-  await t.test('omits used or expired codes from the join link', () => {
-    const base = { slug: 'rocket-ship-1a2b', title: 'Rocket Ship', referralCode: 'AB12CD34' };
-    const used = generateShareLinks(
-      { ...base, referralCodeUsedAt: new Date().toISOString() },
-      'http://localhost:3000'
+  await t.test('falls back to the slug URL for expired, revoked or missing codes', () => {
+    const base = { slug: 'rocket-ship-1a2b', title: 'Rocket Ship', referralCode: 'CREW-AB234' };
+    assert.equal(
+      generateShareLinks(
+        { ...base, referralCodeExpiresAt: new Date(Date.now() - 1000).toISOString() },
+        'http://localhost:3000'
+      ).joinUrl,
+      'http://localhost:3000/join/rocket-ship-1a2b'
     );
-    const expired = generateShareLinks(
-      {
-        ...base,
-        referralCodeCreatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      'http://localhost:3000'
+    assert.equal(
+      generateShareLinks(
+        { ...base, referralCodeRevokedAt: new Date().toISOString() },
+        'http://localhost:3000'
+      ).joinUrl,
+      'http://localhost:3000/join/rocket-ship-1a2b'
     );
-    assert.equal(used.joinUrl, 'http://localhost:3000/join/rocket-ship-1a2b');
-    assert.equal(expired.joinUrl, 'http://localhost:3000/join/rocket-ship-1a2b');
+    assert.equal(
+      generateShareLinks({ slug: 'rocket-ship-1a2b', title: 'Rocket Ship' }, 'http://localhost:3000')
+        .joinUrl,
+      'http://localhost:3000/join/rocket-ship-1a2b'
+    );
+  });
+
+  await t.test('classifies referral link state', () => {
+    const project = {
+      referralCode: 'CREW-AB234',
+      referralCodeCreatedAt: new Date().toISOString(),
+    };
+    assert.equal(referralCodeState(project), 'active');
+    assert.equal(referralCodeState({ ...project, referralCodeRevokedAt: new Date().toISOString() }), 'revoked');
+    assert.equal(referralCodeState({ ...project, referralCodeUsedAt: new Date().toISOString() }), 'used');
+    assert.equal(
+      referralCodeState(
+        { ...project, referralCodeExpiresAt: new Date(Date.now() - 1000).toISOString() },
+        0
+      ),
+      'expired'
+    );
+    assert.equal(referralCodeState({ ...project, referralCodeUsageLimit: 2 }, 2), 'limit-reached');
+    assert.equal(referralCodeState({}, 0), 'missing');
   });
 });
 
-test('Referral code API and notifications', async (t) => {
+test('Reusable referral links', async (t) => {
   const fakeGitHub = new FakeGitHubApi();
   setGitHubClient(fakeGitHub);
   storage.reset();
+  rateLimiter.reset();
 
   const owner = await storage.saveUser({
     id: 101,
@@ -87,7 +146,7 @@ test('Referral code API and notifications', async (t) => {
     publicRepos: 10,
     accessToken: 'fake-token-alice',
   });
-  const applicant = await storage.saveUser({
+  const bob = await storage.saveUser({
     id: 202,
     login: 'bob-builder',
     name: 'Bob',
@@ -95,9 +154,54 @@ test('Referral code API and notifications', async (t) => {
     publicRepos: 8,
     accessToken: 'fake-token-bob',
   });
+  const carol = await storage.saveUser({
+    id: 303,
+    login: 'carol-dev',
+    name: 'Carol',
+    createdAt: '2022-01-01T00:00:00Z',
+    publicRepos: 5,
+    accessToken: 'fake-token-carol',
+  });
+  const dave = await storage.saveUser({
+    id: 404,
+    login: 'dave-maker',
+    name: 'Dave',
+    createdAt: '2022-06-01T00:00:00Z',
+    publicRepos: 4,
+    accessToken: 'fake-token-dave',
+  });
+  const erin = await storage.saveUser({
+    id: 505,
+    login: 'erin-ops',
+    name: 'Erin',
+    createdAt: '2022-09-01T00:00:00Z',
+    publicRepos: 6,
+    accessToken: 'fake-token-erin',
+  });
+  const frank = await storage.saveUser({
+    id: 606,
+    login: 'frank-qa',
+    name: 'Frank',
+    createdAt: '2022-10-01T00:00:00Z',
+    publicRepos: 3,
+    accessToken: 'fake-token-frank',
+  });
+  const gina = await storage.saveUser({
+    id: 707,
+    login: 'gina-lab',
+    name: 'Gina',
+    createdAt: '2022-11-01T00:00:00Z',
+    publicRepos: 7,
+    accessToken: 'fake-token-gina',
+  });
 
   const ownerCookie = cookieFor(await storage.createSession(owner.id));
-  const applicantCookie = cookieFor(await storage.createSession(applicant.id));
+  const bobCookie = cookieFor(await storage.createSession(bob.id));
+  const carolCookie = cookieFor(await storage.createSession(carol.id));
+  const daveCookie = cookieFor(await storage.createSession(dave.id));
+  const erinCookie = cookieFor(await storage.createSession(erin.id));
+  const frankCookie = cookieFor(await storage.createSession(frank.id));
+  const ginaCookie = cookieFor(await storage.createSession(gina.id));
 
   const project = await storage.createProject({
     ownerLogin: owner.login,
@@ -105,146 +209,222 @@ test('Referral code API and notifications', async (t) => {
     repoFullName: 'alice-owner/rocket-ship',
     repoName: 'rocket-ship',
     repoOwner: 'alice-owner',
-    isPrivate: false,
+    isPrivate: true,
     joinMode: 'referral',
     title: 'Rocket Ship',
   });
 
   const originalCode = String(project.referralCode);
-  assert.match(originalCode, /^[A-HJ-NP-Z2-9]{8}$/);
+  assert.match(originalCode, /^CREW-[A-HJ-NP-Z2-9]{5}$/);
   assert.equal(referralCodeState(project), 'active');
+  assert.equal(
+    generateShareLinks(project, 'http://localhost:3000').joinUrl,
+    `http://localhost:3000/join/${originalCode}`
+  );
   let currentCode = originalCode;
 
   await t.test('rejects joining without the invite code', async () => {
-    const req = new NextRequest(`http://localhost:3000/api/join/${project.slug}/apply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: applicantCookie },
-      body: JSON.stringify({ message: 'Let me in.' }),
-    });
+    const req = applyRequest(project.slug, daveCookie, { message: 'Let me in.' });
     const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
     assert.equal(res.status, 400);
     const data = await res.json();
     assert.ok(data.errors.some((e: string) => e.includes('referral code')));
   });
 
-  await t.test('only the owner can regenerate the code', async () => {
-    const req = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/referral-code`,
-      { method: 'POST', headers: { cookie: applicantCookie } }
-    );
-    const res = await regenerateCode(req, { params: Promise.resolve({ id: project.id }) });
-    assert.equal(res.status, 403);
+  await t.test('accepts the first applicant with the code in the body', async () => {
+    const req = applyRequest(project.slug, bobCookie, {
+      message: 'I built propulsion systems.',
+      referralCode: currentCode.toLowerCase(),
+    });
+    const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
+    assert.equal(res.status, 201);
   });
 
-  await t.test('regenerating invalidates the old code and updates the link', async () => {
-    const req = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/referral-code`,
-      { method: 'POST', headers: { cookie: ownerCookie } }
-    );
-    const res = await regenerateCode(req, { params: Promise.resolve({ id: project.id }) });
-    assert.equal(res.status, 200);
-    const data = await res.json();
+  await t.test('accepts a second applicant through the same code in the URL', async () => {
+    const req = applyRequest(currentCode, carolCookie, { message: 'Avionics is my thing.' });
+    const res = await applyToProject(req, { params: Promise.resolve({ slug: currentCode }) });
+    assert.equal(res.status, 201);
 
-    assert.match(data.referralCode, /^[A-HJ-NP-Z2-9]{8}$/);
-    assert.notEqual(data.referralCode, originalCode);
-    assert.ok(data.shareLinks.joinUrl.endsWith(`?ref=${data.referralCode}`));
-
-    const staleReq = new NextRequest(`http://localhost:3000/api/join/${project.slug}/apply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: applicantCookie },
-      body: JSON.stringify({ message: 'Old link.', referralCode: originalCode }),
-    });
-    const staleRes = await applyToProject(staleReq, {
-      params: Promise.resolve({ slug: project.slug }),
-    });
-    assert.equal(staleRes.status, 400);
-
-    const freshReq = new NextRequest(`http://localhost:3000/api/join/${project.slug}/apply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: applicantCookie },
-      body: JSON.stringify({ message: 'Fresh link.', referralCode: data.referralCode.toLowerCase() }),
-    });
-    const freshRes = await applyToProject(freshReq, {
-      params: Promise.resolve({ slug: project.slug }),
-    });
-    assert.equal(freshRes.status, 201);
-
-    currentCode = String(data.referralCode);
-    assert.ok(data.referralCodeCreatedAt);
-    assert.ok(data.expiresAt);
-    const storedAfterFresh = await storage.getProjectById(project.id);
-    assert.equal(referralCodeState(storedAfterFresh!), 'used');
+    assert.equal(await storage.countApplicantsByReferralCode(project.id, currentCode), 2);
   });
 
-  await t.test('rejects a second person using the same code', async () => {
-    const carol = await storage.saveUser({
-      id: 303,
-      login: 'carol-dev',
-      name: 'Carol',
-      createdAt: '2022-01-01T00:00:00Z',
-      publicRepos: 5,
-      accessToken: 'fake-token-carol',
-    });
-    const carolCookie = cookieFor(await storage.createSession(carol.id));
-
-    const req = new NextRequest(`http://localhost:3000/api/join/${project.slug}/apply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: carolCookie },
-      body: JSON.stringify({ message: 'Second person.', referralCode: currentCode }),
+  await t.test('prevents the same user from applying twice', async () => {
+    const req = applyRequest(project.slug, bobCookie, {
+      message: 'Trying again.',
+      referralCode: currentCode,
     });
     const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
     assert.equal(res.status, 400);
     const data = await res.json();
-    assert.ok(data.errors.some((e: string) => e.includes('already been used')));
-
-    const applicants = await storage.getApplicantsByProject(project.id);
-    assert.equal(applicants.length, 1);
+    assert.ok(data.error.includes('already applied'));
   });
 
-  await t.test('rejects an expired code', async () => {
-    const expiredProject = await storage.createProject({
-      ownerLogin: owner.login,
-      ownerId: owner.id,
-      repoFullName: 'alice-owner/old-ship',
-      repoName: 'old-ship',
-      repoOwner: 'alice-owner',
-      isPrivate: false,
-      joinMode: 'referral',
-      referralCode: 'EXPIRE22',
-      referralCodeCreatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-      title: 'Old Ship',
-    });
-    assert.equal(referralCodeState(expiredProject), 'expired');
-
-    const req = new NextRequest(`http://localhost:3000/api/join/${expiredProject.slug}/apply`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', cookie: applicantCookie },
-      body: JSON.stringify({ message: 'Late.', referralCode: 'EXPIRE22' }),
-    });
-    const res = await applyToProject(req, {
-      params: Promise.resolve({ slug: expiredProject.slug }),
-    });
-    assert.equal(res.status, 400);
+  await t.test('serves the private project by code without leaking the code', async () => {
+    const req = new NextRequest(`http://localhost:3000/api/join/${currentCode}`);
+    const res = await getJoinData(req, { params: Promise.resolve({ slug: currentCode }) });
+    assert.equal(res.status, 200);
     const data = await res.json();
-    assert.ok(data.errors.some((e: string) => e.includes('expired')));
+    assert.equal(data.project.title, 'Rocket Ship');
+    assert.equal(data.project.requiresReferralCode, true);
+    assert.equal(JSON.stringify(data).includes(currentCode), false);
   });
 
-  await t.test('owner can replace a used code with a fresh one', async () => {
-    const req = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/referral-code`,
-      { method: 'POST', headers: { cookie: ownerCookie } }
+  await t.test('only the owner can manage the link', async () => {
+    const post = await regenerateCode(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'POST',
+        headers: { cookie: carolCookie },
+      }),
+      { params: Promise.resolve({ id: project.id }) }
     );
-    const res = await regenerateCode(req, { params: Promise.resolve({ id: project.id }) });
+    assert.equal(post.status, 403);
+
+    const patch = await updateReferralSettings(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', cookie: carolCookie },
+        body: JSON.stringify({ usageLimit: 10 }),
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
+    assert.equal(patch.status, 403);
+
+    const del = await revokeReferralCode(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'DELETE',
+        headers: { cookie: carolCookie },
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
+    assert.equal(del.status, 403);
+  });
+
+  await t.test('enforces an optional usage limit', async () => {
+    const patch = await updateReferralSettings(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
+        body: JSON.stringify({ usageLimit: 2 }),
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
+    assert.equal(patch.status, 200);
+    const data = await patch.json();
+    assert.equal(data.referralCodeUsageLimit, 2);
+    assert.equal(data.usageCount, 2);
+    assert.equal(data.shareLinks.joinUrl, `http://localhost:3000/join/${project.slug}`);
+
+    const req = applyRequest(project.slug, daveCookie, {
+      message: 'One more seat?',
+      referralCode: currentCode,
+    });
+    const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(body.errors.some((e: string) => e.includes('usage limit')));
+  });
+
+  await t.test('removing the limit makes the link reusable again', async () => {
+    const patch = await updateReferralSettings(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
+        body: JSON.stringify({ usageLimit: null }),
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
+    assert.equal(patch.status, 200);
+    const data = await patch.json();
+    assert.equal(data.shareLinks.joinUrl, `http://localhost:3000/join/${currentCode}`);
+
+    const req = applyRequest(project.slug, daveCookie, {
+      message: 'Thanks for the extra seat.',
+      referralCode: currentCode,
+    });
+    const res = await applyToProject(req, { params: Promise.resolve({ slug: project.slug }) });
+    assert.equal(res.status, 201);
+    assert.equal(await storage.countApplicantsByReferralCode(project.id, currentCode), 3);
+  });
+
+  await t.test('regenerating replaces the code and invalidates the old link', async () => {
+    const res = await regenerateCode(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'POST',
+        headers: { cookie: ownerCookie },
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
     assert.equal(res.status, 200);
     const data = await res.json();
 
-    const stored = await storage.getProjectById(project.id);
-    assert.equal(referralCodeState(stored!), 'active');
-    assert.ok(!stored?.referralCodeUsedAt);
-    assert.ok(data.shareLinks.joinUrl.endsWith(`?ref=${data.referralCode}`));
+    assert.match(data.referralCode, /^CREW-[A-HJ-NP-Z2-9]{5}$/);
+    assert.notEqual(data.referralCode, originalCode);
+    assert.equal(data.usageCount, 0);
+    assert.equal(data.shareLinks.joinUrl, `http://localhost:3000/join/${data.referralCode}`);
+
+    const stale = await applyToProject(
+      applyRequest(project.slug, erinCookie, { message: 'Old link.', referralCode: currentCode }),
+      { params: Promise.resolve({ slug: project.slug }) }
+    );
+    assert.equal(stale.status, 400);
+    const staleBody = await stale.json();
+    assert.ok(staleBody.errors.some((e: string) => e.includes('not valid')));
+
+    const fresh = await applyToProject(
+      applyRequest(data.referralCode, erinCookie, { message: 'New link.' }),
+      { params: Promise.resolve({ slug: data.referralCode }) }
+    );
+    assert.equal(fresh.status, 201);
+
+    currentCode = String(data.referralCode);
+    assert.equal(await storage.countApplicantsByReferralCode(project.id, currentCode), 1);
   });
 
-  await t.test('screening projects cannot have referral codes', async () => {
+  await t.test('rejects an expired link', async () => {
+    const patch = await updateReferralSettings(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', cookie: ownerCookie },
+        body: JSON.stringify({ expiresAt: new Date(Date.now() - 60_000).toISOString() }),
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
+    assert.equal(patch.status, 200);
+    const data = await patch.json();
+    assert.equal(data.shareLinks.joinUrl, `http://localhost:3000/join/${project.slug}`);
+
+    const res = await applyToProject(
+      applyRequest(project.slug, frankCookie, { message: 'Late.', referralCode: currentCode }),
+      { params: Promise.resolve({ slug: project.slug }) }
+    );
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.ok(body.errors.some((e: string) => e.includes('expired')));
+  });
+
+  await t.test('revoking deactivates the link immediately', async () => {
+    const res = await revokeReferralCode(
+      new NextRequest(`http://localhost:3000/api/projects/${project.id}/referral-code`, {
+        method: 'DELETE',
+        headers: { cookie: ownerCookie },
+      }),
+      { params: Promise.resolve({ id: project.id }) }
+    );
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.ok(data.referralCodeRevokedAt);
+    assert.equal(data.shareLinks.joinUrl, `http://localhost:3000/join/${project.slug}`);
+
+    const apply = await applyToProject(
+      applyRequest(currentCode, ginaCookie, { message: 'Can I still join?', referralCode: currentCode }),
+      { params: Promise.resolve({ slug: currentCode }) }
+    );
+    assert.equal(apply.status, 400);
+    const body = await apply.json();
+    assert.ok(body.errors.some((e: string) => e.includes('revoked')));
+  });
+
+  await t.test('screening projects cannot have referral links', async () => {
     const screeningProject = await storage.createProject({
       ownerLogin: owner.login,
       ownerId: owner.id,
@@ -257,54 +437,73 @@ test('Referral code API and notifications', async (t) => {
       title: 'Screening Ship',
     });
 
-    const req = new NextRequest(
-      `http://localhost:3000/api/projects/${screeningProject.id}/referral-code`,
-      { method: 'POST', headers: { cookie: ownerCookie } }
+    const res = await regenerateCode(
+      new NextRequest(`http://localhost:3000/api/projects/${screeningProject.id}/referral-code`, {
+        method: 'POST',
+        headers: { cookie: ownerCookie },
+      }),
+      { params: Promise.resolve({ id: screeningProject.id }) }
     );
-    const res = await regenerateCode(req, {
-      params: Promise.resolve({ id: screeningProject.id }),
-    });
     assert.equal(res.status, 400);
   });
 
-  await t.test('notifies the owner about pending requests and the applicant about decisions', async () => {
+  await t.test('every private project gets its own unique code', async () => {
+    const second = await storage.createProject({
+      ownerLogin: owner.login,
+      ownerId: owner.id,
+      repoFullName: 'alice-owner/second-ship',
+      repoName: 'second-ship',
+      repoOwner: 'alice-owner',
+      isPrivate: true,
+      joinMode: 'referral',
+      title: 'Second Ship',
+    });
+    assert.match(String(second.referralCode), /^CREW-[A-HJ-NP-Z2-9]{5}$/);
+    assert.notEqual(second.referralCode, originalCode);
+    assert.notEqual(second.referralCode, currentCode);
+  });
+
+  await t.test('notifies the owner about every pending request', async () => {
     const ownerReq = new NextRequest('http://localhost:3000/api/notifications', {
       headers: { cookie: ownerCookie },
     });
     const ownerRes = await getNotifications(ownerReq);
     assert.equal(ownerRes.status, 200);
     const ownerData = await ownerRes.json();
-    assert.equal(ownerData.pendingCount, 1);
-    assert.ok(
-      ownerData.notifications.some(
-        (item: { kind: string; title: string }) =>
-          item.kind === 'join_request' && item.title.includes('@bob-builder')
-      )
-    );
+    assert.equal(ownerData.pendingCount, 4);
+    for (const login of ['bob-builder', 'carol-dev', 'dave-maker', 'erin-ops']) {
+      assert.ok(
+        ownerData.notifications.some(
+          (item: { kind: string; title: string }) =>
+            item.kind === 'join_request' && item.title.includes(`@${login}`)
+        )
+      );
+    }
 
-    const applications = await storage.getApplicantsByUser(applicant.id);
-    assert.equal(applications.length, 1);
+    const bobApplications = await storage.getApplicantsByUser(bob.id);
+    assert.equal(bobApplications.length, 1);
 
-    const approveReq = new NextRequest(
-      `http://localhost:3000/api/projects/${project.id}/applicants/${applications[0].id}/approve`,
-      { method: 'POST', headers: { cookie: ownerCookie } }
+    const approveRes = await approveApplicant(
+      new NextRequest(
+        `http://localhost:3000/api/projects/${project.id}/applicants/${bobApplications[0].id}/approve`,
+        { method: 'POST', headers: { cookie: ownerCookie } }
+      ),
+      { params: Promise.resolve({ id: project.id, applicantId: bobApplications[0].id }) }
     );
-    const approveRes = await approveApplicant(approveReq, {
-      params: Promise.resolve({ id: project.id, applicantId: applications[0].id }),
-    });
     assert.equal(approveRes.status, 200);
 
-    const afterRes = await getNotifications(ownerReq);
-    const afterData = await afterRes.json();
-    assert.equal(afterData.pendingCount, 0);
+    const afterData = await (await getNotifications(ownerReq)).json();
+    assert.equal(afterData.pendingCount, 3);
 
-    const applicantReq = new NextRequest('http://localhost:3000/api/notifications', {
-      headers: { cookie: applicantCookie },
-    });
-    const applicantRes = await getNotifications(applicantReq);
-    const applicantData = await applicantRes.json();
+    const bobData = await (
+      await getNotifications(
+        new NextRequest('http://localhost:3000/api/notifications', {
+          headers: { cookie: bobCookie },
+        })
+      )
+    ).json();
     assert.ok(
-      applicantData.notifications.some(
+      bobData.notifications.some(
         (item: { kind: string; title: string }) =>
           item.kind === 'application_status' && item.title.includes('approved')
       )
@@ -312,8 +511,7 @@ test('Referral code API and notifications', async (t) => {
   });
 
   await t.test('requires a session for notifications', async () => {
-    const req = new NextRequest('http://localhost:3000/api/notifications');
-    const res = await getNotifications(req);
+    const res = await getNotifications(new NextRequest('http://localhost:3000/api/notifications'));
     assert.equal(res.status, 401);
   });
 });
@@ -373,8 +571,10 @@ test('Project logo upload and serving', async (t) => {
     projectId = data.project.id;
     assert.equal(data.project.logoUrl, `/api/projects/${projectId}/logo`);
     assert.equal('logoPath' in data.project, false);
-    assert.ok(data.project.referralCode);
-    assert.ok(data.project.shareLinks.joinUrl.includes(`?ref=${data.project.referralCode}`));
+    assert.match(data.project.referralCode, /^CREW-[A-HJ-NP-Z2-9]{5}$/);
+    assert.ok(
+      data.project.shareLinks.joinUrl.endsWith(`/join/${data.project.referralCode}`)
+    );
 
     const stored = await storage.getProjectById(projectId);
     assert.match(String(stored?.logoPath), /^logo-[a-f0-9-]+\.png$/);

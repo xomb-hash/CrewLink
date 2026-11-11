@@ -100,8 +100,10 @@ test('Storage CRUD operations (TypeScript)', async (t) => {
     assert.ok(found);
     assert.equal(found.id, applicant.id);
 
-    const updated = await storage.updateApplicantStatus(applicant.id, 'approved', { inviteId: 999 });
+    const updated = await storage.updateApplicantStatus(applicant.id, 'approved', {
+      acceptedOnGitHubAt: '2024-01-01T00:00:00.000Z',
+    });
     assert.equal(updated?.status, 'approved');
-    assert.equal(updated?.invitationSent, true);
+    assert.equal(updated?.invitationSent, false);
   });
 });

@@ -29,17 +29,26 @@ export default async function DashboardPage() {
         githubUrl: applicant.githubUrl,
         linkedinUrl: applicant.linkedinUrl,
         resumeFileName: applicant.resumeFileName,
+        referralCode: applicant.referralCode,
         status: applicant.status,
         invitationSent: applicant.invitationSent,
         createdAt: applicant.createdAt,
         updatedAt: applicant.updatedAt,
       }));
 
+      // Usage count = applications that arrived with the project's current
+      // code. Regenerating the code naturally resets this to zero.
+      const referralUsageCount =
+        project.joinMode === 'referral' && project.referralCode
+          ? rawApplicants.filter((applicant) => applicant.referralCode === project.referralCode)
+              .length
+          : 0;
+
       const { logoPath: _logoPath, ...publicProject } = project;
       return {
         ...publicProject,
         logoUrl: projectLogoUrl(project),
-        shareLinks: generateShareLinks(project),
+        shareLinks: generateShareLinks(project, undefined, referralUsageCount),
         applicants,
       };
     })
@@ -58,7 +67,7 @@ export default async function DashboardPage() {
       logoUrl: projectLogoUrl(project),
       ownerLogin: project.ownerLogin,
       status: application.status,
-      invitationSent: application.invitationSent,
+      isPrivate: project.isPrivate,
     });
   }
 

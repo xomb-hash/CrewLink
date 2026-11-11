@@ -8,11 +8,15 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
-  const project = await storage.getProjectBySlug(slug);
+
+  // Same lookup as the join page: slug or referral code in the path.
+  const project = await storage.getProjectBySlugOrReferralCode(slug);
   if (!project) {
     return NextResponse.json({ error: 'Project not found.' }, { status: 404 });
   }
 
+  // Optional session so the response can include the visitor's own application
+  // and whether they own the project. Anonymous requests still work.
   const currentUser = await getCurrentUser(request);
   let existingApplication = null;
   let isOwner = false;
@@ -25,11 +29,12 @@ export async function GET(
         id: applicant.id,
         status: applicant.status,
         createdAt: applicant.createdAt,
-        invitationSent: applicant.invitationSent,
       };
     }
   }
 
+  // Explicit public projection: referral code, expiry, limit and usage are
+  // never included here, so the API cannot leak a working invite.
   return NextResponse.json({
     project: {
       id: project.id,

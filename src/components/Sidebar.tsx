@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Home, LayoutGrid, Compass, Send, LogOut, LogIn } from 'lucide-react';
+import { Home, LayoutGrid, Compass, Send, Megaphone, Sparkles, BarChart3, LogOut, LogIn } from 'lucide-react';
 import type { ShellUser } from './AppShell';
 
 interface SidebarProps {
@@ -31,6 +31,24 @@ export function Sidebar({ user, pathname }: SidebarProps) {
         label="Applications"
         active={isActive('/applications')}
         icon={<Send className="h-[18px] w-[18px]" strokeWidth={1.4} />}
+      />
+      <NavItem
+        href="/publishing"
+        label="Publishing"
+        active={isActive('/publishing')}
+        icon={<Megaphone className="h-[18px] w-[18px]" strokeWidth={1.4} />}
+      />
+      <NavItem
+        href="/analytics"
+        label="Analytics"
+        active={isActive('/analytics')}
+        icon={<BarChart3 className="h-[18px] w-[18px]" strokeWidth={1.4} />}
+      />
+      <NavItem
+        href="/ai"
+        label="AI Studio"
+        active={isActive('/ai')}
+        icon={<Sparkles className="h-[18px] w-[18px]" strokeWidth={1.4} />}
       />
       <NavItem
         href="/dashboard"

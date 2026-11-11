@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { storage } from '@/lib/storage';
 import { config } from '@/config/index';
 import { checkDraft } from '@/posting/checks';
+import { redditApprovalHash } from '@/posting/reddit/validate';
 
 export async function POST(
   request: NextRequest,
@@ -49,7 +50,16 @@ export async function POST(
       approvedDrafts,
     },
     draft.platformId,
-    draft.text
+    draft.text,
+    draft.threadParts,
+    draft.platformId === 'reddit'
+      ? {
+          title: draft.title,
+          subreddit: draft.subreddit,
+          submissionType: draft.submissionType,
+          linkUrl: draft.linkUrl,
+        }
+      : undefined
   );
 
   if (checks.some((c) => c.level === 'error')) {
@@ -59,7 +69,24 @@ export async function POST(
     );
   }
 
-  const approved = await storage.approveDraft(draftId, user.login);
+  // A Reddit approval covers the title, subreddit, type and link as well as the
+  // body, so editing any of them requires a new approval.
+  const approved = await storage.approveDraft(
+    draftId,
+    user.login,
+    draft.platformId === 'reddit'
+      ? {
+          approvedText: draft.text,
+          approvedHash: redditApprovalHash({
+            title: draft.title,
+            subreddit: draft.subreddit,
+            submissionType: draft.submissionType,
+            text: draft.text,
+            linkUrl: draft.linkUrl,
+          }),
+        }
+      : undefined
+  );
   if (!approved) {
     return NextResponse.json({ error: 'Failed to approve draft.' }, { status: 500 });
   }

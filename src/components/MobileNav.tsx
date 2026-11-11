@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Home, LayoutGrid, Compass, Send, LogOut, LogIn } from 'lucide-react';
+import { Home, LayoutGrid, Compass, Send, Megaphone, Sparkles, BarChart3, LogOut, LogIn } from 'lucide-react';
 import type { ShellUser } from './AppShell';
 
 interface MobileNavProps {
@@ -45,6 +45,33 @@ export function MobileNav({ user, pathname }: MobileNavProps) {
       >
         <Send className="h-[18px] w-[18px]" strokeWidth={1.4} />
         Applications
+      </Link>
+      <Link
+        href="/publishing"
+        prefetch={false}
+        aria-current={isActive('/publishing') ? 'page' : undefined}
+        className={itemClass(isActive('/publishing'))}
+      >
+        <Megaphone className="h-[18px] w-[18px]" strokeWidth={1.4} />
+        Publish
+      </Link>
+      <Link
+        href="/analytics"
+        prefetch={false}
+        aria-current={isActive('/analytics') ? 'page' : undefined}
+        className={itemClass(isActive('/analytics'))}
+      >
+        <BarChart3 className="h-[18px] w-[18px]" strokeWidth={1.4} />
+        Stats
+      </Link>
+      <Link
+        href="/ai"
+        prefetch={false}
+        aria-current={isActive('/ai') ? 'page' : undefined}
+        className={itemClass(isActive('/ai'))}
+      >
+        <Sparkles className="h-[18px] w-[18px]" strokeWidth={1.4} />
+        AI
       </Link>
       <Link
         href="/dashboard"

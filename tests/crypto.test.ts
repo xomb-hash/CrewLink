@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import './setup';
-import { encryptSecret, decryptSecret, isEncrypted } from '../src/lib/crypto';
+import {
+  encryptSecret,
+  decryptSecret,
+  isEncrypted,
+  EncryptionConfigError,
+  DecryptionError,
+} from '../src/lib/crypto';
 
 test('crypto: encrypts plaintext with AES-256-GCM format', () => {
   const secret = 'gho_16characterfakegithubtoken12345';
@@ -23,13 +29,15 @@ test('crypto: decrypts encrypted ciphertext back to plaintext', () => {
   assert.equal(decrypted, secret);
 });
 
-test('crypto: avoids double encryption if string is already encrypted', () => {
+test('crypto: always encrypts, even when handed ciphertext', () => {
   const secret = 'gho_token_value';
   const encrypted1 = encryptSecret(secret);
   const encrypted2 = encryptSecret(encrypted1);
 
-  assert.equal(encrypted1, encrypted2);
-  assert.equal(decryptSecret(encrypted2), secret);
+  // encryptSecret is not idempotent; callers guard with isEncrypted (see saveUser).
+  assert.notEqual(encrypted1, encrypted2);
+  assert.equal(decryptSecret(encrypted1), secret);
+  assert.equal(decryptSecret(encrypted2), encrypted1);
 });
 
 test('crypto: returns legacy/unencrypted strings as-is for backward compatibility', () => {
@@ -39,7 +47,7 @@ test('crypto: returns legacy/unencrypted strings as-is for backward compatibilit
   assert.equal(decryptSecret(null), '');
 });
 
-test('crypto: rejects tampered ciphertext', () => {
+test('crypto: rejects tampered ciphertext instead of returning an empty string', () => {
   const secret = 'gho_tamper_test';
   const encrypted = encryptSecret(secret);
   const parts = encrypted.split(':');
@@ -48,7 +56,19 @@ test('crypto: rejects tampered ciphertext', () => {
   const tamperedCipher = parts[2].slice(0, -1) + (parts[2].slice(-1) === 'a' ? 'b' : 'a');
   const tampered = `${parts[0]}:${parts[1]}:${tamperedCipher}`;
 
-  // Decryption should fail integrity check and return empty string
-  const result = decryptSecret(tampered);
-  assert.equal(result, '');
+  assert.throws(() => decryptSecret(tampered), DecryptionError);
+});
+
+test('crypto: fails closed when no encryption secret is configured', () => {
+  const secret = process.env.ENCRYPTION_SECRET;
+  const sessionSecret = process.env.SESSION_SECRET;
+  delete process.env.ENCRYPTION_SECRET;
+  delete process.env.SESSION_SECRET;
+
+  try {
+    assert.throws(() => encryptSecret('gho_value'), EncryptionConfigError);
+  } finally {
+    if (secret !== undefined) process.env.ENCRYPTION_SECRET = secret;
+    if (sessionSecret !== undefined) process.env.SESSION_SECRET = sessionSecret;
+  }
 });

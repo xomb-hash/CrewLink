@@ -98,8 +98,8 @@ function Landing() {
       </h1>
 
       <p className="mx-auto mb-10 max-w-2xl text-[15px] leading-relaxed text-[#c9d1d9]">
-        Connect a GitHub repository, share one join link, and decide who comes aboard. Once approved,
-        Crewlink sends real GitHub collaborator invitations.
+        Connect a GitHub repository, share one join link, and decide who comes aboard. Approved applicants
+        become contributors who fork your repo and open pull requests.
       </p>
 
       <div className="mb-16 flex flex-wrap items-center justify-center gap-3">
@@ -148,10 +148,10 @@ function Landing() {
             <div className="mb-4 grid h-9 w-9 place-items-center rounded-lg border border-line-soft text-[#c9d1d9]">
               <UserCheck className="h-4 w-4" strokeWidth={1.5} />
             </div>
-            <h3 className="mb-1.5 text-[13px] font-normal text-ink">3. Review &amp; invite</h3>
+            <h3 className="mb-1.5 text-[13px] font-normal text-ink">3. Review &amp; approve</h3>
             <p className="text-[12px] leading-relaxed text-[#8b949e]">
-              Review applicants by account age and public repo count. Approving dispatches a real GitHub
-              collaborator invitation.
+              Review applicants by account age and public repo count. Approved applicants become contributors
+              and contribute through forks and pull requests — you keep control of the repository.
             </p>
           </div>
         </div>

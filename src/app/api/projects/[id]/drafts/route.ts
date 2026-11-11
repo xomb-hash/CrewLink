@@ -5,6 +5,7 @@ import { config } from '@/config/index';
 import { byId, platforms } from '@/platforms/registry';
 import { draftPost } from '@/posting/drafts';
 import { checkDraft } from '@/posting/checks';
+import { publicationStateFor } from '@/posting/publicationState';
 
 export async function GET(
   request: NextRequest,
@@ -38,23 +39,40 @@ export async function GET(
       approvedAt: d.approvedAt!,
     }));
 
-  const draftsWithChecks = allDrafts.map((draft) => {
-    const checks = checkDraft(
-      {
-        ownerName: project.repoOwner,
-        repoName: project.repoName,
-        repoFullName: project.repoFullName,
-        isPrivate: project.isPrivate,
-        joinUrl,
-        roles: project.roles,
-        description: project.description,
-        approvedDrafts: approvedDrafts.filter((a) => a.approvedText !== draft.text),
-      },
-      draft.platformId,
-      draft.text
-    );
-    return { ...draft, checks };
-  });
+  const draftsWithChecks = await Promise.all(
+    allDrafts.map(async (draft) => {
+      const checks = checkDraft(
+        {
+          ownerName: project.repoOwner,
+          repoName: project.repoName,
+          repoFullName: project.repoFullName,
+          isPrivate: project.isPrivate,
+          joinUrl,
+          roles: project.roles,
+          description: project.description,
+          approvedDrafts: approvedDrafts.filter((a) => a.approvedText !== draft.text),
+        },
+        draft.platformId,
+        draft.text,
+        draft.threadParts,
+        draft.platformId === 'reddit'
+          ? {
+              title: draft.title,
+              subreddit: draft.subreddit,
+              submissionType: draft.submissionType,
+              linkUrl: draft.linkUrl,
+            }
+          : undefined
+      );
+      const publication = await storage.getPublication(draft.id, draft.platformId);
+      return {
+        ...draft,
+        checks,
+        publication,
+        publicationState: publicationStateFor(draft, publication),
+      };
+    })
+  );
 
   return NextResponse.json({ drafts: draftsWithChecks });
 }
@@ -117,10 +135,34 @@ export async function POST(
         projectId,
         platformId,
         text,
+        // A Reddit submission needs a title and a type from the start. The owner
+        // still has to choose a subreddit before it can be approved.
+        ...(platformId === 'reddit'
+          ? {
+              title: `${project.repoOwner}/${project.repoName} is looking for collaborators`.slice(
+                0,
+                300
+              ),
+              submissionType: 'self' as const,
+            }
+          : {}),
       });
     }
 
-    const checks = checkDraft(projectDraftContext, draft.platformId, draft.text);
+    const checks = checkDraft(
+      projectDraftContext,
+      draft.platformId,
+      draft.text,
+      draft.threadParts,
+      draft.platformId === 'reddit'
+        ? {
+            title: draft.title,
+            subreddit: draft.subreddit,
+            submissionType: draft.submissionType,
+            linkUrl: draft.linkUrl,
+          }
+        : undefined
+    );
     createdDrafts.push({ ...draft, checks });
   }
 

@@ -85,7 +85,7 @@ export function ApplicationsClient({ applications, user }: ApplicationsClientPro
                       {app.status === 'approved' && <CheckCircle2 className="w-3.5 h-3.5 mr-1 inline" />}
                       {app.status === 'pending' && <Clock className="w-3.5 h-3.5 mr-1 inline" />}
                       {app.status === 'rejected' && <XCircle className="w-3.5 h-3.5 mr-1 inline" />}
-                      {app.status}
+                      {app.status === 'approved' ? 'Contributor' : app.status}
                     </Badge>
                   </div>
 
@@ -148,12 +148,12 @@ export function ApplicationsClient({ applications, user }: ApplicationsClientPro
                   {app.status === 'approved' && !app.project.isPrivate && (
                     <Button asChild size="sm" className="bg-success text-white font-semibold hover:bg-success-emphasis border-0">
                       <a
-                        href={`https://github.com/${app.project.repoFullName}`}
+                        href={`https://github.com/${app.project.repoFullName}/fork`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5"
                       >
-                        <span>Open on GitHub</span>
+                        <span>Fork on GitHub</span>
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </Button>
@@ -166,7 +166,10 @@ export function ApplicationsClient({ applications, user }: ApplicationsClientPro
                 <div className="mt-4 p-3 bg-[#238636]/10 border border-[#238636]/40 rounded-lg text-xs text-[#3fb950] flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-ink" />
                   <span>
-                    <strong>Invitation Sent!</strong> A GitHub collaborator invite has been dispatched. Please check your GitHub email or repository page to accept collaborator access.
+                    <strong>You&apos;re a contributor!</strong>{' '}
+                    {app.project.isPrivate
+                      ? 'The repository is private, so its code stays with the owner. Coordinate with them in the channel you both use.'
+                      : 'Fork the repository, push changes to your fork, and open a pull request for the owner to review and merge. You do not have collaborator access.'}
                   </span>
                 </div>
               )}

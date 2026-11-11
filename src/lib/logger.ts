@@ -14,12 +14,23 @@ interface LogPayload {
 
 const SENSITIVE_KEYS = new Set([
   'accesstoken',
+  'refreshtoken',
+  'access_token',
+  'refresh_token',
+  'accesstokenciphertext',
+  'refreshtokenciphertext',
   'token',
   'secret',
+  'clientsecret',
+  'client_secret',
+  'webhooksecret',
+  'webhook_secret',
   'password',
+  'apppassword',
   'authorization',
   'cookie',
   'privatekey',
+  'pendingoauthciphertext',
 ]);
 
 function maskSensitiveData(obj: unknown, depth = 0): unknown {

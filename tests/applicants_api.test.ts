@@ -114,7 +114,7 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     assert.ok(data.error.includes('already applied'));
   });
 
-  await t.test('owner approves applicant, sending GitHub collaborator invite', async () => {
+  await t.test('owner approves applicant without granting GitHub access', async () => {
     const req = new NextRequest(
       `http://localhost:3000/api/projects/${project.id}/applicants/${applicantId}/approve`,
       {
@@ -131,10 +131,13 @@ test('Applicants API route handlers (TypeScript)', async (t) => {
     const data = await res.json();
     assert.equal(data.success, true);
     assert.equal(data.applicant.status, 'approved');
-    assert.equal(data.applicant.invitationSent, true);
+    assert.equal(data.applicant.invitationSent, false);
 
-    assert.equal(fakeGitHub.invitations.length, 1);
-    assert.equal(fakeGitHub.invitations[0].username, 'bob-builder');
+    const stored = await storage.getApplicantById(applicantId);
+    assert.equal(stored?.status, 'approved');
+    assert.equal(stored?.invitationSent, false);
+
+    assert.equal(fakeGitHub.invitations.length, 0);
   });
 
   await t.test('enforces required credentials and serves resumes to the right people', async () => {

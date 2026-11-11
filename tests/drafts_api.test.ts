@@ -82,6 +82,9 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
     const data = await res.json();
     assert.equal(data.drafts.length, 2);
     assert.ok(Array.isArray(data.drafts[0].checks));
+    assert.equal(data.drafts[0].publication, null);
+    assert.equal(data.drafts[0].publicationState.kind, 'needs_approval');
+    assert.equal(data.drafts[0].publicationState.canPublish, false);
   });
 
   await t.test('edits draft and resets approval state', async () => {
@@ -117,6 +120,20 @@ test('Drafts API route handlers (TypeScript)', async (t) => {
     assert.ok(data.draft.approvedHash);
     assert.equal(data.draft.approvedHash.length, 64);
     assert.equal(data.draft.approvedBy, 'alice-owner');
+  });
+
+  await t.test('reports a ready publication state after approval', async () => {
+    const req = new NextRequest(`http://localhost:3000/api/projects/${project.id}/drafts`, {
+      headers: { cookie },
+    });
+    const res = await getDrafts(req, { params: Promise.resolve({ id: project.id }) });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    const listed = data.drafts.find((d: { id: string; platformId: string }) => d.platformId === 'discord');
+    assert.equal(listed.id, draftId);
+    assert.equal(listed.publication, null);
+    assert.equal(listed.publicationState.kind, 'ready');
+    assert.equal(listed.publicationState.canPublish, true);
   });
 
   await t.test('skips draft', async () => {

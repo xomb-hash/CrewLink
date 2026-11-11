@@ -7,9 +7,10 @@ export function AdvisoryBanners() {
       <div className="flex items-start gap-3 rounded-lg border border-line-soft bg-panel p-3.5 text-[12px] leading-relaxed text-[#e6edf3]">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-ink" strokeWidth={1.5} />
         <div>
-          <strong className="font-normal text-ink">GitHub access level notice:</strong> Read-only
-          invitations only apply on organisation repositories. On personal repositories, GitHub grants write
-          access to every collaborator.
+          <strong className="font-normal text-ink">Contribution model:</strong> Approving an applicant
+          makes them a Crewlink contributor. It never adds them as a GitHub collaborator or grants write,
+          maintain or admin access. Contributors fork the repository and open pull requests that you review
+          and merge.
         </div>
       </div>
 

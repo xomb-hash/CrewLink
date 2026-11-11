@@ -39,10 +39,18 @@ export async function GET(
     createdAt: applicant.createdAt,
   }));
 
+  // Usage count drives the join URL: a code at its limit falls back to the
+  // permanent slug URL in generateShareLinks.
+  const referralUsageCount =
+    project.joinMode === 'referral' && project.referralCode
+      ? rawApplicants.filter((applicant) => applicant.referralCode === project.referralCode).length
+      : 0;
+
   return NextResponse.json({
     project: {
       ...project,
-      shareLinks: generateShareLinks(project),
+      shareLinks: generateShareLinks(project, undefined, referralUsageCount),
+      referralUsageCount,
       applicants,
     },
   });
